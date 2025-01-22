@@ -3,11 +3,13 @@ import firebase_admin
 from firebase_admin import auth, credentials
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
+cred = credentials.Certificate('path/to/firebase_config.json')
+firebase_admin.initialize_app(cred)
 
 @bp.route('/signup', methods=['POST'])
 def signup():
     # Mock signup. (Need to set up Firebase Auth)
-    data = request.get_json()
+    data = request.json
     email = data.get('email')
     password = data.get('password')
     try:
