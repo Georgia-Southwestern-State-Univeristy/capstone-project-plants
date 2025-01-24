@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
+from app.config.firebaseSetup import db
 
 bp = Blueprint('plants', __name__, url_prefix='/plants')
+plants_ref = db.collection('plants')
 
 @bp.route('/', methods=['POST'])
 def add_plant():

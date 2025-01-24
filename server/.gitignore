@@ -1,8 +1,23 @@
-# Environments
+# Ignore the Firebase Admin key JSON
+app/config/*.json
+
+# Python virtual environment
 venv/
+
+# Environment variables
 .env
 
-#Python cache files
+# Cache files
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+
+# Logs
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/

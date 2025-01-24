@@ -3,7 +3,7 @@ import firebase_admin
 from firebase_admin import auth, credentials
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
-cred = credentials.Certificate('path/to/firebase_config.json')
+cred = credentials.Certificate('FIREBASE_KEY_PATH')
 firebase_admin.initialize_app(cred)
 
 @bp.route('/signup', methods=['POST'])
