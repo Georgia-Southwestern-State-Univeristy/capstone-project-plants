@@ -7,7 +7,7 @@ def create_app():
     app = Flask(__name__)
     CORS(app)
     # Initialize Firestore
-    db = firestore.Client.from_service_account_json('FIREBASE_KEY_PATH')
+    db = firestore.Client.from_service_account_json(FIREBASE_KEY_PATH)
 
     # Register Blueprints
     app.register_blueprint(plants.bp)
