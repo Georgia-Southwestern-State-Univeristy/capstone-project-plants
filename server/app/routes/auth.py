@@ -1,9 +1,12 @@
 from flask import Blueprint, request, jsonify
 import firebase_admin
 from firebase_admin import auth, credentials
+from dotenv import load_dotenv
 
+
+load_dotenv()
 bp = Blueprint('auth', __name__, url_prefix='/auth')
-cred = credentials.Certificate('FIREBASE_KEY_PATH')
+cred = credentials.Certificate(FIREBASE_KEY_PATH)
 firebase_admin.initialize_app(cred)
 
 @bp.route('/signup', methods=['POST'])
