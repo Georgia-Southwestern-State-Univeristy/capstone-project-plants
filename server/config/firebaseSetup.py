@@ -1,8 +1,6 @@
 import os
 from dotenv import load_dotenv
-from google.cloud import firestore
-import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, auth
 import logging
 
 # Load environment variables
@@ -12,12 +10,13 @@ load_dotenv()
 key_path = os.getenv("FIREBASE_KEY_PATH")
 if not key_path:
     logging.error("FIREBASE_KEY_PATH not found in environment variables")
-    
+    raise EnvironmentError("FIREBASE_KEY_PATH is missing")
+
 # Initialize Firestore
 try:
     cred = credentials.Certificate(key_path)
     firebase_admin.initialize_app(cred)
-    db = firestore.Client()
+    db = firestore.client()
     logging.info("Firestore initialized")
 except Exception as e:
     logging.error(f"Error initializing Firestore: {str(e)}")
@@ -36,14 +35,15 @@ def create_user(email, password):
         logging.error(f"Error creating user: {str(e)}")
         return None
     
-def add_document(collection_name, data):
+def add_document(collection_name, document_id, data):
     try:
-        doc_ref = db.collection(collection_name).add(data)
-        logging.info(f"Document added with ID: {doc_ref[1].id}")
-        return doc_ref
+        doc_ref = db.collection(collection_name).document(document_id)
+        doc_ref.set(data)
+        logging.info(f"Document {document_id} added to collection {collection_name}.")
+        return True
     except Exception as e:
         logging.error(f"Error adding document: {e}")
-        return None
+        return False
 
 def get_documents(collection_name):
     try:
