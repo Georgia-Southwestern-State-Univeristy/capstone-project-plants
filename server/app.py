@@ -1,9 +1,13 @@
 from flask import Flask
 from flask_cors import CORS
-from config.firebaseSetup import get_firestore_client  # Import Firestore client
-from app.routes import plants_bp, auth_bp, ai_bp
 from dotenv import load_dotenv
 import os
+
+
+from config.firebaseSetup import get_firestore_client
+from app.routes.auth import bp as auth_bp
+from app.routes.plants import bp as plants_bp
+from app.routes.ai import bp as ai_bp
 
 
 def create_app():
@@ -24,4 +28,5 @@ def create_app():
 
 
 if __name__ == '__main__':
+    app = create_app()
     app.run(host='0.0.0.0', port=5000, debug=True)
