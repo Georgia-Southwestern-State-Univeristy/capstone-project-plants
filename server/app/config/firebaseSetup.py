@@ -1,30 +1,33 @@
 import os
 from dotenv import load_dotenv
+import firebase_admin
 from firebase_admin import credentials, firestore, auth
 import logging
 
 # Load environment variables
 load_dotenv()
 
-# Get the path from the environment
+# Get the Firebase credentials path
 key_path = os.getenv("FIREBASE_KEY_PATH")
 if not key_path:
-    logging.error("FIREBASE_KEY_PATH not found in environment variables")
-    raise EnvironmentError("FIREBASE_KEY_PATH is missing")
+    logging.error("FIREBASE_KEY_PATH not found in environment variables.")
+    raise EnvironmentError("FIREBASE_KEY_PATH is missing.")
 
 # Initialize Firestore
 try:
     cred = credentials.Certificate(key_path)
     firebase_admin.initialize_app(cred)
     db = firestore.client()
-    logging.info("Firestore initialized")
+    logging.info("Firestore initialized successfully.")
 except Exception as e:
     logging.error(f"Error initializing Firestore: {str(e)}")
     db = None
 
-
 def get_firestore_client():
-    return db 
+    if db is None:
+        raise ValueError("Firestore is not initialized. Check logs for errors.")
+    return db
+
 
 def create_user(email, password):
     try:

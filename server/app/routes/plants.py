@@ -1,21 +1,17 @@
-from flask import Blueprint, request, jsonify
-from config.firebaseSetup import db, add_document, get_documents 
+from flask import Blueprint, jsonify
+from app.services.perenual_service import fetch_plant_from_perenual
+from app.database.firestore_db import store_plant
 
+plants_bp = Blueprint("plants", __name__)
 
-bp = Blueprint('plants', __name__, url_prefix='/plants')
-# plants_ref = db.collection('plants')
-
-@bp.route('/', methods=['POST'])
-def add_plant():
-    data = request.get_json()
-    # Add plant to Firestore
-    doc_ref = request.app.firestore.collection('plants').add(data)
-    return jsonify({"message": "Plant added successfully", "id": doc_ref.id}), 201
-
-@bp.route('/', methods=['GET'])
-def get_plants():
-    plants = [doc.to_dict() for doc in request.app.firestore.collection('plants').stream()]
-    return jsonify(plants), 200
-
-add_document("test_collection", {"name": "Test Plant", "status": "Healthy"})
-print(get_documents("test_collection"))
+@plants_bp.route("/plants/<plant_id>", methods=["GET"])
+def get_plant(plant_id):
+    """Retrieve plant from Perenual API and store it in Firestore"""
+    plant = fetch_plant_from_perenual(plant_id)
+    
+    if not plant:
+        return jsonify({"error": "Plant not found"}), 404
+    
+    store_plant(plant)
+    
+    return jsonify(plant)
