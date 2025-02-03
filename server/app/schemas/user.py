@@ -6,7 +6,7 @@ from firebase_admin import auth
 from datetime import datetime
 from app.utils.security import hash_password  # Import from utils
 
-class UserModel(BaseModel):
+class User(BaseModel):
     user_id: str
     name: str = Field(..., min_length=2, max_length=20)
     email: EmailStr
