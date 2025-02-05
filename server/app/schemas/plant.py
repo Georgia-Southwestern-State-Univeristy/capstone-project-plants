@@ -14,4 +14,4 @@ class PlantModel(BaseModel):
     added_date: datetime = datetime.utcnow()
 
     class Config:
-        orm_mode = True
+        from_attributes = True

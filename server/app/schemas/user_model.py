@@ -28,4 +28,4 @@ class UserModel(BaseModel):
         return hash_password(password)  # Use external function
 
     class Config:
-        orm_mode = True
+        from_attributes = True

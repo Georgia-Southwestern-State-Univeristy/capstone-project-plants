@@ -8,15 +8,17 @@ import logging
 load_dotenv()
 
 # Get the Firebase credentials path
-key_path = os.getenv("FIREBASE_KEY_PATH")
-if not key_path:
+firebase_key_path = os.getenv("FIREBASE_KEY_PATH")
+if not firebase_key_path:
     logging.error("FIREBASE_KEY_PATH not found in environment variables.")
     raise EnvironmentError("FIREBASE_KEY_PATH is missing.")
 
 # Initialize Firestore
 try:
-    cred = credentials.Certificate(key_path)
+    cred = credentials.Certificate(firebase_key_path)
     firebase_admin.initialize_app(cred)
+    print(firebase_admin._apps)  # This should show at least one app initialized
+
     db = firestore.client()
     logging.info("Firestore initialized successfully.")
 except Exception as e:
