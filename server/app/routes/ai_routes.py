@@ -1,19 +1,47 @@
 from flask import Blueprint, request, jsonify
-from tensorflow.keras.models import load_model
-import torch
+import numpy as np
 from PIL import Image
 import io
+from keras.applications.efficientnet import EfficientNetB0
+from keras.applications.efficientnet import preprocess_input, decode_predictions
 
-bp = Blueprint('ai', __name__, url_prefix='/ai')
+# Initialize Flask Blueprint
+ai_bp = Blueprint('ai', __name__, url_prefix='/ai')
 
-# Load models
-inception_model = load_model('path/to/inceptionv3_model.h5')
-yolo_model = torch.hub.load('ultralytics/yolov5', 'custom', path='path/to/yolov5_model.pt')
+# Load EfficientNet model (pre-trained on ImageNet)
+model = EfficientNetB0(weights="imagenet")
 
-@bp.route('/analyze', methods=['POST'])
+@ai_bp.route('/analyze', methods=['POST'])
 def analyze_image():
+    """
+    Analyze an image using EfficientNet and return the top prediction.
+    """
+    if 'image' not in request.files:
+        return jsonify({"error": "No image file provided"}), 400
+
     file = request.files['image']
-    image = Image.open(io.BytesIO(file.read()))
-    # Example: Preprocess image and make predictions
-    result = inception_model.predict(image)
-    return jsonify({"health_status": str(result)})
+    image = Image.open(io.BytesIO(file.read())).convert("RGB")
+
+    # Resize image to match EfficientNet input size (224x224)
+    image = image.resize((224, 224))
+    
+    # Convert image to numpy array
+    img_array = np.array(image)
+    
+    # Expand dimensions to match model input shape
+    img_array = np.expand_dims(img_array, axis=0)
+
+    # Preprocess image
+    img_array = preprocess_input(img_array)
+
+    # Make prediction
+    predictions = model.predict(img_array)
+
+    # Decode prediction to readable labels
+    decoded_predictions = decode_predictions(predictions, top=3)[0]
+
+    # Format response
+    results = [{"label": pred[1], "probability": float(pred[2])} for pred in decoded_predictions]
+
+    return jsonify({"predictions": results})
+

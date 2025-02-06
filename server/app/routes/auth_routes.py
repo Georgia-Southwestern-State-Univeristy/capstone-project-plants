@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from app.config.firebaseSetup import db
 import firebase_admin
 from firebase_admin import auth, credentials
 from dotenv import load_dotenv
@@ -7,12 +8,13 @@ import os
 
 load_dotenv()
 
-bp = Blueprint('auth', __name__, url_prefix='/auth')
+auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
-# Load Firebase credentials
-cred = credentials.Certificate(os.getenv("FIREBASE_KEY_PATH"))
-if not firebase_admin._apps:
-    firebase_admin.initialize_app(cred)
+
+# # Load Firebase credentials
+# cred = credentials.Certificate(os.getenv("FIREBASE_KEY_PATH"))
+# if not firebase_admin._apps:
+#     firebase_admin.initialize_app(cred)
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")  # Ensure this is in your .env file
 
@@ -26,7 +28,7 @@ def verify_google_token(token):
         return response.json()
     return None
 
-@bp.route('/google-login', methods=['POST'])
+@auth_bp.route('/google-login', methods=['POST'])
 def google_login():
     """
     Log in or sign up users using Google OAuth.

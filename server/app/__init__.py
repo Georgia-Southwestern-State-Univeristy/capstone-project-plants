@@ -1,6 +1,9 @@
 from flask import Flask
 from google.cloud import firestore
-from app.routes import plants, auth, ai
+from app.routes.plants_routes import plants_bp
+from app.routes.auth_routes import auth_bp
+from app.routes.ai_routes import ai_bp
+
 from flask_cors import CORS
 
 def create_app():
