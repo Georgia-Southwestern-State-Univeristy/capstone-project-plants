@@ -16,9 +16,9 @@ Download and go through the setup procedures for Node.js.
 Download zipped folder that contains the Verdure AI Vue application, and its
 corresponding backend information.
 
-Extract information from Vue app folder from within your Downloads folder.
-Proceed to your Windows Powershell terminal and navigate to the folder
-where you extracted Verdure AI to. Once you are inside the folder that
+Extract information from zipped folder from within your Downloads folder.
+Proceed to your Windows Powershell terminal and navigate to the Vue app folder
+where Verdure AI resides. Once you are inside the folder that
 contains the Vue files, utilize this instruction which installs the 
 Node Package Manager.
 
