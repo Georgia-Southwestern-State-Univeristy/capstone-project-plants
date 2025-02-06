@@ -45,8 +45,10 @@ npm run start
 
 Navigate to your local host to interact with Verdure AI. 
 
+### Contributor Guidelines
+
+
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
-
 
 
