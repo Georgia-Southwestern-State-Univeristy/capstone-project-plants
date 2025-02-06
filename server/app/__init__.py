@@ -16,5 +16,6 @@ def create_app():
     app.register_blueprint(plants.bp)
     app.register_blueprint(auth.bp)
     app.register_blueprint(ai.bp)
+    app.register_blueprint(user.bp)
 
     return app
