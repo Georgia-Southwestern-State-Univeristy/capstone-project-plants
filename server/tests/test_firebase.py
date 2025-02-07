@@ -25,4 +25,5 @@ def test_get_documents(firestore_client):
     doc_list = [doc.to_dict() for doc in docs]
 
     # Ensure there's at least one document
+    #Test
     assert len(doc_list) > 0
