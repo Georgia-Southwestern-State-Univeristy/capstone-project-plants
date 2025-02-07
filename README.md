@@ -46,7 +46,33 @@ npm run start
 Navigate to your local host to interact with Verdure AI. 
 
 ### Contributor Guidelines
+Based on the project documents and understanding that this is a Verdure AI Capstone project focused on plant care assistance, here's a comprehensive contributor guideline:
 
+Contributors should:
+
+1. Follow Vue.js best practices when working with components, including proper component organization and using composition API as demonstrated in the existing codebase.
+
+2. Maintain the established color scheme (primary colors #072d13 for dark green and #341c02 for brown) and design aesthetic throughout new UI components.
+
+3. Use ESLint for code formatting and follow the existing ESLint configuration. The project uses `plugin:vue/vue3-essential` and `eslint:recommended` as shown in `.eslintrc.js`.
+
+4. Handle errors appropriately using the established error handling patterns, including proper logging through the `logger` service and user notifications through the `useNotifications` composable.
+
+5. Follow the existing authentication patterns when working with Firebase, including proper error handling and user state management through Vuex.
+
+6. Write code that is responsive and accessible, following the project's commitment to ADA compliance as mentioned in the project proposal.
+
+7. Use Bootstrap 5 for styling and components, maintaining consistency with the existing responsive design patterns.
+
+8. Implement proper API error handling and loading states for all asynchronous operations.
+
+9. When working with the AI features, utilize the established services in the `ai.js` file and follow the caching patterns using Redis.
+
+10. Maintain environment variable security by never committing sensitive credentials and following the `.gitignore` patterns.
+
+11. Test all features across different screen sizes as the application is designed to be responsive and mobile-friendly.
+
+These guidelines ensure consistency with the existing codebase while maintaining the project's goals of providing an accessible and efficient plant care assistant.
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
