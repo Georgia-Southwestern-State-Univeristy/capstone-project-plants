@@ -11,39 +11,124 @@ to analyze and identify different plant species and their conditions.
 
 ## Installation and setup instructions
 
-Download and go through the setup procedures for Node.js. 
+Here are comprehensive setup instructions for the Verdure AI plant care application:
 
-Download zipped folder that contains the Verdure AI Vue application, and its
-corresponding backend information.
+Prerequisites Setup:
+1. Install Node.js and npm
+   - Go to Node.js website
+   - Download and install the LTS (Long Term Support) version
+   - Verify installation in terminal/command prompt:
+     ```
+     node --version
+     npm --version
+     ```
 
-Extract information from zipped folder from within your Downloads folder.
-Proceed to your Windows Powershell terminal and navigate to the Vue app folder
-where Verdure AI resides. Once you are inside the folder that
-contains the Vue files, utilize this instruction which installs the 
-Node Package Manager.
+2. Install Git
+   - Download and install from Git website
+   - Verify installation:
+     ```
+     git --version
+     ```
 
-```
-npm install
-```
-Do this command for further configuration.
+3. Install Redis
+   - Download and install Redis for your operating system
+   - Start Redis service following your OS instructions
 
-```
-npm run lint
-```
+Main Application Setup:
+1. Download and extract the project files to your desired location
 
-Use this command to build the application.
+2. Environment Configuration:
+   - Create a new file named `.env` in the root folder
+   - Add the following required credentials (get these from your project administrators):
+     - Firebase configuration
+     - Google Cloud Vision API keys
+     - Perenual API key
+     - Redis configuration
+     - Google OAuth credentials
 
-```
-npm run build
-```
+3. Open terminal/command prompt and navigate to project folder:
+   ```
+   cd [to wherever you extracted the files]
+   ```
 
-Then do this command to have the app run on your local host.
+4. Install dependencies:
+   ```
+   npm install
+   ```
+   - This may take several minutes
+   - If you get permissions errors:
+     - Windows: Run terminal as administrator
+     - Mac/Linux: Use `sudo npm install`
 
-```
-npm run start
-```
+5. Run the linter to check code:
+   ```
+   npm run lint
+   ```
+   - Fix any errors if they appear
 
-Navigate to your local host to interact with Verdure AI. 
+6. Build the application:
+   ```
+   npm run build
+   ```
+   - This creates production files
+   - Check for any build errors
+
+7. Start the application:
+   ```
+   npm run serve
+   ```
+   - For development mode
+   OR
+   ```
+   npm start
+   ```
+   - For production mode
+
+8. Access the application:
+   - Open your web browser
+   - Go to: `http://localhost:[your-port-number]`
+   - You should see the Verdure AI landing page
+
+Verification Steps:
+1. Check that you can:
+   - View the landing page
+   - Register/login
+   - Access the chat interface
+   - Upload images
+   - Receive AI responses
+
+Troubleshooting:
+- If dependencies fail to install:
+  ```
+  npm cache clean --force
+  npm install
+  ```
+- If Redis connection fails:
+  - Verify Redis is running
+  - Check .env configuration
+- If build fails:
+  - Check Node.js version compatibility
+  - Verify all environment variables are set
+- If Firebase fails:
+  - Verify Firebase credentials in .env
+  - Check Firebase console for service status
+
+Additional Notes:
+- Keep your .env file secure and never commit it to version control
+- Regular npm updates may be required:
+  ```
+  npm update
+  ```
+- For development, use `npm run serve` to get hot-reload features
+- For production, use `npm start` to run the optimized build
+
+Required Services:
+- Firebase account for authentication and database
+- Google Cloud Vision API for image analysis
+- Redis server for caching
+- Google OAuth for authentication
+
+These instructions assume no prior experience with Vue.js or npm and should get you started with the Verdure AI application. Contact project administrators if you need specific API keys or credentials.
 
 ### Contributor Guidelines
 Based on the project documents and understanding that this is a Verdure AI Capstone project focused on plant care assistance, here's a comprehensive contributor guideline:
