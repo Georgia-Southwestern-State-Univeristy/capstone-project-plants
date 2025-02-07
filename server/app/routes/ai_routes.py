@@ -1,47 +1,78 @@
+import json
+import requests
 from flask import Blueprint, request, jsonify
 import numpy as np
 from PIL import Image
 import io
-from keras.applications.efficientnet import EfficientNetB0
-from keras.applications.efficientnet import preprocess_input, decode_predictions
+import tensorflow as tf
+import tensorflow_hub as hub
+
+# Suppress TensorFlow warnings
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 # Initialize Flask Blueprint
 ai_bp = Blueprint('ai', __name__, url_prefix='/ai')
 
-# Load EfficientNet model (pre-trained on ImageNet)
-model = EfficientNetB0(weights="imagenet")
+# Load EfficientNetB0 from TensorFlow Hub
+MODEL_URL = "https://tfhub.dev/google/efficientnet/b0/classification/1"
+model = hub.load(MODEL_URL)
+
+# Load ImageNet labels
+IMAGENET_LABELS_URL = "https://storage.googleapis.com/download.tensorflow.org/data/imagenet_class_index.json"
+imagenet_labels = requests.get(IMAGENET_LABELS_URL).json()
 
 @ai_bp.route('/analyze', methods=['POST'])
 def analyze_image():
     """
-    Analyze an image using EfficientNet and return the top prediction.
+    Analyze an image using EfficientNetB0 and return the top predictions.
     """
     if 'image' not in request.files:
         return jsonify({"error": "No image file provided"}), 400
 
-    file = request.files['image']
-    image = Image.open(io.BytesIO(file.read())).convert("RGB")
+    try:
+        # Load image from request
+        file = request.files['image']
+        image = Image.open(file.stream).convert("RGB")
 
-    # Resize image to match EfficientNet input size (224x224)
-    image = image.resize((224, 224))
-    
-    # Convert image to numpy array
-    img_array = np.array(image)
-    
-    # Expand dimensions to match model input shape
-    img_array = np.expand_dims(img_array, axis=0)
+        # Resize image to EfficientNet input size
+        image = image.resize((224, 224))
 
-    # Preprocess image
-    img_array = preprocess_input(img_array)
+        # Convert to numpy array
+        img_array = np.array(image, dtype=np.float32)
 
-    # Make prediction
-    predictions = model.predict(img_array)
+        # Normalize pixel values
+        img_array = img_array / 255.0
 
-    # Decode prediction to readable labels
-    decoded_predictions = decode_predictions(predictions, top=3)[0]
+        # Add batch dimension
+        img_array = np.expand_dims(img_array, axis=0)
 
-    # Format response
-    results = [{"label": pred[1], "probability": float(pred[2])} for pred in decoded_predictions]
+        # Convert NumPy array to TensorFlow Tensor
+        img_tensor = tf.convert_to_tensor(img_array, dtype=tf.float32)
 
-    return jsonify({"predictions": results})
+        # Extract the correct function for inference
+        classifier = model.signatures["default"]
 
+        # Run inference
+        output = classifier(img_tensor)
+
+        # Get correct output key dynamically
+        output_key = list(output.keys())[0]
+        predictions = output[output_key].numpy()
+
+        # Get top predictions
+        top_predictions = np.argsort(predictions[0])[::-1][:3]
+
+        # Convert numerical labels to class names
+        results = [
+            {
+                "label": imagenet_labels[str(idx)][1],  # Convert index to class name
+                "probability": float(predictions[0][idx])
+            }
+            for idx in top_predictions
+        ]
+
+        return jsonify({"predictions": results})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
