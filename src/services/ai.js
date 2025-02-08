@@ -1,11 +1,15 @@
 
-import axios from 'axios';
-import { storage } from '@/utils/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { logger } from './logging';
+import { storage } from '@/utils/firebase';
 import { cache } from './cache';
+import { logger } from './logging';
+import axios from 'axios';
 
 // Request configuration
+
+const PERENUAL_API = 'https://perenual.com/api/v1';
+const OPEN_IMAGES_PLANTS = 'https://storage.googleapis.com/openimages/v6/oidv6-train-annotations-human-imagelabels.csv';
+
 const API_CONFIG = {
   headers: {
     'Content-Type': 'application/json',
@@ -33,125 +37,101 @@ class AIServiceError extends Error {
   }
 }
 
+// analyzeImage function in ai.js
 export const analyzeImage = async (imageFile) => {
   try {
-    if (!imageFile) {
-      throw new AIServiceError('No image file provided', 'INVALID_INPUT');
+    // First get Vision AI results
+    const imageBuffer = await getImageBuffer(imageFile);
+    const visionResults = await visionService.detectPlants(imageBuffer);
+ 
+    // If Vision AI detects a plant, get detailed info from Perenual
+    if (visionResults.labels.some(label => 
+      label.description.toLowerCase().includes('plant') || 
+      label.description.toLowerCase().includes('flower'))) {
+      const plantDetails = await getPerenualDetails(visionResults.labels[0].description);
+      return {
+        basicAnalysis: visionResults,
+        detailedInfo: plantDetails,
+        confidence: visionResults.labels[0].score,
+        recommendations: generateRecommendations(plantDetails)
+      };
     }
-
-    // Validate file type
-    if (!imageFile.type.startsWith('image/')) {
-      throw new AIServiceError('Invalid file type. Only images are allowed', 'INVALID_FILE_TYPE');
-    }
-
-    // Validate file size (max 5MB)
-    if (imageFile.size > 5 * 1024 * 1024) {
-      throw new AIServiceError('File too large. Maximum size is 5MB', 'FILE_TOO_LARGE');
-    }
-
-    // Check cache first
-    const cacheKey = `image_analysis_${imageFile.name}_${imageFile.size}`;
-    const cachedResult = await cache.get(cacheKey);
-    if (cachedResult) {
-      logger.logInfo('Retrieved analysis from cache', { cacheKey });
-      return cachedResult;
-    }
-
-    // Create form data
-    const formData = new FormData();
-    formData.append('file', imageFile);
-    formData.append('timestamp', Date.now());
-
-    // Upload to Firebase Storage
-    const storageRef = ref(storage, `plant-images/${Date.now()}_${imageFile.name}`);
-        await uploadBytes(storageRef, imageFile);
-        const imageUrl = await getDownloadURL(storageRef);
-
-        // Send for analysis
-        const uploadResponse = await axios.post('/api/upload', formData, {
-            ...API_CONFIG,
-            headers: {
-                ...API_CONFIG.headers,
-                'Content-Type': 'multipart/form-data'
-            }
-
-
-  });
-
-    // Get analysis
-    const analysisResponse = await axios.post('/api/analyze-image', 
-      { imageUrl: uploadResponse.data.url },
-      API_CONFIG
-    );
-
-    // Cache the result
-    await cache.set(cacheKey, analysisResponse.data, CACHE_DURATIONS.IMAGE_ANALYSIS);
-
-   
+ 
     return {
-      imageUrl,    // Return it as part of the response
-      analysis: analysisResponse.data
-  };
+      basicAnalysis: visionResults,
+      confidence: visionResults.labels[0].score
+    };
+ 
   } catch (error) {
-    if (error instanceof AIServiceError) {
-      throw error;
-    }
-
-    if (axios.isAxiosError(error)) {
-      if (error.response) {
-        throw new AIServiceError(
-          `Server error: ${error.response.data.message || 'Unknown error'}`,
-          'SERVER_ERROR',
-          error
-        );
-      } else if (error.request) {
-        throw new AIServiceError(
-          'Network error: No response from server',
-          'NETWORK_ERROR',
-          error
-        );
-      }
-    }
-
-    throw new AIServiceError(
-      'An unexpected error occurred during image analysis',
-      'UNKNOWN_ERROR',
-      error
-    );
+    logger.logError('Error in plant analysis:', error);
+    throw new AIServiceError('Failed to analyze plant image', 'ANALYSIS_ERROR', error);
   }
 };
-
-export const getPlantCareAdvice = async (plantInfo) => {
+ 
+// Get detailed plant information from Perenual
+async function getPerenualDetails(plantName) {
   try {
-    if (!plantInfo?.trim()) {
-      throw new AIServiceError('No plant information provided', 'INVALID_INPUT');
+    const response = await axios.get(`${PERENUAL_API}/species-list`, {
+      params: {
+        key: process.env.VUE_APP_PERENUAL_API_KEY,
+        q: plantName
+      }
+    });
+ 
+    if (response.data.data && response.data.data.length > 0) {
+      // Get detailed info for the first match
+      const speciesId = response.data.data[0].id;
+      const detailsResponse = await axios.get(`${PERENUAL_API}/species/details/${speciesId}`, {
+        params: {
+          key: process.env.VUE_APP_PERENUAL_API_KEY
+        }
+      });
+ 
+      return {
+        name: detailsResponse.data.common_name,
+        scientific_name: detailsResponse.data.scientific_name,
+        care_level: detailsResponse.data.care_level,
+        watering: detailsResponse.data.watering,
+        sunlight: detailsResponse.data.sunlight,
+        cycle: detailsResponse.data.cycle
+      };
     }
-
-    const cacheKey = `plant_advice_${plantInfo}`;
-    const cachedAdvice = await cache.get(cacheKey);
-    if (cachedAdvice) {
-      logger.logInfo('Retrieved plant care advice from cache', { cacheKey });
-      return cachedAdvice;
-    }
-
-    const response = await axios.post(
-      '/api/plant-care',
-      { plantInfo },
-      API_CONFIG
-    );
-
-    await cache.set(cacheKey, response.data.advice, CACHE_DURATIONS.PLANT_CARE);
-    return response.data.advice;
+    return null;
   } catch (error) {
-    if (error instanceof AIServiceError) {
-      throw error;
-    }
-
-    logger.logError('Error getting plant care advice:', error);
-    throw new AIServiceError(
-      'Failed to get plant care advice',
-      'ADVICE_ERROR',
-      error
-    );
+    logger.logError('Perenual API Error:', error);
+    return null;
   }
-};
+}
+ 
+// Generate care recommendations based on plant details
+function generateRecommendations(plantDetails) {
+  if (!plantDetails) return [];
+ 
+  const recommendations = [];
+ 
+  if (plantDetails.watering) {
+    recommendations.push({
+      type: 'watering',
+      instruction: `Watering needs: ${plantDetails.watering}`,
+      priority: 'high'
+    });
+  }
+ 
+  if (plantDetails.sunlight) {
+    recommendations.push({
+      type: 'sunlight',
+      instruction: `Sunlight needs: ${plantDetails.sunlight.join(' or ')}`,
+      priority: 'high'
+    });
+  }
+ 
+  if (plantDetails.care_level) {
+    recommendations.push({
+      type: 'general',
+      instruction: `Care level: ${plantDetails.care_level}`,
+      priority: 'medium'
+    });
+  }
+ 
+  return recommendations;
+}
