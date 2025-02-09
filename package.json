@@ -120,7 +120,7 @@
 
 
 
- "dev": "concurrently \"npm run serve\" \"nodemon server/vueServer.js\""
+ "dev": "nodemon ./server/vueServer.js"
  
 
 
