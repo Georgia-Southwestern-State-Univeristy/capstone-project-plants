@@ -70,13 +70,9 @@ app.get('/api/test', (req, res) => {
 });
 
 // Plant analysis route
-app.post('/api/analyze-plant', upload.single('image'), async (req, res) => {
+// In vueServer.js
+app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No image file provided' });
-    }
-
-    // Analyze image with Vision AI
     const [result] = await visionClient.annotateImage({
       image: { content: req.file.buffer },
       features: [
@@ -85,14 +81,12 @@ app.post('/api/analyze-plant', upload.single('image'), async (req, res) => {
         { type: 'IMAGE_PROPERTIES' }
       ]
     });
-
-    res.json({ analysis: result });
+    res.json(result);
   } catch (error) {
-    console.error('Plant analysis error:', error);
-    res.status(500).json({ error: 'Failed to analyze plant image' });
+    console.error('Vision API Error:', error);
+    res.status(500).json({ error: 'Failed to analyze image' });
   }
 });
-
 // Logging routes
 app.post('/api/log/error', (req, res) => {
   console.error('Client Error:', req.body.error);

@@ -4,10 +4,16 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { logger } from './logging';
 import { cache } from './cache';
 import vision from '@google-cloud/vision';
+import { OAuth2Client } from 'google-auth-library';
 
 // Initialize Vision AI client
+const auth = new OAuth2Client({
+  clientId: process.env.VUE_APP_GOOGLE_OAUTH_CLIENT_ID,
+});
 const visionClient = new vision.ImageAnnotatorClient({
-  keyFilename: process.env.VUE_APP_GOOGLE_APPLICATION_CREDENTIALS
+  keyFilename: process.env.VUE_APP_GOOGLE_APPLICATION_CREDENTIALS,
+  auth: auth,
+  numericEnums: true
 });
 
 // Perenual API configuration
