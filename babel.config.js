@@ -3,11 +3,10 @@ module.exports = {
     ['@vue/cli-plugin-babel/preset', {
       useBuiltIns: 'usage',
       corejs: 3,
-      modules: 'auto'
+      modules: false // Important: Use ES modules
     }]
   ],
   plugins: [
-    '@babel/plugin-transform-modules-commonjs',
     '@babel/plugin-transform-runtime'
   ]
 }
