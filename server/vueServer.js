@@ -36,18 +36,19 @@ const visionClient = new ImageAnnotatorClient({
 
 // Serve static files with proper MIME types
 app.use(express.static(path.join(__dirname, '../dist'), {
-  extensions: ['html', 'js', 'css'],
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.js')) {
       res.setHeader('Content-Type', 'application/javascript');
-    } else if (filePath.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
-    } else if (filePath.endsWith('.html')) {
-      res.setHeader('Content-Type', 'text/html');
+    }
+    if (filePath.endsWith('.mjs')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+    // Add this specifically for ES modules
+    if (filePath.includes('type="module"')) {
+      res.setHeader('Content-Type', 'application/javascript');
     }
   }
 }));
-
 // API Routes
 // Test route
 app.get('/api/test', (req, res) => {
@@ -174,22 +175,24 @@ redis.on('connect', () => {
   console.log('Redis connected successfully');
 });
 
-// Create API endpoints for cache operations
-app.get('/api/cache/:key', async (req, res) => {
-  try {
-    const value = await redis.get(req.params.key);
-    res.json({ value });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 app.post('/api/cache', async (req, res) => {
   try {
-    const { key, value, duration } = req.body;
-    await redis.set(key, value, 'EX', duration);
-    res.json({ success: true });
+    const { key, value, duration } = req.body
+    await redis.set(key, JSON.stringify(value), 'EX', duration)
+    res.json({ success: true })
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Redis set error:', error)
+    res.status(500).json({ error: 'Cache operation failed' })
+  }
+})
+
+app.get('/api/cache/:key', async (req, res) => {
+  try {
+    const value = await redis.get(req.params.key)
+    res.json({ value: value ? JSON.parse(value) : null })
+  } catch (error) {
+    console.error('Redis get error:', error)
+    res.status(500).json({ error: 'Cache operation failed' })
   }
 });
