@@ -31,6 +31,23 @@ module.exports =defineConfig ( {
       alias: {
         '@': path.resolve(__dirname, 'src')
     },
+    plugins: [
+      // Make Buffer and process available globally
+      new webpack.ProvidePlugin({
+        Buffer: ['buffer', 'Buffer'],
+        process: 'process/browser'
+      }),
+      // Define process.env
+      new webpack.DefinePlugin({
+        'process.env': JSON.stringify(process.env)
+      }),
+
+      "@babel/plugin-transform-modules-commonjs"
+    ],
+
+    presets: [
+      '@vue/cli-plugin-babel/preset'
+    ],
     
   }, 
   optimization: {
@@ -56,6 +73,13 @@ module.exports =defineConfig ( {
       .use(webpack.ProvidePlugin, [{
         process: 'process/browser'
       }])
+
+      config.module
+      .rule('js')
+      .test(/\.js$/)
+      .use('babel-loader')
+      .loader('babel-loader')
+      .end();
   },
   devServer: {
     port: 8082,
@@ -69,6 +93,13 @@ module.exports =defineConfig ( {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
       'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization'
+  },
+  setupMiddlewares: (middlewares, devServer) => {
+    devServer.app.get('*.js', (req, res, next) => {
+      res.set('Content-Type', 'application/javascript');
+      next();
+    });
+    return middlewares;
   }
 }
 
