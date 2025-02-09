@@ -8,6 +8,7 @@ import { auth } from './utils/firebase';
 import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import cors from 'cors';
 import Redis from 'ioredis';
+import { analyzeImage } from './services/vision.js';
 
 const app = express();
 const PORT = process.env.PORT || 8082;

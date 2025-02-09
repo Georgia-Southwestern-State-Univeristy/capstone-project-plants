@@ -24,6 +24,15 @@ module.exports = defineConfig({
         "https": require.resolve("https-browserify"),
         "os": require.resolve("os-browserify/browser"),
         "url": require.resolve("url/"),
+        "fs": false,
+        "path": require.resolve("path-browserify"),
+        "querystring": require.resolve("querystring-es3"),
+        "net": false,  // Not needed in browser
+        "tls": false,  // Not needed in browser
+        "zlib": false,
+        "child_process": false,  // Not needed in browser
+        "util": require.resolve("util/")
+
       },
       alias: {
         '@': path.resolve(__dirname, 'src')
