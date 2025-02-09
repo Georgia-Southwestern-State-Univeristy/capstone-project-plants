@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { vi } from 'vitest';
-import { visionService } from 'server/services/vision';
+import { visionService } from 'server/services/visionService';
 import { cache } from 'server/services/cache';
 
 describe('Plant Analysis API Integration', () => {

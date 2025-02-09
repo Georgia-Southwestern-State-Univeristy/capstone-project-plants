@@ -1,6 +1,8 @@
 import authRoutes from './routes/authRoutes.js';
 import openaiRoutes from './routes/openaiRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import visionRoutes from './routes/visionRoutes.js';
+import plantRoutes from './routes/plantRoutes.js';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -34,6 +36,8 @@ app.use(cors()); // Enable CORS for all routes
 app.use('/auth', authRoutes);
 app.use('/openai', openaiRoutes);
 app.use('/user', userRoutes);
+app.use('/vision', visionRoutes);
+app.use('/plant', plantRoutes);
 
 // Configure multer for file uploads
 const upload = multer({

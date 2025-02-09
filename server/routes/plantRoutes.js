@@ -1,6 +1,6 @@
 import express from 'express';
 import { fetchPlantFromPerenual } from '../services/perenualService.js';
-import { storePlant } from '../utils/firebaseAdmin.js'; // Assuming you have Firebase set up
+// import { storePlant } from '../utils/firebaseAdmin.js'; 
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ router.get('/plants/:plantId', async (req, res) => {
         }
 
         // Store plant in Firestore (Firebase)
-        await storePlant(plant);
+        // await storePlant(plant);
 
         res.json(plant);
     } catch (error) {

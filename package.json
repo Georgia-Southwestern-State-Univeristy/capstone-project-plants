@@ -78,9 +78,13 @@
     "vitest": "^3.0.5"
   },
   "nodemonConfig": {
-    "watch": ["src/**/*"],
+    "watch": [
+      "src/**/*"
+    ],
     "ext": "js,vue,json",
-    "ignore": ["src/**/*.spec.js"],
+    "ignore": [
+      "src/**/*.spec.js"
+    ],
     "exec": "npm run serve"
   }
 }
