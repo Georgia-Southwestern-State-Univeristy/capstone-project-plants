@@ -1,6 +1,6 @@
 // tests/unit/services/auth.spec.js
-import { loginWithEmail, registerWithEmail, loginWithGoogle } from '@/utils/firebase';
-import { auth } from '@/utils/firebase';
+import { loginWithEmail, registerWithEmail, loginWithGoogle } from 'server/utils/firebase';
+import { auth } from 'server/utils/firebase';
 import { vi } from 'vitest';
 
 describe('Authentication Service', () => {
