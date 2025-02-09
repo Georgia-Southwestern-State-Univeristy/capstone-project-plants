@@ -4,11 +4,11 @@ import { ImageAnnotatorClient } from '@google-cloud/vision';
 import path from 'path';
 import multer from 'multer';
 import { OAuth2Client } from 'google-auth-library';
-import { auth } from './utils/firebase';
+import { auth } from './utils/firebase.js';
 import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import cors from 'cors';
 import Redis from 'ioredis';
-import { analyzeImage } from './services/vision.js';
+
 
 const app = express();
 const PORT = process.env.PORT || 8082;
