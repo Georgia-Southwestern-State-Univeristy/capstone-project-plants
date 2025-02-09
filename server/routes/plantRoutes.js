@@ -1,6 +1,6 @@
 import express from 'express';
 import { fetchPlantFromPerenual } from '../services/perenualService.js';
-import { storePlant } from '../utils/firebase.js'; // Assuming you have Firebase set up
+import { storePlant } from '../utils/firebaseAdmin.js'; // Assuming you have Firebase set up
 
 const router = express.Router();
 

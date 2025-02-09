@@ -1,14 +1,26 @@
-require('dotenv').config();
-const express = require('express');
-// const { Storage } = require('@google-cloud/storage');
-const { ImageAnnotatorClient } = require('@google-cloud/vision');
-const path = require('path');
-const multer = require('multer');
-const { OAuth2Client } = require('google-auth-library');
-const { auth } = require('./utils/firebase');
-const { signInWithCredential, GoogleAuthProvider } = require('firebase/auth');
-const cors = require('cors'); // Add CORS support
-const Redis = require('ioredis');
+import authRoutes from './routes/authRoutes.js';
+import openaiRoutes from './routes/openaiRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+
+import dotenv from 'dotenv';
+dotenv.config();
+
+import express from 'express';
+import { ImageAnnotatorClient } from '@google-cloud/vision';
+import path from 'path';
+import multer from 'multer';
+import { OAuth2Client } from 'google-auth-library';
+import { adminAuth  } from './utils/firebaseAdmin.js'; 
+import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
+import cors from 'cors'; // ✅ CORS for frontend requests
+import Redis from 'ioredis';
+
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ✅ Define __dirname manually for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 8082;
@@ -17,6 +29,11 @@ const PORT = process.env.PORT || 8082;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors()); // Enable CORS for all routes
+
+//Register routes
+app.use('/auth', authRoutes);
+app.use('/openai', openaiRoutes);
+app.use('/user', userRoutes);
 
 // Configure multer for file uploads
 const upload = multer({
@@ -108,7 +125,7 @@ app.post('/auth/google-login', async (req, res) => {
     const credential = GoogleAuthProvider.credential(id_token);
     
     try {
-      const userCredential = await signInWithCredential(auth, credential);
+      const userCredential = await signInWithCredential(adminAuth , credential);
       res.status(200).json({
         success: true,
         user: {

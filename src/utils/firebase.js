@@ -1,15 +1,17 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
-  // signInWithEmailAndPassword, 
-  // createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
   GoogleAuthProvider, 
-  // signOut 
-} from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+  signOut, 
+  sendPasswordResetEmail,
+  updateProfile,
+  sendEmailVerification
+} from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
-// Firebase Configuration (use frontend-safe keys)
 const firebaseConfig = {
   apiKey: process.env.VUE_APP_FIREBASE_API_KEY,
   authDomain: process.env.VUE_APP_FIREBASE_AUTH_DOMAIN,
@@ -19,7 +21,7 @@ const firebaseConfig = {
   appId: process.env.VUE_APP_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
+// Initialize Firebase Client SDK
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
