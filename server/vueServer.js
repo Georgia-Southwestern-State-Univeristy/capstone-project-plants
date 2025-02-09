@@ -8,10 +8,16 @@ import { auth } from './utils/firebase.js';
 import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import cors from 'cors';
 import Redis from 'ioredis';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import dotenv from 'dotenv';
 
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8082;
+
 
 // Middleware Configuration
 app.use(express.json());
