@@ -4,29 +4,49 @@
   <main>
     <div id="chatBackground" class="chat-container px-4 py-5">
       <!-- Messages display area -->
-      <div class="messages-area mb-4" ref="messagesContainer">
-        <div v-for="(msg, index) in messages" 
-             :key="index" 
-             :class="['message-card mb-4', msg.isUser ? 'user-message' : 'ai-message']">
-          <div class="card">
-            <div class="card-body">
-              <!-- Message sender identifier -->
-              <h6 class="card-subtitle mb-2" :class="msg.isUser ? 'text-end' : 'text-start'">
-                {{ msg.isUser ? 'You' : 'Verdure AI' }}
-              </h6>
-
-              <!-- Text message -->
-              <p v-if="msg.type === 'text'" class="card-text" v-html="msg.content"></p>
-
-              <!-- Image message -->
-              <div v-else-if="msg.type === 'image'" class="image-message">
-                <img :src="msg.content" class="img-fluid rounded" alt="Uploaded plant image">
-                <p v-if="msg.analysis" class="mt-3" v-html="msg.analysis"></p>
-              </div>
-            </div>
-          </div>
-        </div>
+<div class="messages-area mb-4" ref="messagesContainer">
+  <div v-for="(msg, index) in messages" 
+       :key="index" 
+       class="message-wrapper"
+       :class="msg.isUser ? 'justify-content-end' : 'justify-content-start'">
+    
+    <!-- Message card with dynamic styling -->
+    <div class="message-bubble" :class="msg.isUser ? 'user-message' : 'ai-message'">
+      <!-- Text message -->
+      <div v-if="msg.type === 'text'" 
+           class="message-content"
+           :class="{ 'typing': !msg.isUser && isTyping }">
+        <p class="mb-0" v-html="msg.content"></p>
       </div>
+
+      <!-- Image message -->
+      <div v-else-if="msg.type === 'image'" class="image-message">
+        <img :src="msg.content" 
+             class="uploaded-image" 
+             alt="Uploaded plant image">
+        <p v-if="msg.analysis" 
+           class="mt-2 mb-0" 
+           v-html="msg.analysis"></p>
+      </div>
+
+      <!-- Timestamp -->
+      <small class="message-time">
+        {{ new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
+      </small>
+    </div>
+  </div>
+
+  <!-- Typing indicator for AI -->
+  <div v-if="isTyping" class="message-wrapper justify-content-start">
+    <div class="message-bubble ai-message typing-indicator">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</div>
+
+
 
 
     <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
@@ -68,15 +88,16 @@
       <!-- Input area fixed at bottom -->
       <div class="chat-textarea-container">
         <!-- File preview if exists -->
-        <div v-if="uploadedFile" class="file-preview mb-2">
-          <div class="d-flex align-items-center bg-light p-2 rounded">
-            <i class="bi bi-image me-2"></i>
-            <span class="flex-grow-1">{{ uploadedFile.name }}</span>
-            <button class="btn btn-sm btn-link text-danger" @click="removeUpload">
-              <i class="bi bi-x-lg"></i>
-            </button>
-          </div>
-        </div>
+       <!-- File upload preview -->
+<div v-if="uploadedFile" class="file-preview">
+  <div class="file-preview-content">
+    <i class="bi bi-image me-2"></i>
+    <span class="file-name">{{ uploadedFile.name }}</span>
+    <button class="remove-file" @click="removeUpload">
+      <i class="bi bi-x"></i>
+    </button>
+  </div>
+</div>
 
         <!-- Input area -->
         <div class="input-group">
@@ -140,57 +161,151 @@
 <script>
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useStore } from 'vuex'
-import { analyzeImage, getPlantCareAdvice } from '@/services/ai'
+import { analyzeImage, getPlantCareAdvice } from '../../server/services/ai'
 import { useNotifications } from '@/composables/useNotifications'
-import { auth } from '@/utils/firebase'
-import { uploadImage } from '@/services/storage'
-import { logger } from '@/services/logging'
+import { auth } from '../../server/utils/firebase'
+import { uploadImage } from '../../server/services/storage'
+import { logger } from '../../server/services/logging'
+
 
 export default {
   name: 'ChatView',
   
   setup() {
     const store = useStore()
-    const { addNotification } = useNotifications()
+    const { showNotification } = useNotifications()
 
-       // Use store to save chat messages to Vuex
-       const saveMessageToStore = (message) => {
-        store.dispatch('sendMessage', message)
-    }
-
-    const logChatEvent = (event) => {
-        logger.logInfo(`Chat event: ${event}`)
-    }
-    
-    // Refs for DOM elements
+    // Refs for DOM elements and state
     const messagesContainer = ref(null)
     const fileInput = ref(null)
     const textInput = ref(null)
-
-    // State management
     const messages = ref([])
     const userInput = ref('')
     const uploadedFile = ref(null)
     const isProcessing = ref(false)
+    const isTyping = ref(false)
 
-    // Computed properties
-    const canSendMessage = computed(() => {
-      return !isProcessing.value && (userInput.value.trim() || uploadedFile.value)
-    })
+    // Helper function to simulate AI typing
+    const simulateTyping = async (message) => {
+      isTyping.value = true
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000))
+      isTyping.value = false
+      return message
+    }
 
-    // Auto-scroll to bottom when new messages arrive
-    watch(messages, async () => {
-      await nextTick()
-      if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    // Process plant-related queries
+    const processPlantQuery = async (query) => {
+      try {
+        const response = await getPlantCareAdvice(query)
+        return response.naturalResponse || response
+      } catch (error) {
+        logger.logError('Error processing plant query:', error)
+        return "I'm having trouble getting that information right now. Could you try rephrasing your question?"
       }
+    }
+
+    const handleImageAnalysis = async (file) => {
+  try {
+    isProcessing.value = true
+    
+    // Add user's image message
+    messages.value.push({
+      type: 'image',
+      content: URL.createObjectURL(file),
+      isUser: true,
+      timestamp: new Date()
     })
 
+    // Use the uploadImage service instead of direct Firebase calls
+    const imageUrl = await uploadImage(file)
+    
+    // Get analysis using the uploaded image URL
+    const analysis = await analyzeImage(imageUrl)
+    
+    // Add AI's response messages
+    messages.value.push({
+      type: 'text',
+      content: await simulateTyping(analysis.naturalResponse),
+      isUser: false,
+      timestamp: new Date()
+    })
+
+    if (analysis.analysis.careInstructions) {
+      messages.value.push({
+        type: 'text',
+        content: await simulateTyping(
+          "Here are some care instructions: " + analysis.analysis.careInstructions
+        ),
+        isUser: false,
+        timestamp: new Date()
+      })
+    }
+
+    // Save to store
+    store.dispatch('sendMessage', {
+      type: 'analysis',
+      content: analysis,
+      timestamp: new Date()
+    })
+
+  } catch (error) {
+    logger.logError('Error in image analysis:', error)
+    messages.value.push({
+      type: 'text',
+      content: "I'm sorry, I had trouble analyzing that image. Please make sure it's a clear photo of a plant.",
+      isUser: false,
+      timestamp: new Date()
+    })
+  } finally {
+    isProcessing.value = false
+  }
+}
 
 
-  
+    // Send message function
+    const sendMessage = async () => {
+      if (!canSendMessage.value) return
+      isProcessing.value = true
 
-    // Methods
+      try {
+        if (uploadedFile.value) {
+          await handleImageAnalysis(uploadedFile.value.file)
+          removeUpload()
+        } else if (userInput.value.trim()) {
+          // Add user message
+          const userMessage = {
+            type: 'text',
+            content: userInput.value,
+            isUser: true,
+            timestamp: new Date()
+          }
+          messages.value.push(userMessage)
+          store.dispatch('sendMessage', userMessage)
+
+          // Process query and get AI response
+          const response = await processPlantQuery(userInput.value)
+          
+          // Add AI response
+          const aiMessage = {
+            type: 'text',
+            content: await simulateTyping(response),
+            isUser: false,
+            timestamp: new Date()
+          }
+          messages.value.push(aiMessage)
+          store.dispatch('sendMessage', aiMessage)
+
+          userInput.value = ''
+        }
+      } catch (error) {
+        logger.logError('Error in chat:', error)
+        showNotification('An error occurred while processing your message', 'error')
+      } finally {
+        isProcessing.value = false
+      }
+    }
+
+    // File handling functions
     const triggerFileUpload = () => {
       fileInput.value.click()
     }
@@ -215,95 +330,45 @@ export default {
       fileInput.value.value = ''
     }
 
-    const sendMessage = async () => {
-      if (!canSendMessage.value) return
-      isProcessing.value = true
+    // Computed properties
+    const canSendMessage = computed(() => {
+      return !isProcessing.value && (userInput.value.trim() || uploadedFile.value)
+    })
 
-      try {
-        // Handle file upload
-        if (uploadedFile.value) {
-          logChatEvent('Processing image upload')
-                const imageUrl = await uploadImage(uploadedFile.value.file)
-                
-                const message = {
-                    type: 'image',
-                    content: uploadedFile.value.preview,
-                    isUser: true,
-                    timestamp: new Date()
-                }
-
-                messages.value.push(message)
-                saveMessageToStore(message)
-
-
-          // Get AI analysis
-          const analysis = await analyzeImage(imageUrl)
-          messages.value.push({
-            type: 'text',
-            content: analysis,
-            isUser: false,
-            timestamp: new Date()
-          })
-
-          removeUpload()
-        } 
-        // Handle text message
-        else if (userInput.value.trim()) {
-          messages.value.push({
-            type: 'text',
-            content: userInput.value,
-            isUser: true,
-            timestamp: new Date()
-          })
-
-          const response = await getPlantCareAdvice(userInput.value)
-          messages.value.push({
-            type: 'text',
-            content: response,
-            isUser: false,
-            timestamp: new Date()
-          })
-
-          userInput.value = ''
-        }
-      } catch (error) {
-            logger.logError('Error in chat:', error)
-            addNotification('An error occurred while processing your message', 'error')
-      } finally {
-        isProcessing.value = false
-      }
-    }
-
-
-
-    onMounted(() => {
-      // Load chat history if user is authenticated
-      if (auth.currentUser) {
-        // Load chat history from Firestore
+    // Auto-scroll to bottom when new messages arrive
+    watch(messages, async () => {
+      await nextTick()
+      if (messagesContainer.value) {
+        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
       }
     })
 
-    /*
-    const handleSignOut = async () => {
-      try {
-        await auth.signOut()
-        router.push('/login')
-      } catch (error) {
-        console.error('Error signing out:', error)
+    // Load chat history on mount
+    onMounted(() => {
+      if (auth.currentUser) {
+        store.dispatch('loadChatHistory', auth.currentUser.uid)
+          .then((history) => {
+            messages.value = history
+          })
+          .catch((error) => {
+            logger.logError('Error loading chat history:', error)
+          })
       }
-*/
+    })
+
     return {
-        messages,
-        userInput,
-        uploadedFile,
-        fileInput,
-        textInput,
-        messagesContainer,
-        canSendMessage,
-        triggerFileUpload,
-        handleFileUpload,
-        removeUpload,
-        sendMessage
+      messages,
+      userInput,
+      uploadedFile,
+      fileInput,
+      textInput,
+      messagesContainer,
+      canSendMessage,
+      isTyping,
+      triggerFileUpload,
+      handleFileUpload,
+      removeUpload,
+      sendMessage
     }
   }
 }
@@ -521,6 +586,165 @@ i#ImageAttachIcon {
 
 fill: #341c02;
 
+}
+
+/* Message container styles */
+.messages-area {
+  height: calc(100vh - 180px);
+  overflow-y: auto;
+  padding: 1rem;
+  background-color: #341c02;
+}
+
+.message-wrapper {
+  display: flex;
+  margin-bottom: 1rem;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Message bubble styles */
+.message-bubble {
+  max-width: 70%;
+  padding: 0.8rem 1rem;
+  border-radius: 1rem;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-message {
+  background-color: #F5E6D3; /* Cream color */
+  color: #341c02;
+  border-top-right-radius: 0.2rem;
+  margin-left: auto;
+}
+
+.ai-message {
+  background-color: #FFF8F0; /* Lighter cream */
+  color: #341c02;
+  border-top-left-radius: 0.2rem;
+  margin-right: auto;
+}
+
+/* Message content styles */
+.message-content {
+  word-wrap: break-word;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* Image message styles */
+.image-message {
+  width: 100%;
+}
+
+.uploaded-image {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Timestamp styles */
+.message-time {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.25rem;
+  opacity: 0.8;
+}
+
+/* File preview styles */
+.file-preview {
+  position: absolute;
+  bottom: 70px;
+  left: 0;
+  right: 0;
+  background-color: rgba(255, 248, 240, 0.95);
+  padding: 0.5rem 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.file-preview-content {
+  display: flex;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.file-name {
+  flex-grow: 1;
+  margin-right: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remove-file {
+  background: none;
+  border: none;
+  color: #341c02;
+  padding: 0.25rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.remove-file:hover {
+  opacity: 1;
+}
+
+/* Typing indicator animation */
+.typing-indicator {
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.typing-indicator span {
+  height: 8px;
+  width: 8px;
+  background-color: #341c02;
+  border-radius: 50%;
+  margin: 0 2px;
+  display: inline-block;
+  animation: bounce 1.4s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar styling */
+.messages-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-area::-webkit-scrollbar-track {
+  background: rgba(255, 248, 240, 0.1);
+}
+
+.messages-area::-webkit-scrollbar-thumb {
+  background-color: rgba(52, 28, 2, 0.3);
+  border-radius: 3px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .message-bubble {
+    max-width: 85%;
+  }
+  
+  .messages-area {
+    height: calc(100vh - 160px);
+  }
 }
 
  

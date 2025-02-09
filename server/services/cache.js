@@ -2,6 +2,8 @@
 import Redis from 'ioredis';
 import { logger } from './logging';
 
+const redis = new Redis();
+
 // Cache durations in seconds
 const CACHE_DURATIONS = {
   SHORT: 300,        // 5 minutes
@@ -19,25 +21,6 @@ class CacheError extends Error {
   }
 }
 
-const redis = new Redis({
-  host: process.env.VUE_APP_REDIS_HOST || 'localhost',
-  port: process.env.VUE_APP_REDIS_PORT || 6379,
-  password: process.env.VUE_APP_REDIS_PASSWORD,
-  retryStrategy: (times) => {
-    const delay = Math.min(times * 100, 2000);
-    logger.logInfo(`Redis retry attempt ${times} with delay ${delay}ms`);
-    return delay;
-  },
-  maxRetriesPerRequest: 3
-});
-
-redis.on('error', (error) => {
-  logger.logError('Redis connection error:', error);
-});
-
-redis.on('connect', () => {
-  logger.logInfo('Redis connected successfully');
-});
 
 export const cache = {
   async set(key, value, duration = CACHE_DURATIONS.MEDIUM) {

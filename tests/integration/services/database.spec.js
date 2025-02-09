@@ -1,4 +1,4 @@
-import { db } from '@/utils/firebase';
+import { db } from 'server/utils/firebase';
 import { collection, addDoc, getDoc, doc } from 'firebase/firestore';
 import { vi } from 'vitest';
 

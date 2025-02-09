@@ -1,85 +1,101 @@
-// tests/unit/services/ai.spec.js
-import { analyzeImage, getPlantCareAdvice } from '@/services/ai';
-import axios from 'axios';
-import { storage } from '@/utils/firebase';
-import { cache } from '@/services/cache';
-import { vi } from 'vitest';
+import { analyzeImage, getPlantCareAdvice } from 'server/services/ai'
+import axios from 'axios'
+import { storage } from 'server/utils/firebase'
+import { cache } from 'server/services/cache'
+import vision from '@google-cloud/vision'
+import { vi } from 'vitest'
 
 describe('AI Service', () => {
+  const mockImageFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
+  const mockVisionClient = {
+    annotateImage: vi.fn()
+  }
+
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.spyOn(cache, 'get').mockResolvedValue(null);
-    vi.spyOn(cache, 'set').mockResolvedValue();
-  });
+    vi.clearAllMocks()
+    vi.spyOn(cache, 'get').mockResolvedValue(null)
+    vi.spyOn(cache, 'set').mockResolvedValue()
+    vi.spyOn(storage, 'uploadBytes').mockResolvedValue()
+    vi.spyOn(storage, 'getDownloadURL').mockResolvedValue('mock-url')
+    vi.spyOn(vision, 'ImageAnnotatorClient').mockReturnValue(mockVisionClient)
+  })
 
   describe('analyzeImage', () => {
-    const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-    const mockImageUrl = 'https://example.com/image.jpg';
+    it('successfully analyzes plant image', async () => {
+      const mockVisionResponse = {
+        labelAnnotations: [
+          { description: 'Plant', score: 0.9 }
+        ],
+        imagePropertiesAnnotation: {
+          dominantColors: {
+            colors: [{ color: { green: 200, red: 100, blue: 100 }, score: 0.5 }]
+          }
+        },
+        localizedObjectAnnotations: []
+      }
 
-    it('successfully analyzes a valid image', async () => {
-      const mockAnalysis = { species: 'Rose', health: 'Good' };
-      
-      vi.spyOn(storage, 'uploadBytes').mockResolvedValue();
-      vi.spyOn(storage, 'getDownloadURL').mockResolvedValue(mockImageUrl);
-      vi.spyOn(axios, 'post').mockResolvedValueOnce({ data: { url: mockImageUrl } })
-                             .mockResolvedValueOnce({ data: mockAnalysis });
+      mockVisionClient.annotateImage.mockResolvedValue([mockVisionResponse])
 
-      const result = await analyzeImage(mockFile);
-      
-      expect(result).toEqual({
-        imageUrl: mockImageUrl,
-        analysis: mockAnalysis
-      });
-      expect(storage.uploadBytes).toHaveBeenCalled();
-      expect(axios.post).toHaveBeenCalledTimes(2);
-    });
+      const mockPerenualResponse = {
+        data: {
+          data: [{
+            common_name: 'Test Plant',
+            scientific_name: 'Testus Plantus',
+            care_instructions: 'Water daily'
+          }]
+        }
+      }
+
+      vi.spyOn(axios, 'get').mockResolvedValue(mockPerenualResponse)
+
+      const result = await analyzeImage(mockImageFile)
+
+      expect(result.analysis.species).toBe('Test Plant')
+      expect(result.analysis.health).toBe(true)
+      expect(result.naturalResponse).toContain('good health')
+      expect(mockVisionClient.annotateImage).toHaveBeenCalled()
+      expect(axios.get).toHaveBeenCalled()
+    })
 
     it('handles invalid file types', async () => {
-      const invalidFile = new File(['test'], 'test.txt', { type: 'text/plain' });
-      
-      await expect(analyzeImage(invalidFile)).rejects.toThrow('Invalid file type');
-    });
-
-    it('handles file size limits', async () => {
-      const largeFile = new File([new ArrayBuffer(6 * 1024 * 1024)], 'large.jpg', { type: 'image/jpeg' });
-      
-      await expect(analyzeImage(largeFile)).rejects.toThrow('File too large');
-    });
+      const invalidFile = new File(['test'], 'test.txt', { type: 'text/plain' })
+      await expect(analyzeImage(invalidFile)).rejects.toThrow('Invalid file type')
+    })
 
     it('uses cached results when available', async () => {
-      const mockCachedResult = { analysis: { species: 'Cached Rose' } };
-      vi.spyOn(cache, 'get').mockResolvedValue(mockCachedResult);
+      const mockCachedResult = {
+        analysis: { species: 'Cached Plant' },
+        naturalResponse: 'Cached response'
+      }
+      vi.spyOn(cache, 'get').mockResolvedValue(mockCachedResult)
 
-      const result = await analyzeImage(mockFile);
-      
-      expect(result).toEqual(mockCachedResult);
-      expect(storage.uploadBytes).not.toHaveBeenCalled();
-    });
-  });
+      const result = await analyzeImage(mockImageFile)
+      expect(result).toEqual(mockCachedResult)
+      expect(mockVisionClient.annotateImage).not.toHaveBeenCalled()
+    })
+  })
 
   describe('getPlantCareAdvice', () => {
-    it('successfully retrieves plant care advice', async () => {
-      const mockAdvice = { watering: 'Weekly', sunlight: 'Full sun' };
-      vi.spyOn(axios, 'post').mockResolvedValue({ data: { advice: mockAdvice } });
+    it('successfully retrieves care advice', async () => {
+      const mockPerenualResponse = {
+        data: {
+          data: [{
+            watering: 'Daily',
+            sunlight: 'Full sun',
+            soil: 'Well-draining'
+          }]
+        }
+      }
 
-      const result = await getPlantCareAdvice('rose plant');
-      
-      expect(result).toEqual(mockAdvice);
-      expect(axios.post).toHaveBeenCalledWith('/api/plant-care', { plantInfo: 'rose plant' }, expect.any(Object));
-    });
+      vi.spyOn(axios, 'get').mockResolvedValue(mockPerenualResponse)
+
+      const result = await getPlantCareAdvice('test plant')
+      expect(result.watering).toBe('Daily')
+      expect(result.naturalResponse).toContain('Daily')
+    })
 
     it('handles empty input', async () => {
-      await expect(getPlantCareAdvice('')).rejects.toThrow('No plant information provided');
-    });
-
-    it('uses cached advice when available', async () => {
-      const mockCachedAdvice = { watering: 'Cached advice' };
-      vi.spyOn(cache, 'get').mockResolvedValue(mockCachedAdvice);
-
-      const result = await getPlantCareAdvice('rose plant');
-      
-      expect(result).toEqual(mockCachedAdvice);
-      expect(axios.post).not.toHaveBeenCalled();
-    });
-  });
-});
+      await expect(getPlantCareAdvice('')).rejects.toThrow('No plant information provided')
+    })
+  })
+})

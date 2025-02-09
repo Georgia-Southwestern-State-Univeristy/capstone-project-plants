@@ -1,13 +1,15 @@
 module.exports = {
     root: true,
     env: {
-      node: true
+      node: true,
+      es2020: true
     },
     extends: [
       'plugin:vue/vue3-essential',
       'eslint:recommended'
     ],
     globals: {
-      google: 'readonly'
+      google: 'readonly',
+      globalThis: 'writable'
     }
   }

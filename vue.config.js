@@ -1,5 +1,5 @@
 const webpack = require('webpack')
-const {defineConfig} = require('@vue/cli-service')
+const path = require('path')
 
 module.exports = {
   outputDir: 'dist',
@@ -21,18 +21,25 @@ module.exports = {
         "path": false,
         "zlib": false,
         "dns": false,
+        "process": require.resolve("process/browser"),
         "querystring": require.resolve("querystring-es3"),
         "child_process": false,
         "vm": require.resolve("vm-browserify"),
         extensions: ['.js', '.vue', '.json']
-      }
+      },
+      alias: {
+        '@': path.resolve(__dirname, 'src')
     },
-    optimization: {
-      splitChunks: {
-        chunks: 'all'
-      }
+    
+  }, 
+  optimization: {
+    splitChunks: {
+      chunks: 'all'
     }
   },
+  
+},
+
   chainWebpack: config => {
     config
       .plugin('define')
@@ -53,7 +60,10 @@ module.exports = {
     port: 8082,
     hot: true,
     open: true,
-    historyApiFallback: true,
+    historyApiFallback: {
+      disableDotRule: true,
+      index: '/index.html'
+    },
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
@@ -62,3 +72,4 @@ module.exports = {
 }
 
 }
+
