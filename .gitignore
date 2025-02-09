@@ -25,7 +25,7 @@ debug.log
 .env.test
 .env.*.local
 
-# 🔥 Firebase & Google Cloud Keys (Updated)
+# 🔥 Firebase & Google Cloud Keys 
 server/services/firebaseServiceKey.json
 
 # ⚡ Build & Compiled Files

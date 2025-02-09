@@ -1,7 +1,11 @@
 import vision from '@google-cloud/vision';
 import { v4 as uuidv4 } from 'uuid';
-import { getStorage } from 'firebase-admin/storage';
+import dotenv from 'dotenv';
+// import { getStorage } from 'firebase-admin/storage';
 
+
+process.env.GOOGLE_APPLICATION_CREDENTIALS = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+;
 const client = new vision.ImageAnnotatorClient(); // Uses GOOGLE_APPLICATION_CREDENTIALS
 
 //Analyze image
