@@ -5,47 +5,38 @@ const { defineConfig } = require('@vue/cli-service');
 module.exports = defineConfig({
   outputDir: 'dist',
   configureWebpack: {
-
+    entry: './src/main.js',
     output: {
-      // Ensure proper module format
-      libraryTarget: 'umd',
-      globalObject: 'this'
+      filename: '[name].js',
+      chunkFilename: '[name].js',
+      publicPath: '/'
     },
-
     resolve: {
-      // Extensions should be at the resolve level, not inside fallback
       extensions: ['.js', '.vue', '.json'],
       fallback: {
-        "crypto": require.resolve("crypto-browserify"),
+        "buffer": require.resolve("buffer/"),
+        "process": require.resolve("process/browser"),
         "stream": require.resolve("stream-browserify"),
+        "util": require.resolve("util/"),
+        "crypto": require.resolve("crypto-browserify"),
         "assert": require.resolve("assert/"),
         "http": require.resolve("stream-http"),
         "https": require.resolve("https-browserify"),
         "os": require.resolve("os-browserify/browser"),
         "url": require.resolve("url/"),
-        "buffer": require.resolve("buffer/"),
-        "util": require.resolve("util/"),
-        "fs": false,
-        "tls": false,
-        "net": false,
-        "path": false,
-        "zlib": false,
-        "dns": false,
-        "process": require.resolve("process/browser"),
-        "querystring": require.resolve("querystring-es3"),
-        "child_process": false,
-        "vm": require.resolve("vm-browserify")
       },
       alias: {
         '@': path.resolve(__dirname, 'src')
       }
     },
-    // Plugins should be at the configureWebpack level, not inside resolve
     plugins: [
+      // Define global variables
       new webpack.DefinePlugin({
-        'process.env': JSON.stringify(process.env),
-        'global': {}, // Add this line
+        __VUE_OPTIONS_API__: true,
+        __VUE_PROD_DEVTOOLS__: false,
+        'process.env': JSON.stringify(process.env)
       }),
+      // Provide polyfills
       new webpack.ProvidePlugin({
         process: 'process/browser',
         Buffer: ['buffer', 'Buffer']
@@ -53,49 +44,45 @@ module.exports = defineConfig({
     ],
     optimization: {
       splitChunks: {
-        chunks: 'all'
+        chunks: 'all',
+        name: false
       }
     }
   },
-
+  
   chainWebpack: config => {
-    config
-      .plugin('define')
-      .tap(args => {
-        args[0]['process.env'] = JSON.stringify(process.env);
-        args[0]['process.browser'] = true;
-        args[0]['process.version'] = JSON.stringify(process.version);
-        return args;
-      });
-    
-    config
-      .plugin('provide')
-      .use(webpack.ProvidePlugin, [{
-        process: 'process/browser'
-      }]);
-
+    // Configure babel-loader
     config.module
-    .rule('js')
-    .use('babel-loader')
-    .loader('babel-loader')
-    .options({
-      presets: [
-        ['@vue/cli-plugin-babel/preset', {
-          useBuiltIns: 'usage',
-          corejs: 3
-        }]
-      ]
-    }
-  )
+      .rule('js')
+      .test(/\.js$/)
+      .use('babel-loader')
+      .loader('babel-loader')
+      .options({
+        presets: [
+          ['@vue/cli-plugin-babel/preset', {
+            useBuiltIns: 'usage',
+            corejs: 3,
+            modules: false // Important: This ensures ES modules are processed correctly
+          }]
+        ],
+        plugins: [
+          '@babel/plugin-transform-runtime'
+        ]
+      })
+      .end();
+
+    // Ensure proper handling of modules
+    config.resolve.modules
+      .add('node_modules')
+      .add(path.resolve(__dirname, 'src'));
   },
 
   devServer: {
     port: 8082,
     hot: true,
-    open: true,
-    historyApiFallback: {
-      disableDotRule: true,
-      index: '/index.html'
+    historyApiFallback: true,
+    static: {
+      directory: path.join(__dirname, 'dist'),
     },
     headers: {
       'Access-Control-Allow-Origin': '*',
@@ -104,7 +91,7 @@ module.exports = defineConfig({
     },
     setupMiddlewares: (middlewares, devServer) => {
       devServer.app.get('*.js', (req, res, next) => {
-        res.set('Content-Type', 'application/javascript');
+        res.type('application/javascript');
         next();
       });
       return middlewares;

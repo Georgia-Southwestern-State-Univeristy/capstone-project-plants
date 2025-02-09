@@ -1,14 +1,13 @@
-require('dotenv').config();
-const express = require('express');
-// const { Storage } = require('@google-cloud/storage');
-const { ImageAnnotatorClient } = require('@google-cloud/vision');
-const path = require('path');
-const multer = require('multer');
-const { OAuth2Client } = require('google-auth-library');
-const { auth } = require('./utils/firebase');
-const { signInWithCredential, GoogleAuthProvider } = require('firebase/auth');
-const cors = require('cors'); // Add CORS support
-const Redis = require('ioredis');
+import 'dotenv/config';
+import express from 'express';
+import { ImageAnnotatorClient } from '@google-cloud/vision';
+import path from 'path';
+import multer from 'multer';
+import { OAuth2Client } from 'google-auth-library';
+import { auth } from './utils/firebase';
+import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
+import cors from 'cors';
+import Redis from 'ioredis';
 
 const app = express();
 const PORT = process.env.PORT || 8082;
