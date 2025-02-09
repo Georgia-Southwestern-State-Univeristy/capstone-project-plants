@@ -1,27 +1,22 @@
-// src/services/cacheService.js
-import axios from 'axios'
+// services/cache.js
+import axios from 'axios';
 
-export const cacheService = {
+export const cache = {
   async set(key, value, duration) {
     try {
-      await axios.post('/api/cache', {
-        key,
-        value,
-        duration
-      })
+      await axios.post('/api/cache', { key, value, duration });
     } catch (error) {
-      console.error('Cache set error:', error)
-      throw error
+      console.error('Cache set error:', error);
     }
   },
 
   async get(key) {
     try {
-      const response = await axios.get(`/api/cache/${key}`)
-      return response.data.value
+      const response = await axios.get(`/api/cache/${key}`);
+      return response.data.value;
     } catch (error) {
-      console.error('Cache get error:', error)
-      return null
+      console.error('Cache get error:', error);
+      return null;
     }
   }
-}
+};

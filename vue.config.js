@@ -5,6 +5,13 @@ const { defineConfig } = require('@vue/cli-service');
 module.exports = defineConfig({
   outputDir: 'dist',
   configureWebpack: {
+
+    output: {
+      // Ensure proper module format
+      libraryTarget: 'umd',
+      globalObject: 'this'
+    },
+
     resolve: {
       // Extensions should be at the resolve level, not inside fallback
       extensions: ['.js', '.vue', '.json'],
@@ -35,12 +42,13 @@ module.exports = defineConfig({
     },
     // Plugins should be at the configureWebpack level, not inside resolve
     plugins: [
-      new webpack.ProvidePlugin({
-        Buffer: ['buffer', 'Buffer'],
-        process: 'process/browser'
-      }),
       new webpack.DefinePlugin({
-        'process.env': JSON.stringify(process.env)
+        'process.env': JSON.stringify(process.env),
+        'global': {}, // Add this line
+      }),
+      new webpack.ProvidePlugin({
+        process: 'process/browser',
+        Buffer: ['buffer', 'Buffer']
       })
     ],
     optimization: {
@@ -67,11 +75,18 @@ module.exports = defineConfig({
       }]);
 
     config.module
-      .rule('js')
-      .test(/\.js$/)
-      .use('babel-loader')
-      .loader('babel-loader')
-      .end();
+    .rule('js')
+    .use('babel-loader')
+    .loader('babel-loader')
+    .options({
+      presets: [
+        ['@vue/cli-plugin-babel/preset', {
+          useBuiltIns: 'usage',
+          corejs: 3
+        }]
+      ]
+    }
+  )
   },
 
   devServer: {

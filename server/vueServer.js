@@ -34,6 +34,14 @@ const visionClient = new ImageAnnotatorClient({
   keyFilename: process.env.VUE_APP_GOOGLE_APPLICATION_CREDENTIALS
 });
 
+app.use((req, res, next) => {
+  if (req.url.endsWith('.js')) {
+    res.type('application/javascript');
+  }
+  next();
+});
+
+
 // Serve static files with proper MIME types
 app.use(express.static(path.join(__dirname, '../dist'), {
   setHeaders: (res, filePath) => {
