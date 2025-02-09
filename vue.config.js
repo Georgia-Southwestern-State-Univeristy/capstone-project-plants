@@ -1,11 +1,13 @@
-const webpack = require('webpack')
-const path = require('path')
-const { defineConfig } = require('@vue/cli-service')
+const webpack = require('webpack');
+const path = require('path');
+const { defineConfig } = require('@vue/cli-service');
 
-module.exports =defineConfig ( {
+module.exports = defineConfig({
   outputDir: 'dist',
   configureWebpack: {
     resolve: {
+      // Extensions should be at the resolve level, not inside fallback
+      extensions: ['.js', '.vue', '.json'],
       fallback: {
         "crypto": require.resolve("crypto-browserify"),
         "stream": require.resolve("stream-browserify"),
@@ -25,62 +27,53 @@ module.exports =defineConfig ( {
         "process": require.resolve("process/browser"),
         "querystring": require.resolve("querystring-es3"),
         "child_process": false,
-        "vm": require.resolve("vm-browserify"),
-        extensions: ['.js', '.vue', '.json']
+        "vm": require.resolve("vm-browserify")
       },
       alias: {
         '@': path.resolve(__dirname, 'src')
+      }
     },
+    // Plugins should be at the configureWebpack level, not inside resolve
     plugins: [
-      // Make Buffer and process available globally
       new webpack.ProvidePlugin({
         Buffer: ['buffer', 'Buffer'],
         process: 'process/browser'
       }),
-      // Define process.env
       new webpack.DefinePlugin({
         'process.env': JSON.stringify(process.env)
-      }),
-
-      "@babel/plugin-transform-modules-commonjs"
+      })
     ],
-
-    presets: [
-      '@vue/cli-plugin-babel/preset'
-    ],
-    
-  }, 
-  optimization: {
-    splitChunks: {
-      chunks: 'all'
+    optimization: {
+      splitChunks: {
+        chunks: 'all'
+      }
     }
   },
-  
-},
 
   chainWebpack: config => {
     config
       .plugin('define')
       .tap(args => {
-        args[0]['process.env'] = JSON.stringify(process.env)
-        args[0]['process.browser'] = true
-        args[0]['process.version'] = JSON.stringify(process.version)
-        return args
-      })
+        args[0]['process.env'] = JSON.stringify(process.env);
+        args[0]['process.browser'] = true;
+        args[0]['process.version'] = JSON.stringify(process.version);
+        return args;
+      });
     
     config
       .plugin('provide')
       .use(webpack.ProvidePlugin, [{
         process: 'process/browser'
-      }])
+      }]);
 
-      config.module
+    config.module
       .rule('js')
       .test(/\.js$/)
       .use('babel-loader')
       .loader('babel-loader')
       .end();
   },
+
   devServer: {
     port: 8082,
     hot: true,
@@ -93,15 +86,13 @@ module.exports =defineConfig ( {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
       'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization'
-  },
-  setupMiddlewares: (middlewares, devServer) => {
-    devServer.app.get('*.js', (req, res, next) => {
-      res.set('Content-Type', 'application/javascript');
-      next();
-    });
-    return middlewares;
+    },
+    setupMiddlewares: (middlewares, devServer) => {
+      devServer.app.get('*.js', (req, res, next) => {
+        res.set('Content-Type', 'application/javascript');
+        next();
+      });
+      return middlewares;
+    }
   }
-}
-
-})
-
+});
