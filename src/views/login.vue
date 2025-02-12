@@ -102,7 +102,7 @@
 <script>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { loginWithEmail, loginWithGoogle, resetPassword } from '../../server/utils/firebase'
+import { loginWithEmail, loginWithGoogle, resetPassword } from '../utils/firebase'
 // import { useStore } from 'vuex'
 
 export default {

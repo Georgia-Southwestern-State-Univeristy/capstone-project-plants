@@ -1,9 +1,9 @@
-import { adminAuth } from '../utils/firebaseAdmin.js';
+import { auth } from '../utils/firebase.js';
 
 // ✅ Register User
 export const registerWithEmail = async (email, password, name) => {
     try {
-        const user = await adminAuth.createUser({
+        const user = await auth.createUser({
             email,
             password,
             displayName: name
@@ -17,7 +17,7 @@ export const registerWithEmail = async (email, password, name) => {
 // ✅ Login User (Backend verification)
 export const loginWithEmail = async (email) => {
     try {
-        const user = await adminAuth.getUserByEmail(email);
+        const user = await auth.getUserByEmail(email);
         return { uid: user.uid, email: user.email, name: user.displayName };
     } catch (error) {
         throw new Error(error.message);
@@ -27,7 +27,7 @@ export const loginWithEmail = async (email) => {
 // ✅ Reset Password
 export const resetPassword = async (email) => {
     try {
-        await adminAuth.generatePasswordResetLink(email);
+        await auth.generatePasswordResetLink(email);
         return { success: true, message: "Password reset link sent." };
     } catch (error) {
         throw new Error(error.message);

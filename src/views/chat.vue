@@ -163,7 +163,7 @@ import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { analyzeImage, getPlantCareAdvice } from '../../server/services/ai'
 import { useNotifications } from '@/composables/useNotifications'
-import { auth } from '../../server/utils/firebase'
+import { auth } from '../utils/firebase'
 import { uploadImage } from '../../server/services/storage'
 import { logger } from '../../server/services/logging'
 

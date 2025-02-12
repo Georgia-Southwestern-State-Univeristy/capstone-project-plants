@@ -143,7 +143,7 @@
 <script>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { registerWithEmail } from '../../server/utils/firebase'
+import { registerWithEmail } from '../utils/firebase'
 import { useStore } from 'vuex'
 
 export default {

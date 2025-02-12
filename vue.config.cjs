@@ -11,6 +11,7 @@ module.exports = defineConfig({
       chunkFilename: '[name].js',
       publicPath: '/'
     },
+    target: 'web',
     resolve: {
       extensions: ['.js', '.vue', '.json'],
       fallback: {
@@ -55,7 +56,10 @@ module.exports = defineConfig({
       splitChunks: {
         chunks: 'all',
         name: false
-      }
+      },
+      // externals: {
+      //   ioredis: 'commonjs ioredis' 
+      // }
     }
   },
   

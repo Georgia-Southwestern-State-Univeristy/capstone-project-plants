@@ -11,7 +11,7 @@ const auth = new OAuth2Client({
   clientId: process.env.VUE_APP_GOOGLE_OAUTH_CLIENT_ID,
 });
 const visionClient = new vision.ImageAnnotatorClient({
-  keyFilename: process.env.VUE_APP_GOOGLE_APPLICATION_CREDENTIALS,
+  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
   auth: auth,
   numericEnums: true
 });
