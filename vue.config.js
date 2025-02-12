@@ -1,8 +1,10 @@
-const webpack = require('webpack');
-const path = require('path');
-const { defineConfig } = require('@vue/cli-service');
+import webpack from 'webpack';
+import path from 'path';
+import { defineConfig } from '@vue/cli-service';
+const NodePolyfillPlugin = (await import('node-polyfill-webpack-plugin')).default;
 
-module.exports = defineConfig({
+
+export default defineConfig({
   outputDir: 'dist',
   configureWebpack: {
     entry: './src/main.js',
@@ -11,55 +13,43 @@ module.exports = defineConfig({
       chunkFilename: '[name].js',
       publicPath: '/'
     },
-    target: 'web',
+    target: 'web', // ✅ Ensure Webpack knows this is a browser build
     resolve: {
       extensions: ['.js', '.vue', '.json'],
       fallback: {
-        "buffer": require.resolve("buffer/"),
-        "process": require.resolve("process/browser"),
-        "stream": require.resolve("stream-browserify"),
-        "util": require.resolve("util/"),
-        "crypto": require.resolve("crypto-browserify"),
-        "assert": require.resolve("assert/"),
-        "http": require.resolve("stream-http"),
-        "https": require.resolve("https-browserify"),
-        "os": require.resolve("os-browserify/browser"),
-        "url": require.resolve("url/"),
-        "fs": false,
-        "path": require.resolve("path-browserify"),
-        "querystring": require.resolve("querystring-es3"),
-        "net": false,  // Not needed in browser
-        "tls": false,  // Not needed in browser
+        "events": "events/",  // ✅ Fix `node:events`
+        "stream": "stream-browserify",  // ✅ Fix `node:stream`
+        "util": "util/",  // ✅ Fix `node:util`
+        "buffer": "buffer/",
+        "process": "process/browser",
+        "crypto": "crypto-browserify",
+        "assert": "assert/",
+        "http": "stream-http",
+        "https": "https-browserify",
+        "os": "os-browserify/browser",
+        "url": "url/",
+        "fs": false,  // ❌ Prevents server-side modules from breaking frontend
+        "path": "path-browserify",
+        "querystring": "querystring-es3",
+        "net": false,
+        "tls": false,
         "zlib": false,
-        "child_process": false,  // Not needed in browser
-        "util": require.resolve("util/")
-
-      },
-      alias: {
-        '@': path.resolve(__dirname, 'src')
+        "child_process": false 
       }
     },
     plugins: [
-      // Define global variables
-      new webpack.DefinePlugin({
-        __VUE_OPTIONS_API__: true,
-        __VUE_PROD_DEVTOOLS__: false,
-        'process.env': JSON.stringify(process.env)
-      }),
-      // Provide polyfills
       new webpack.ProvidePlugin({
         process: 'process/browser',
         Buffer: ['buffer', 'Buffer']
-      })
+
+      }),
+      new NodePolyfillPlugin() // ✅ Fix for handling node modules in the browser
     ],
     optimization: {
       splitChunks: {
         chunks: 'all',
         name: false
-      },
-      // externals: {
-      //   ioredis: 'commonjs ioredis' 
-      // }
+      }
     }
   },
   
@@ -75,7 +65,7 @@ module.exports = defineConfig({
           ['@vue/cli-plugin-babel/preset', {
             useBuiltIns: 'usage',
             corejs: 3,
-            modules: false // Important: This ensures ES modules are processed correctly
+            modules: false // ✅ Ensures ES modules are processed correctly
           }]
         ],
         plugins: [
@@ -87,7 +77,7 @@ module.exports = defineConfig({
     // Ensure proper handling of modules
     config.resolve.modules
       .add('node_modules')
-      .add(path.resolve(__dirname, 'src'));
+      .add(path.resolve(process.cwd(), 'src'));
   },
 
   devServer: {
@@ -95,7 +85,7 @@ module.exports = defineConfig({
     hot: true,
     historyApiFallback: true,
     static: {
-      directory: path.join(__dirname, 'dist'),
+      directory: path.join(process.cwd(), 'dist'),
     },
     headers: {
       'Access-Control-Allow-Origin': '*',
