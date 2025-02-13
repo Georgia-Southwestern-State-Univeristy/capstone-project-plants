@@ -1,8 +1,11 @@
 import webpack from 'webpack';
 import path from 'path';
 import { defineConfig } from '@vue/cli-service';
-const NodePolyfillPlugin = (await import('node-polyfill-webpack-plugin')).default;
-
+import NodePolyfillPlugin from 'node-polyfill-webpack-plugin';
+// import { fileURLToPath } from 'url';
+// const NodePolyfillPlugin = (await import('node-polyfill-webpack-plugin')).default;
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   outputDir: 'dist',
@@ -13,7 +16,7 @@ export default defineConfig({
       chunkFilename: '[name].js',
       publicPath: '/'
     },
-    target: 'web', // ✅ Ensure Webpack knows this is a browser build
+    target: 'node', // ✅ Ensure Webpack knows this is a browser build
     resolve: {
       extensions: ['.js', '.vue', '.json'],
       fallback: {
