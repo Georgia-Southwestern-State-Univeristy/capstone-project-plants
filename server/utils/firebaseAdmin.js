@@ -1,3 +1,4 @@
+
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -8,7 +9,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
 // ✅ Initialize Firebase Admin SDK (Server Only)
 const app = initializeApp({
   credential: cert(serviceAccount),

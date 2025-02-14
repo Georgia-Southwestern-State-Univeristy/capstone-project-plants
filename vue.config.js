@@ -1,7 +1,9 @@
 import webpack from 'webpack';
 import path from 'path';
 import { defineConfig } from '@vue/cli-service';
-import NodePolyfillPlugin from 'node-polyfill-webpack-plugin';
+import { mergeAlias } from 'vite';
+import { dot } from '@tensorflow/tfjs';
+// import NodePolyfillPlugin from 'node-polyfill-webpack-plugin';
 // import { fileURLToPath } from 'url';
 // const NodePolyfillPlugin = (await import('node-polyfill-webpack-plugin')).default;
 // const __filename = fileURLToPath(import.meta.url);
@@ -16,7 +18,14 @@ export default defineConfig({
       chunkFilename: '[name].js',
       publicPath: '/'
     },
-    target: 'node', // ✅ Ensure Webpack knows this is a browser build
+    target: 'web', // ✅ Ensure Webpack knows this is a browser build
+    externals: {
+      dotenv: 'commonjs dotenv',
+      'url': 'commonjs url',
+      'fs': 'commonjs fs',
+      'path': 'commonjs path',
+      'firebase-admin': 'commonjs firebase-admin',
+    },
     resolve: {
       extensions: ['.js', '.vue', '.json'],
       fallback: {
@@ -34,10 +43,25 @@ export default defineConfig({
         "fs": false,  // ❌ Prevents server-side modules from breaking frontend
         "path": "path-browserify",
         "querystring": "querystring-es3",
+        "vm": "vm-browserify",
+        "crypto": false,
+        "stream": "stream-browserify",
         "net": false,
         "tls": false,
         "zlib": false,
         "child_process": false 
+      },
+      alias: {
+        'google-auth-library': false,
+        'gcp-metadata': false,
+        'google-logging-utils': false,
+        'firebase-admin': false,
+        'dns': false, // Prevents Webpack from bundling `dns`
+        'ioredis': false, // Prevents Webpack from bundling Redis in frontend
+        'fs': false, // Prevents backend-only modules from breaking frontend
+        'path': false,
+        'net': false,
+        'tls': false
       }
     },
     plugins: [
@@ -46,7 +70,7 @@ export default defineConfig({
         Buffer: ['buffer', 'Buffer']
 
       }),
-      new NodePolyfillPlugin() // ✅ Fix for handling node modules in the browser
+      // new NodePolyfillPlugin() // ✅ Fix for handling node modules in the browser
     ],
     optimization: {
       splitChunks: {

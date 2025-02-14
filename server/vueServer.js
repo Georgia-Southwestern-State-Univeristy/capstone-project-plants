@@ -1,9 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
+import path, {dirname} from 'path';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import dotenv from 'dotenv';
 import Redis from 'ioredis';
 
@@ -91,17 +90,23 @@ app.listen(PORT, () => {
 });
 
 // ✅ Initialize Redis connection
-const redis = new Redis({
-  host: process.env.VUE_APP_REDIS_HOST,
-  port: process.env.VUE_APP_REDIS_PORT,
-  password: process.env.VUE_APP_REDIS_PASSWORD
-});
+if (typeof window === 'undefined') {
+  const redis = new Redis({
+    host: process.env.VUE_APP_REDIS_HOST,
+    port: process.env.VUE_APP_REDIS_PORT,
+    username: process.env.VUE_APP_REDIS_NAMENAME,
+    password: process.env.VUE_APP_REDIS_PASSWORD
+  });
 
-// ✅ Fix Redis error handling
-redis.on('error', (error) => {
-  console.error('❌ Redis connection error:', error);
-});
+  // ✅ Fix Redis error handling
+  redis.on('error', (error) => {
+    console.error('❌ Redis connection error:', error);
+  });
 
-redis.on('connect', () => {
-  console.log('✅ Redis connected successfully');
-});
+  redis.on('connect', () => {
+    console.log('✅ Redis connected successfully');
+  });
+}
+
+
+export default app;

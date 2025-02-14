@@ -1,4 +1,4 @@
-import { storage } from "../utils/firebase.js";
+import { storage } from "../utils/firebaseAdmin.js";
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { logger } from './logging'
 

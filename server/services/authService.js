@@ -1,4 +1,4 @@
-import { auth } from '../utils/firebase.js';
+import { auth } from '../utils/firebaseAdmin.js';
 
 // ✅ Register User
 export const registerWithEmail = async (email, password, name) => {
