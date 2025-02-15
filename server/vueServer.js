@@ -1,9 +1,11 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config();
+// import 'dotenv/config';
+
 import express from 'express';
 import cors from 'cors';
 import path, {dirname} from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
 import Redis from 'ioredis';
 
 // Import Routes
@@ -13,7 +15,7 @@ import routes from './routes/index.js';
 // Initialize environment variables and Express app
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 8082;
 
@@ -74,7 +76,11 @@ app.use((req, res, next) => {
 });
 
 // ✅ Fix: Handle all other routes properly
-app.get('*', (req, res) => {
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return next(); // ✅ Pass API requests to the next middleware
+  }
+
   const filePath = path.join(__dirname, '../dist/index.html');
   return res.sendFile(filePath, (err) => {
     if (err) {

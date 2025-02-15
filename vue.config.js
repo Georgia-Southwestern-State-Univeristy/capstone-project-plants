@@ -1,13 +1,13 @@
 import webpack from 'webpack';
 import path from 'path';
 import { defineConfig } from '@vue/cli-service';
-import { mergeAlias } from 'vite';
-import { dot } from '@tensorflow/tfjs';
-// import NodePolyfillPlugin from 'node-polyfill-webpack-plugin';
-// import { fileURLToPath } from 'url';
-// const NodePolyfillPlugin = (await import('node-polyfill-webpack-plugin')).default;
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
+// import { mergeAlias } from 'vite';
+// import { dot } from '@tensorflow/tfjs';
+// // import NodePolyfillPlugin from 'node-polyfill-webpack-plugin';
+// // import { fileURLToPath } from 'url';
+// // const NodePolyfillPlugin = (await import('node-polyfill-webpack-plugin')).default;
+// // const __filename = fileURLToPath(import.meta.url);
+// // const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   outputDir: 'dist',
@@ -16,15 +16,23 @@ export default defineConfig({
     output: {
       filename: '[name].js',
       chunkFilename: '[name].js',
-      publicPath: '/'
+      publicPath: '/',
+      // libraryTarget: 'module', // ✅ Forces ES Module output
+      // environment: { module: true } // ✅ Ensures Webpack 5 keeps `import`
     },
+    // experiments: {
+    //   outputModule: true, // ✅ Enable native ESM output
+    // },
     target: 'web', // ✅ Ensure Webpack knows this is a browser build
     externals: {
-      dotenv: 'commonjs dotenv',
+      "dotenv": 'commonjs dotenv',
       'url': 'commonjs url',
       'fs': 'commonjs fs',
       'path': 'commonjs path',
       'firebase-admin': 'commonjs firebase-admin',
+      express: 'commonjs express',
+      "on-finished": "commonjs on-finished",
+      "raw-body": "commonjs raw-body"
     },
     resolve: {
       extensions: ['.js', '.vue', '.json'],
@@ -40,16 +48,18 @@ export default defineConfig({
         "https": "https-browserify",
         "os": "os-browserify/browser",
         "url": "url/",
-        "fs": false,  // ❌ Prevents server-side modules from breaking frontend
         "path": "path-browserify",
         "querystring": "querystring-es3",
         "vm": "vm-browserify",
-        "crypto": false,
         "stream": "stream-browserify",
+        "crypto": false,
+        "fs": false,  // ❌ Prevents server-side modules from breaking frontend
         "net": false,
         "tls": false,
         "zlib": false,
-        "child_process": false 
+        "child_process": false,
+        "async_hooks": false, // Prevents Webpack from bundling `async_hooks`
+        "dotenv": false
       },
       alias: {
         'google-auth-library': false,

@@ -1,5 +1,6 @@
 // server/redisConnection.js
-const Redis = require('ioredis');
+import Redis from 'ioredis';
+
 
 
 
