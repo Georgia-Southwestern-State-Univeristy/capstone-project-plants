@@ -17,19 +17,15 @@ export default defineConfig({
       filename: '[name].js',
       chunkFilename: '[name].js',
       publicPath: '/',
-      // libraryTarget: 'module', // ✅ Forces ES Module output
-      // environment: { module: true } // ✅ Ensures Webpack 5 keeps `import`
     },
-    // experiments: {
-    //   outputModule: true, // ✅ Enable native ESM output
-    // },
+
     target: 'web', // ✅ Ensure Webpack knows this is a browser build
     externals: [
       (context, request, callback) => {
-        if (/dotenv|server/.test(request)) {
-          return callback(null, 'commonjs ' + request); // ✅ Fully exclude dotenv and server/
-        }
-        callback();
+    if (/dotenv|server|tty|stream|util|http|tls|https|net|os|dns|crypto|fs|querystring|http2|url/.test(request)) {
+      return callback(null, 'commonjs ' + request); // ✅ Fully exclude dotenv, server, and all Node.js modules
+    }
+    callback();
       },
       {
         "dotenv": "commonjs dotenv",
@@ -46,28 +42,55 @@ export default defineConfig({
       extensions: ['.js', '.vue', '.json'],
       fallback: {
         "events": "events/",  // ✅ Fix `node:events`
-        "stream": "stream-browserify",  // ✅ Fix `node:stream`
-        "util": "util/",  // ✅ Fix `node:util`
-        "buffer": "buffer/",
-        "process": "process/browser",
-        "crypto": "crypto-browserify",
-        "assert": "assert/",
-        "http": "stream-http",
-        "https": "https-browserify",
-        "os": "os-browserify/browser",
-        "url": "url/",
-        "path": "path-browserify",
-        "querystring": "querystring-es3",
-        "vm": "vm-browserify",
-        "stream": "stream-browserify",
+        "stream": false,  // ✅ Ensure Webpack does not bundle stream
+        "util": false,  // ✅ Prevents Webpack from bundling util
+        "buffer": false,
+        "process": false,
         "crypto": false,
-        "fs": false,  // ❌ Prevents server-side modules from breaking frontend
+        "assert": false,
+        "http": false,
+        "https": false,
+        "os": false,
+        "url": false,
+        "path": false,
+        "querystring": false,
+        "vm": false,
         "net": false,
         "tls": false,
         "zlib": false,
         "child_process": false,
-        "async_hooks": false, // Prevents Webpack from bundling `async_hooks`
-        "dotenv": false
+        "async_hooks": false,  // ✅ Prevents Webpack from bundling async_hooks
+        "dotenv": false,
+        "tty": false, // ✅ Ensure Webpack does not bundle tty
+        "http2": false,
+        "dns": false
+
+
+
+
+        // "events": "events/",  // ✅ Fix `node:events`
+        // "stream": "stream-browserify",  // ✅ Fix `node:stream`
+        // "util": "util/",  // ✅ Fix `node:util`
+        // "buffer": "buffer/",
+        // "process": "process/browser",
+        // "crypto": "crypto-browserify",
+        // "assert": "assert/",
+        // "http": "stream-http",
+        // "https": "https-browserify",
+        // "os": "os-browserify/browser",
+        // "url": "url/",
+        // "path": "path-browserify",
+        // "querystring": "querystring-es3",
+        // "vm": "vm-browserify",
+        // "stream": "stream-browserify",
+        // "crypto": false,
+        // "fs": false,  // ❌ Prevents server-side modules from breaking frontend
+        // "net": false,
+        // "tls": false,
+        // "zlib": false,
+        // "child_process": false,
+        // "async_hooks": false, // Prevents Webpack from bundling `async_hooks`
+        // "dotenv": false
       },
       alias: {
         'google-auth-library': false,
