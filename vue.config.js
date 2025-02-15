@@ -24,16 +24,24 @@ export default defineConfig({
     //   outputModule: true, // ✅ Enable native ESM output
     // },
     target: 'web', // ✅ Ensure Webpack knows this is a browser build
-    externals: {
-      "dotenv": 'commonjs dotenv',
-      'url': 'commonjs url',
-      'fs': 'commonjs fs',
-      'path': 'commonjs path',
-      'firebase-admin': 'commonjs firebase-admin',
-      express: 'commonjs express',
-      "on-finished": "commonjs on-finished",
-      "raw-body": "commonjs raw-body"
-    },
+    externals: [
+      (context, request, callback) => {
+        if (/dotenv|server/.test(request)) {
+          return callback(null, 'commonjs ' + request); // ✅ Fully exclude dotenv and server/
+        }
+        callback();
+      },
+      {
+        "dotenv": "commonjs dotenv",
+        "url": "commonjs url",
+        "fs": "commonjs fs",
+        "path": "commonjs path",
+        "firebase-admin": "commonjs firebase-admin",
+        "express": "commonjs express",
+        "on-finished": "commonjs on-finished",
+        "raw-body": "commonjs raw-body"
+      }
+    ],
     resolve: {
       extensions: ['.js', '.vue', '.json'],
       fallback: {
