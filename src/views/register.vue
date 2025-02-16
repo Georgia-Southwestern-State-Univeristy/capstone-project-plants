@@ -143,7 +143,7 @@
 <script>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { registerWithEmail } from '../utils/firebase'
+import { registerUser } from '@/api';
 import { useStore } from 'vuex'
 
 export default {
@@ -179,27 +179,36 @@ export default {
     try {
         isLoading.value = true;
         error.value = '';
+
+        // ✅ Call the backend API instead of Firebase directly
+        const response = await registerUser(email.value, password.value, name.value);
         
-        const user = await registerWithEmail(email.value, password.value, name.value);
-        
-        // Use the store to save user data
-        store.commit('SET_USER', user);
+        if (!response.success) {
+            throw new Error(response.error || 'Registration failed');
+        }
+
+        // ✅ Use Vuex store to save user data
+        store.commit('SET_USER', response.user);
         store.dispatch('addNotification', {
             type: 'success',
             message: 'Registration successful!'
         });
-        
+
+        // ✅ Navigate after successful registration
         router.push('/chat');
     } catch (err) {
+        console.error("❌ Registration error:", err);
         error.value = err.message;
+
         store.dispatch('addNotification', {
             type: 'error',
-            message: 'Registration failed'
+            message: err.message || 'Registration failed'
         });
     } finally {
         isLoading.value = false;
     }
 };
+
 
     return {
       name,

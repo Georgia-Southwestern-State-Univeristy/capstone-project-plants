@@ -8,5 +8,9 @@ export default {
   ],
   plugins: [
     '@babel/plugin-transform-runtime'
+  ],
+  "ignore": [
+    "server/**/*.js",  // ✅ Ignore backend files in Webpack
+    "server/**/*.ts"
   ]
 };

@@ -20,24 +20,7 @@ export default defineConfig({
     },
 
     target: 'web', // ✅ Ensure Webpack knows this is a browser build
-    externals: [
-      (context, request, callback) => {
-    if (/dotenv|server|tty|stream|util|http|tls|https|net|os|dns|crypto|fs|querystring|http2|url/.test(request)) {
-      return callback(null, 'commonjs ' + request); // ✅ Fully exclude dotenv, server, and all Node.js modules
-    }
-    callback();
-      },
-      {
-        "dotenv": "commonjs dotenv",
-        "url": "commonjs url",
-        "fs": "commonjs fs",
-        "path": "commonjs path",
-        "firebase-admin": "commonjs firebase-admin",
-        "express": "commonjs express",
-        "on-finished": "commonjs on-finished",
-        "raw-body": "commonjs raw-body"
-      }
-    ],
+
     resolve: {
       extensions: ['.js', '.vue', '.json'],
       fallback: {
@@ -105,6 +88,24 @@ export default defineConfig({
         'tls': false
       }
     },
+    externals: [
+      (context, request, callback) => {
+    if (/dotenv|server|tty|stream|util|http|tls|https|net|os|dns|crypto|fs|querystring|http2|url/.test(request)) {
+      return callback(null, 'commonjs ' + request); // ✅ Fully exclude dotenv, server, and all Node.js modules
+    }
+    callback();
+      },
+      {
+        "dotenv": "commonjs dotenv",
+        "url": "commonjs url",
+        "fs": "commonjs fs",
+        "path": "commonjs path",
+        "firebase-admin": "commonjs firebase-admin",
+        "express": "commonjs express",
+        "on-finished": "commonjs on-finished",
+        "raw-body": "commonjs raw-body"
+      }
+    ],
     plugins: [
       new webpack.ProvidePlugin({
         process: 'process/browser',
@@ -147,11 +148,16 @@ export default defineConfig({
       .add('node_modules')
       .add(path.resolve(process.cwd(), 'src'));
   },
-
   devServer: {
-    port: 8082,
-    hot: true,
+    port: 8082,  // ✅ Vue frontend runs on port 8082
+    hot: false,
     historyApiFallback: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',  // ✅ Redirect API requests to backend
+        changeOrigin: true
+      }
+    },
     static: {
       directory: path.join(process.cwd(), 'dist'),
     },

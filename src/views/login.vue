@@ -102,65 +102,96 @@
 <script>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { loginWithEmail, loginWithGoogle, resetPassword } from '../utils/firebase'
-// import { useStore } from 'vuex'
+import { useStore } from 'vuex'
 
 export default {
   name: 'LoginPage',
   setup() {
-    const router = useRouter()
-    //const store = useStore()
-    const email = ref('')
-    const password = ref('')
-    const error = ref('')
-    const isLoading = ref(false)
+    const router = useRouter();
+    const store = useStore();
+    const email = ref('');
+    const password = ref('');
+    const error = ref('');
+    const isLoading = ref(false);
 
+    // ✅ API-based Login (Vuex action)
     const handleLogin = async () => {
       try {
-        isLoading.value = true
-        error.value = ''
-        await loginWithEmail(email.value, password.value)
-        router.push('/chat')
-      } catch (err) {
-        error.value = err.message
-      } finally {
-        isLoading.value = false
-      }
-      
-    }
+        isLoading.value = true;
+        error.value = '';
 
+        // ✅ Call Vuex action to login using API
+        await store.dispatch('login', { email: email.value, password: password.value });
+
+        // ✅ Navigate to chat after successful login
+        router.push('/chat');
+      } catch (err) {
+        console.error('❌ Login error:', err);
+        error.value = err.message;
+
+        // ✅ Show error notification
+        store.dispatch('addNotification', {
+          type: 'error',
+          message: err.message || 'Login failed'
+        });
+      } finally {
+        isLoading.value = false;
+      }
+    };
+
+    // ✅ API-based Google Login (Vuex action)
     const handleGoogleLogin = async () => {
-    
       try {
-    isLoading.value = true;
-    error.value = '';
-    await loginWithGoogle();
-    router.push('/chat');
-  } catch (err) {
-    error.value = err.message;
-  } finally {
-    isLoading.value = false;
-  }
-};
+        isLoading.value = true;
+        error.value = '';
+
+        // ✅ Call Vuex action to handle Google login via API
+        await store.dispatch('googleLogin');
+
+        router.push('/chat');
+      } catch (err) {
+        console.error('❌ Google login error:', err);
+        error.value = err.message;
+
+        store.dispatch('addNotification', {
+          type: 'error',
+          message: err.message || 'Google login failed'
+        });
+      } finally {
+        isLoading.value = false;
+      }
+    };
+
+    // ✅ Password Reset (API call)
     const forgotPassword = async () => {
       if (!email.value) {
-        error.value = 'Please enter your email address'
-        return
+        error.value = 'Please enter your email address';
+        return;
       }
       
       try {
-        isLoading.value = true
-        error.value = ''
-        await resetPassword(email.value)
-        alert('Password reset email sent! Please check your inbox.')
-      } catch (err) {
-        error.value = err.message
-      } finally {
-        isLoading.value = false
-      }
-    }
+        isLoading.value = true;
+        error.value = '';
 
-    
+        // ✅ Call Vuex action to reset password
+        await store.dispatch('resetPassword', { email: email.value });
+
+        store.dispatch('addNotification', {
+          type: 'success',
+          message: 'Password reset email sent! Please check your inbox.'
+        });
+      } catch (err) {
+        console.error('❌ Password reset error:', err);
+        error.value = err.message;
+
+        store.dispatch('addNotification', {
+          type: 'error',
+          message: err.message || 'Password reset failed'
+        });
+      } finally {
+        isLoading.value = false;
+      }
+    };
 
     return {
       email,
@@ -170,7 +201,7 @@ export default {
       handleLogin,
       handleGoogleLogin,
       forgotPassword
-    }
+    };
   }
 }
 </script>
