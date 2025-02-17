@@ -1,3 +1,5 @@
+// src/store/index.js
+
 import { createStore } from 'vuex';
 import { registerUser, loginUser, googleLogin, resetPassword } from '@/api'; // ✅ Import API functions
 import { auth, db } from '@/utils/firebase';

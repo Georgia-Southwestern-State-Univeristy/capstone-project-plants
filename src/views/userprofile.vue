@@ -220,8 +220,7 @@ export default {
 
   computed: {
     hasChanges() {
-      return this.userData.name !== this.originalData?.name || 
-             this.userData.email !== this.originalData?.email
+      return this.userData.name !== this.originalData?.name || this.userData.email !== this.originalData?.email
     }
   },
 
