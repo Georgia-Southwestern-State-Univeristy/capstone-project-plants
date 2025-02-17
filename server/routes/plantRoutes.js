@@ -5,6 +5,28 @@ import { db } from '../utils/firebaseAdmin.js';
 const router = express.Router();
 
 /**
+ * ✅ GET /plants/perenual/:plantId
+ * Fetch plant details from the Perenual API
+ */
+
+router.get('/plants/perenual/:plantId', async (req, res) => {
+    const { plantId } = req.params;
+
+    try {
+        const plant = await fetchPlantFromPerenual(plantId);
+
+        if (!plant) {
+            return res.status(404).json({ error: 'Plant not found in Perenual API' });
+        }
+
+        res.json(plant);
+    } catch (error) {
+        console.error('Error retrieving plant from Perenual API:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+/**
  * GET /users/:userId/plants - Retrieve all plants saved by a user
  */
 router.get('/users/:userId/plants', async (req, res) => {
