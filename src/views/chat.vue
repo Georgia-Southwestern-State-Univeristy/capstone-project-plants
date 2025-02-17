@@ -161,16 +161,12 @@
 <script>
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useStore } from 'vuex'
-import { analyzeImage, getPlantCareAdvice } from '../../server/services/ai'
 import { useNotifications } from '@/composables/useNotifications'
 import { auth } from '../utils/firebase'
-import { uploadImage } from '../../server/services/storage'
-import { logger } from '../../server/services/logging'
-
 
 export default {
   name: 'ChatView',
-  
+
   setup() {
     const store = useStore()
     const { showNotification } = useNotifications()
@@ -193,74 +189,90 @@ export default {
       return message
     }
 
-    // Process plant-related queries
+    // Fetch plant care advice from backend API
     const processPlantQuery = async (query) => {
       try {
-        const response = await getPlantCareAdvice(query)
-        return response.naturalResponse || response
+        const response = await fetch('/api/get-plant-care-advice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        })
+        const data = await response.json()
+        return data.naturalResponse || data
       } catch (error) {
-        logger.logError('Error processing plant query:', error)
+        console.error('Error processing plant query:', error)
         return "I'm having trouble getting that information right now. Could you try rephrasing your question?"
       }
     }
 
+    // Handle image analysis via backend API
     const handleImageAnalysis = async (file) => {
-  try {
-    isProcessing.value = true
-    
-    // Add user's image message
-    messages.value.push({
-      type: 'image',
-      content: URL.createObjectURL(file),
-      isUser: true,
-      timestamp: new Date()
-    })
+      try {
+        isProcessing.value = true
 
-    // Use the uploadImage service instead of direct Firebase calls
-    const imageUrl = await uploadImage(file)
-    
-    // Get analysis using the uploaded image URL
-    const analysis = await analyzeImage(imageUrl)
-    
-    // Add AI's response messages
-    messages.value.push({
-      type: 'text',
-      content: await simulateTyping(analysis.naturalResponse),
-      isUser: false,
-      timestamp: new Date()
-    })
+        // Add user's image message
+        messages.value.push({
+          type: 'image',
+          content: URL.createObjectURL(file),
+          isUser: true,
+          timestamp: new Date()
+        })
 
-    if (analysis.analysis.careInstructions) {
-      messages.value.push({
-        type: 'text',
-        content: await simulateTyping(
-          "Here are some care instructions: " + analysis.analysis.careInstructions
-        ),
-        isUser: false,
-        timestamp: new Date()
-      })
+        // Upload image via backend API
+        const formData = new FormData()
+        formData.append('image', file)
+
+        const uploadResponse = await fetch('/api/upload-image', {
+          method: 'POST',
+          body: formData
+        })
+        const uploadData = await uploadResponse.json()
+        const imageUrl = uploadData.imageUrl
+
+        // Get analysis using the uploaded image URL
+        const analysisResponse = await fetch('/api/analyze-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl })
+        })
+        const analysis = await analysisResponse.json()
+
+        // Add AI's response messages
+        messages.value.push({
+          type: 'text',
+          content: await simulateTyping(analysis.naturalResponse),
+          isUser: false,
+          timestamp: new Date()
+        })
+
+        if (analysis.analysis && analysis.analysis.careInstructions) {
+          messages.value.push({
+            type: 'text',
+            content: await simulateTyping("Here are some care instructions: " + analysis.analysis.careInstructions),
+            isUser: false,
+            timestamp: new Date()
+          })
+        }
+
+        // Save to store
+        store.dispatch('sendMessage', {
+          type: 'analysis',
+          content: analysis,
+          timestamp: new Date()
+        })
+
+      } catch (error) {
+        console.error('Error in image analysis:', error)
+        messages.value.push({
+          type: 'text',
+          content: "I'm sorry, I had trouble analyzing that image. Please make sure it's a clear photo of a plant.",
+          isUser: false,
+          timestamp: new Date()
+        })
+      } finally {
+        isProcessing.value = false
+      }
     }
-
-    // Save to store
-    store.dispatch('sendMessage', {
-      type: 'analysis',
-      content: analysis,
-      timestamp: new Date()
-    })
-
-  } catch (error) {
-    logger.logError('Error in image analysis:', error)
-    messages.value.push({
-      type: 'text',
-      content: "I'm sorry, I had trouble analyzing that image. Please make sure it's a clear photo of a plant.",
-      isUser: false,
-      timestamp: new Date()
-    })
-  } finally {
-    isProcessing.value = false
-  }
-}
-
 
     // Send message function
     const sendMessage = async () => {
@@ -284,7 +296,7 @@ export default {
 
           // Process query and get AI response
           const response = await processPlantQuery(userInput.value)
-          
+
           // Add AI response
           const aiMessage = {
             type: 'text',
@@ -298,7 +310,7 @@ export default {
           userInput.value = ''
         }
       } catch (error) {
-        logger.logError('Error in chat:', error)
+        console.error('Error in chat:', error)
         showNotification('An error occurred while processing your message', 'error')
       } finally {
         isProcessing.value = false
@@ -351,7 +363,7 @@ export default {
             messages.value = history
           })
           .catch((error) => {
-            logger.logError('Error loading chat history:', error)
+            console.error('Error loading chat history:', error)
           })
       }
     })
@@ -373,6 +385,7 @@ export default {
   }
 }
 </script>
+
 
 <style>
 @import '@/assets/styles/generalStyle.css';

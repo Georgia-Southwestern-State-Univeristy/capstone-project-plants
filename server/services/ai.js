@@ -8,7 +8,7 @@ import { OAuth2Client } from 'google-auth-library';
 
 // Initialize Vision AI client
 const auth = new OAuth2Client({
-  clientId: process.env.VUE_APP_GOOGLE_OAUTH_CLIENT_ID,
+  clientId: process.env.VITE_APP_GOOGLE_OAUTH_CLIENT_ID,
 });
 const visionClient = new vision.ImageAnnotatorClient({
   keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
@@ -18,7 +18,7 @@ const visionClient = new vision.ImageAnnotatorClient({
 
 // Perenual API configuration
 const PERENUAL_API_BASE = 'https://perenual.com/api';
-const PERENUAL_API_KEY = process.env.VUE_APP_PERENUAL_API_KEY;
+const PERENUAL_API_KEY = process.env.VITE_APP_PERENUAL_API_KEY;
 
 // Cache durations
 const CACHE_DURATIONS = {

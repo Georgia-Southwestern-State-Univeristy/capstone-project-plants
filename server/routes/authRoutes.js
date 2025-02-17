@@ -59,7 +59,7 @@ router.post('/google-login', async (req, res) => {
         // ✅ Verify Google token
         const ticket = await googleClient.verifyIdToken({
             idToken: id_token,
-            audience: process.env.VUE_APP_GOOGLE_OAUTH_CLIENT_ID
+            audience: process.env.VITE_APP_GOOGLE_OAUTH_CLIENT_ID
         });
 
         const payload = ticket.getPayload();

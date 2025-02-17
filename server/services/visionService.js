@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 // import { getStorage } from 'firebase-admin/storage';
 
 dotenv.config();
-process.env.GOOGLE_APPLICATION_CREDENTIALS = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+process.env.GOOGLE_APPLICATION_CREDENTIALS = process.env.VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY;
 
 const client = new vision.ImageAnnotatorClient(); // Uses GOOGLE_APPLICATION_CREDENTIALS
 

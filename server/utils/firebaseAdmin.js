@@ -9,7 +9,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+const serviceAccount = JSON.parse(process.env.VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY);
 // ✅ Initialize Firebase Admin SDK (Server Only)
 const app = initializeApp({
   credential: cert(serviceAccount),
@@ -20,7 +20,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // ✅ Google OAuth Client for verifying Google Sign-In tokens
-const googleClient = new OAuth2Client(process.env.VUE_APP_GOOGLE_OAUTH_CLIENT_ID);
+const googleClient = new OAuth2Client(process.env.VITE_APP_GOOGLE_OAUTH_CLIENT_ID);
 
 /**
  * ✅ Verify Firebase ID Token (Google Sign-In Flow)

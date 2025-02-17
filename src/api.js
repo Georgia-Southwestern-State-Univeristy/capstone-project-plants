@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VUE_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_APP_API_URL || 'http://localhost:5000/api';
 
 /**
  * Helper function to make API requests

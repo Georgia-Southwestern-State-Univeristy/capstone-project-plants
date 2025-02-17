@@ -5,9 +5,9 @@ const router = express.Router();
 
 // Initialize Redis connection
 const redis = new Redis({
-  host: process.env.VUE_APP_REDIS_HOST,
-  port: process.env.VUE_APP_REDIS_PORT,
-  password: process.env.VUE_APP_REDIS_PASSWORD
+  host: process.env.VITE_APP_REDIS_HOST,
+  port: process.env.VITE_APP_REDIS_PORT,
+  password: process.env.VITE_APP_REDIS_PASSWORD
 });
 
 // Handle Redis errors

@@ -2,7 +2,7 @@ import express from 'express';
 import OpenAI from 'openai';
 
 const router = express.Router();
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const client = new OpenAI({ apiKey: process.env.VITE_APP_OPENAI_API_KEY });
 
 // ✅ AI Chat for Plant Care
 router.post('/chat', async (req, res) => {
