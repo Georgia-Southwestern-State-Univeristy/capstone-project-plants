@@ -41,6 +41,12 @@ export default defineConfig({
   },
 
   build: {
+    rollupOptions: {
+        external: [
+            'firebase-admin', 
+            'server/utils/firebaseAdmin.js'
+        ] 
+      },
     sourcemap: false // ✅ Prevents missing source map errors
   }
 });
