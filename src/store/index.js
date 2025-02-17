@@ -1,8 +1,8 @@
 import { createStore } from 'vuex';
-import { registerUser, loginUser, googleLogin, resetPassword,sendChatMessage } from '@/api'; // ✅ Import API functions
+import { registerUser, loginUser, googleLogin, resetPassword } from '@/api'; // ✅ Import API functions
 import { auth, db } from '@/utils/firebase';
 import { signOut } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default createStore({
   state: {
@@ -153,28 +153,28 @@ export default createStore({
     },
 
     // ✅ Chat actions
-    async sendMessage({ commit, state }, message) {
-      commit('SET_LOADING', true);
-      try {
-        commit('ADD_CHAT_MESSAGE', {
-          ...message,
-          timestamp: new Date()
-        });
+    // async sendChatMessage({ commit, state }, message) {
+    //   commit('SET_LOADING', true);
+    //   try {
+    //     commit('ADD_CHAT_MESSAGE', {
+    //       ...message,
+    //       timestamp: new Date()
+    //     });
     
-        // ✅ Keep storing chat messages in Firestore
-        if (state.user) {
-          await setDoc(doc(db, `chats/${state.user.uid}/messages`, Date.now().toString()), {
-            ...message,
-            timestamp: new Date()
-          });
-        }
-      } catch (error) {
-        commit('SET_ERROR', error.message);
-        throw error;
-      } finally {
-        commit('SET_LOADING', false);
-      }
-    }
+    //     // ✅ Keep storing chat messages in Firestore
+    //     if (state.user) {
+    //       await setDoc(doc(db, `chats/${state.user.uid}/messages`, Date.now().toString()), {
+    //         ...message,
+    //         timestamp: new Date()
+    //       });
+    //     }
+    //   } catch (error) {
+    //     commit('SET_ERROR', error.message);
+    //     throw error;
+    //   } finally {
+    //     commit('SET_LOADING', false);
+    //   }
+    // }
     
   },
 
