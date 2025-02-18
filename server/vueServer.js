@@ -7,6 +7,7 @@ import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import Redis from 'ioredis';
 import routes from './routes/index.js';
+import plantRoutes from './routes/plantRoutes.js';
 
 // Initialize environment variables and Express app
 const __filename = fileURLToPath(import.meta.url);
@@ -22,7 +23,7 @@ app.use(cors()); // Enable CORS for all routes
 
 // ✅ Use API routes correctly
 app.use('/api', routes);
-
+app.use('/plants', plantRoutes);
 // ✅ Handle Vite Development Mode
 const isProduction = process.env.NODE_ENV === 'production';
 
