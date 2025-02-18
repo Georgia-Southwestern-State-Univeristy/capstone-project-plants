@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const PERENUAL_API_KEY = process.env.PERENUAL_API_KEY;
+const PERENUAL_API_KEY = process.env.VITE_APP_PERENUAL_API_KEY;
 const PERENUAL_BASE_URL = "https://perenual.com/api/species/details";
 
 /**

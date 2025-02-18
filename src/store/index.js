@@ -5,6 +5,10 @@ import { registerUser, loginUser, googleLogin, resetPassword } from '@/api'; // 
 import { auth, db } from '@/utils/firebase';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_APP_API_URL || 'http://localhost:5000/api';
+
 
 export default createStore({
   state: {
@@ -62,20 +66,21 @@ export default createStore({
     },
 
     // ✅ API-based User Login
-    async login({ commit, dispatch }, { email, password }) {
-      commit('SET_LOADING', true);
+    async login({ commit }, { email, password }) {
       try {
-        const response = await loginUser(email, password);
-        if (!response.success) throw new Error(response.error || 'Login failed');
-
-        commit('SET_USER', response.user);
-        return response.user;
+        const response = await axios.post(`${API_URL}/auth/login`, { email, password });
+  
+        if (response.data.success) {
+          console.log("✅ Vuex storing user:", response.data.user);
+          commit('SET_USER', response.data.user); // ✅ Ensure Vuex stores the user
+          commit('SET_TOKEN', response.data.token);
+          return response.data;
+        } else {
+          throw new Error(response.data.error || 'Login failed');
+        }
       } catch (error) {
-        commit('SET_ERROR', error.message);
-        dispatch('addNotification', { type: 'error', message: error.message || 'Login failed' });
+        console.error('❌ Login API error:', error);
         throw error;
-      } finally {
-        commit('SET_LOADING', false);
       }
     },
 
