@@ -4,6 +4,7 @@
       <!-- Account Icon Dropdown -->
      <!-- Replace the current account dropdown HTML with this -->
 <!-- Update the account dropdown HTML -->
+
 <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
   <div class="dropdown">
     <button 
@@ -194,6 +195,24 @@ onMounted(async () => {
     await chatStore.loadChatHistory(authStore.user.uid);
   }
 });
+
+// Add this to your component's data/refs
+const isDropdownOpen = ref(false);
+
+// Add this method
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+// Optional: Close dropdown when clicking outside
+onMounted(() => {
+  document.addEventListener('click', (event) => {
+    const dropdown = document.querySelector('.dropdown');
+    if (!dropdown.contains(event.target)) {
+      isDropdownOpen.value = false;
+    }
+  });
+});
 </script>
 
 <style scoped>
@@ -227,9 +246,12 @@ onMounted(async () => {
   position: absolute;
   right: 0;
   min-width: 160px;
+
 }
 
-
+.account-dropdown.show {
+  display: block;
+}
 
 .chat-container {
   min-height: 100vh;
