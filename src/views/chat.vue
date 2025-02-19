@@ -2,30 +2,23 @@
   <main>
     <div id="chatBackground" class="chat-container px-4 py-5">
       <!-- Account Icon Dropdown -->
-      <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
-        <div class="dropdown">
-          <button 
-            class="btn rounded-circle d-flex align-items-center justify-content-center account-button" 
-            type="button" 
-            data-bs-toggle="dropdown" 
-            aria-expanded="false"
-          >
-            <i class="bi bi-person-fill"></i>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li>
-              <router-link to="/userprofile" class="dropdown-item">
-                Account
-              </router-link>
-            </li>
-            <li>
-              <a href="#" class="dropdown-item" @click.prevent="handleSignOut">
-                Sign Out
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
+     <!-- Replace the current account dropdown HTML with this -->
+<div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
+  <div class="dropdown">
+    <button 
+      class="account-circle"
+      type="button" 
+      data-bs-toggle="dropdown" 
+      aria-expanded="false"
+    >
+      <i class="bi bi-person-fill"></i>
+    </button>
+    <ul class="account-dropdown">
+      <li><router-link to="/userprofile" class="dropdown-item">Account</router-link></li>
+      <li><a href="#" class="dropdown-item" @click.prevent="handleSignOut">Sign Out</a></li>
+    </ul>
+  </div>
+</div>
 
       <!-- Messages display area -->
       <div class="messages-area mb-4" ref="messagesContainer">
@@ -204,6 +197,34 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+
+.account-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #F5E6D3;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.account-circle i {
+  color: #341c02;
+  font-size: 1.2rem;
+}
+
+.account-dropdown {
+  background-color: #F5E6D3;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  list-style: none;
+}
+
 .chat-container {
   min-height: 100vh;
   background-color: #341c02;
@@ -229,7 +250,10 @@ onMounted(async () => {
 
 .dropdown-item {
   color: #341c02;
-  padding: 8px 16px;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  display: block;
+  font-weight: 500;
 }
 
 .dropdown-item:hover {
