@@ -150,59 +150,15 @@ const textInput = ref(null);
 const messagesContainer = ref(null);
 const userInput = ref('');
 const uploadedFile = ref(null);
-const isCameraOpen = ref(false);
-const isPhotoTaken = ref(false);
-const isShotPhoto = ref(false);
 const isLoading = ref(false);
 const cameraRef = ref(null);
 const canvasRef = ref(null);
 
- const triggerCamera = async () => {
-  if (isCameraOpen.value) {
-    isCameraOpen.value = false;
-    isPhotoTaken.value = false;
-    isShotPhoto.value = false;
-    stopCameraStream();
-  } else {
-    isCameraOpen.value = true;
-    createCameraElement();
-  }
-};
 
-triggerCamera = () => {
+const triggerCamera = () => {
   fileInput.value?.click();
 };
 
-const createCameraElement = () => {
-  isLoading.value = true;
-  
-  const constraints = {
-    audio: false,
-    video: true
-  };
-
-  navigator.mediaDevices
-    .getUserMedia(constraints)
-    .then(stream => {
-      isLoading.value = false;
-      if (cameraRef.value) {
-        cameraRef.value.srcObject = stream;
-      }
-    })
-    .catch(error => {
-      isLoading.value = false;
-      alert("The browser might not support camera access or there are some errors.");
-    });
-};
-
-const stopCameraStream = () => {
-  if (cameraRef.value && cameraRef.value.srcObject) {
-    const tracks = cameraRef.value.srcObject.getTracks();
-    tracks.forEach(track => {
-      track.stop();
-    });
-  }
-};
 
 const takePhoto = () => {
   if (!isPhotoTaken.value) {
