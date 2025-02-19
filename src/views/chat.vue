@@ -67,7 +67,7 @@
                  @change="handleFileUpload">
           
           <!-- Camera button -->
-          <div v-if="isCameraActive" class="camera-preview-container">
+         <div v-if="isCameraActive" class="camera-preview-container">
   <video 
     ref="videoPreview"
     autoplay 
@@ -451,66 +451,6 @@ onUnmounted(() => {
   padding: 0;
   display: flex;
   align-items: center;
-}
-
-.camera-preview-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #000;
-  z-index: 1100;
-  display: flex;
-  flex-direction: column;
-}
-
-.camera-preview {
-  width: 100%;
-  height: calc(100% - 80px);
-  object-fit: cover;
-}
-
-.camera-controls {
-  height: 80px;
-  background-color: #341c02;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 2rem;
-  padding: 1rem;
-}
-
-.capture-button {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background-color: #F5E6D3;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.capture-button i {
-  color: #341c02;
-  font-size: 1.5rem;
-}
-
-.close-camera {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: rgba(245, 230, 211, 0.2);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.close-camera i {
-  color: #F5E6D3;
-  font-size: 1.2rem;
 }
 
 @media (max-width: 768px) {
