@@ -155,10 +155,8 @@ const isShotPhoto = ref(false);
 const isLoading = ref(false);
 const cameraRef = ref(null);
 const canvasRef = ref(null);
-const triggerCamera= ref(null);
 
-
- triggerCamera = async () => {
+ const triggerCamera = async () => {
   if (isCameraOpen.value) {
     isCameraOpen.value = false;
     isPhotoTaken.value = false;
