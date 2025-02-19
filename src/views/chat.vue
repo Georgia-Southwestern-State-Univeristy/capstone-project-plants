@@ -1,225 +1,360 @@
-<template id="chatTemplate">
-  <body id="bodyTemplate">
-  <section class="bg-[#072d13] min-h-screen relative">
-    <!-- Requirement 1: Account Icon -->
-    <div class="fixed top-4 right-4 z-50">
-      <div class="relative">
-        <button 
-          @click="store.toggleDropdown"
-          class="w-10 h-10 rounded-full bg-[#F5E6D3] flex items-center justify-center shadow-md"
-        >
-          <i class="bi bi-person-fill text-[#072d13] text-xl"></i>
-        </button>
-        
-        <div v-if="store.isDropdownOpen" 
-             class="absolute right-0 mt-2 w-48 bg-[#F5E6D3] rounded-lg shadow-lg">
-          <div class="py-1">
-            <a href="#" class="block px-4 py-2 text-[#072d13] hover:bg-[#072d13]/10">Account</a>
-            <a href="#" class="block px-4 py-2 text-[#072d13] hover:bg-[#072d13]/10">Sign Out</a>
+<template>
+  <main>
+    <div id="chatBackground" class="chat-container px-4 py-5">
+      <!-- Account Icon Dropdown -->
+      <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
+        <div class="dropdown">
+          <button 
+            class="btn rounded-circle d-flex align-items-center justify-content-center account-button" 
+            type="button" 
+            data-bs-toggle="dropdown" 
+            aria-expanded="false"
+          >
+            <i class="bi bi-person-fill"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <router-link to="/userprofile" class="dropdown-item">
+                Account
+              </router-link>
+            </li>
+            <li>
+              <a href="#" class="dropdown-item" @click.prevent="handleSignOut">
+                Sign Out
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Messages display area -->
+      <div class="messages-area mb-4" ref="messagesContainer">
+        <div v-for="msg in chatStore.messages" 
+             :key="msg.id" 
+             class="card mb-3"
+             :class="msg.isUser ? 'ms-auto' : 'me-auto'"
+             style="max-width: 70%;">
+          <div class="card-header">
+            {{ msg.isUser ? 'You' : 'Verdure AI' }}
+          </div>
+          <div class="card-body">
+            <div v-if="msg.type === 'text'" class="message-content">
+              <p class="mb-0">{{ msg.content }}</p>
+            </div>
+            <div v-else-if="msg.type === 'image'" class="image-message">
+              <img :src="msg.content" 
+                   class="img-fluid rounded" 
+                   alt="Uploaded plant image">
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="container py-5">
-      <div class="row d-flex justify-content-center">
-        <div class="col-md-10 col-lg-8 col-xl-6">
-
-          <div class="card" id="chat2">
-            <!-- Requirement 4: Message Display Area -->
-            <div class="card-body" ref="chatBody" style="height: 400px; overflow-y: auto;">
-              <!-- Messages -->
-              <div v-for="message in store.messages" 
-                   :key="message.id" 
-                   :class="[
-                     'd-flex flex-row mb-4',
-                     message.isUser ? 'justify-content-end' : 'justify-content-start'
-                   ]">
-                <div :class="[
-                  'max-w-[70%]',
-                  message.isUser ? 'order-2' : ''
-                ]">
-                  <div class="bg-[#F5E6D3] rounded-3 p-3">
-                    <p class="text-[#072d13] font-semibold mb-2">
-                      {{ message.isUser ? 'You' : 'Verdure AI' }}
-                    </p>
-                    <div v-if="message.type === 'image'" class="mb-2">
-                      <img :src="message.content" 
-                           class="img-fluid rounded" 
-                           alt="Uploaded image">
-                    </div>
-                    <p v-else class="text-[#072d13] mb-0">{{ message.content }}</p>
-                    <p class="small text-muted mt-2 mb-0">{{ message.timestamp }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Requirement 2 & 3: Chat Input Area -->
-            <div class="card-footer bg-[#072d13] p-3">
-              <!-- File Preview -->
-              <div v-if="store.uploadedFile" 
-                   class="mb-2 bg-white/90 border border-[#072d13] rounded px-3 py-1 d-inline-flex align-items-center">
-                <span class="text-[#072d13] me-2">{{ store.uploadedFile.name }}</span>
-                <button @click="store.clearUploadedFile" 
-                        class="text-[#072d13] hover:opacity-75 border-none bg-transparent">
-                  ×
-                </button>
-              </div>
-
-              <div class="d-flex align-items-center">
-                <!-- Camera Input -->
-                <input ref="cameraInput" 
-                       type="file" 
-                       accept="image/*" 
-                       capture="environment"
-                       class="d-none" 
-                       @change="handleFileUpload">
-                
-                <!-- Camera Button -->
-                <button @click="$refs.cameraInput.click()" 
-                        class="btn me-2">
-                  <i class="bi bi-camera text-[#072d13] text-xl"></i>
-                </button>
-
-                <!-- File Input -->
-                <input ref="fileInput" 
-                       type="file" 
-                       accept="image/*" 
-                       class="d-none" 
-                       @change="handleFileUpload">
-                
-                <!-- Paperclip Button -->
-                <button @click="$refs.fileInput.click()" 
-                        class="btn bg-[#072d13] border border-white rounded me-2">
-                  <i class="bi bi-paperclip text-white"></i>
-                </button>
-
-                <!-- Text Input -->
-                <textarea ref="messageInput"
-                          v-model="messageText"
-                          class="form-control flex-grow-1"
-                          rows="1"
-                          placeholder="Type your message..."
-                          @input="adjustTextarea"></textarea>
-
-                <!-- Send Button -->
-                <button @click="sendMessage" 
-                        class="btn ms-2 transition-transform active:scale-90">
-                  <i class="bi bi-send-fill text-[#072d13] text-xl"></i>
-                </button>
-              </div>
-            </div>
+      <!-- Input area -->
+      <div class="chat-input-container">
+        <div v-if="uploadedFile" class="file-preview">
+          <div class="file-preview-content">
+            <span class="file-name">{{ uploadedFile.name }}</span>
+            <button class="remove-file" @click="removeUpload">
+              <i class="bi bi-x"></i>
+            </button>
           </div>
+        </div>
 
+        <div class="input-group">
+          <input type="file" 
+                 ref="fileInput" 
+                 class="d-none" 
+                 accept="image/*" 
+                 @change="handleFileUpload">
+          
+          <button class="camera-button" @click="triggerCamera">
+            <i class="bi bi-camera-fill"></i>
+          </button>
+
+          <button class="attach-button" @click="triggerFileUpload">
+            <i class="bi bi-paperclip"></i>
+          </button>
+
+          <textarea
+            class="form-control chat-textarea" 
+            placeholder="Ask about your plants or upload an image..." 
+            v-model="userInput"
+            @input="adjustTextarea"
+            @keyup.enter.exact="sendMessage"
+            ref="textInput"
+          ></textarea>
+
+          <button class="send-button" @click="sendMessage">
+            <i class="bi bi-send-fill"></i>
+          </button>
         </div>
       </div>
     </div>
-
-   
-    
-  </section>
-</body>
+  </main>
 </template>
 
-<script setup>
-import { ref, onMounted, watch } from 'vue'
-import { useChatStore } from '@/store/chatStore'
+<script>
+import { ref, onMounted, watch, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/user';
+import { useChatStore } from '@/stores/chat';
 
-const store = useChatStore()
-const messageText = ref('')
-const chatBody = ref(null)
-const messageInput = ref(null)
-const fileInput = ref(null)
-const cameraInput = ref(null)
+export default {
+  name: 'ChatInterface',
+  setup() {
+    const router = useRouter();
+    const userStore = useUserStore();
+    const chatStore = useChatStore();
 
-// Requirement 2: Auto-expanding textarea
-const adjustTextarea = () => {
-  const textarea = messageInput.value
-  textarea.style.height = 'auto'
-  textarea.style.height = `${textarea.scrollHeight}px`
-}
+    const fileInput = ref(null);
+    const textInput = ref(null);
+    const messagesContainer = ref(null);
+    const userInput = ref('');
+    const uploadedFile = ref(null);
 
-// Requirement 3: File handling
-const handleFileUpload = (event) => {
-  const file = event.target.files[0]
-  if (file && file.type.startsWith('image/')) {
-    store.setUploadedFile(file)
+    const adjustTextarea = () => {
+      const textarea = textInput.value;
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    };
+
+    const handleFileUpload = (event) => {
+      const file = event.target.files[0];
+      if (file && file.type.startsWith('image/')) {
+        uploadedFile.value = {
+          name: file.name,
+          file: file
+        };
+      }
+    };
+
+    const removeUpload = () => {
+      uploadedFile.value = null;
+      if (fileInput.value) {
+        fileInput.value.value = '';
+      }
+    };
+
+    const triggerFileUpload = () => {
+      fileInput.value?.click();
+    };
+
+    const handleSignOut = async () => {
+      await userStore.logout();
+      router.push('/login');
+    };
+
+    const sendMessage = async () => {
+      if (!userInput.value.trim() && !uploadedFile.value) return;
+
+      if (uploadedFile.value) {
+        await chatStore.addMessage({
+          id: Date.now(),
+          type: 'image',
+          content: URL.createObjectURL(uploadedFile.value.file),
+          isUser: true,
+          timestamp: new Date()
+        });
+        removeUpload();
+      }
+
+      if (userInput.value.trim()) {
+        await chatStore.addMessage({
+          id: Date.now(),
+          type: 'text',
+          content: userInput.value,
+          isUser: true,
+          timestamp: new Date()
+        });
+        userInput.value = '';
+        adjustTextarea();
+      }
+
+      await nextTick();
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    };
+
+    watch(() => chatStore.messages, async () => {
+      await nextTick();
+      if (messagesContainer.value) {
+        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+      }
+    }, { deep: true });
+
+    onMounted(async () => {
+      if (userStore.isAuthenticated) {
+        await chatStore.loadChatHistory(userStore.user.uid);
+      }
+    });
+
+    return {
+      fileInput,
+      textInput,
+      messagesContainer,
+      userInput,
+      uploadedFile,
+      adjustTextarea,
+      handleFileUpload,
+      removeUpload,
+      triggerFileUpload,
+      handleSignOut,
+      sendMessage
+    };
   }
-}
+};
 
-const sendMessage = () => {
-  store.sendMessage(messageText.value)
-  messageText.value = ''
-  adjustTextarea()
-}
 
-// Auto-scroll to bottom when new messages arrive
-watch(() => store.messages, () => {
-  if (chatBody.value) {
-    chatBody.value.scrollTop = chatBody.value.scrollHeight
-  }
-}, { deep: true })
 
-onMounted(() => {
-  if (chatBody.value) {
-    chatBody.value.scrollTop = chatBody.value.scrollHeight
-  }
-})
 </script>
 
 <style scoped>
-body#bodyTemplate {
-color: #341c02;
-
+.chat-container {
+  min-height: 100vh;
+  background-color: #341c02;
+  position: relative;
 }
 
-
-
-
-/* Basic chat styling from template */
-#chat2 .form-control {
-  border-color: transparent;
+.account-button {
+  width: 40px;
+  height: 40px;
+  background-color: #F5E6D3;
 }
 
-#chat2 .form-control:focus {
-  border-color: transparent;
-  box-shadow: inset 0px 0px 0px 1px transparent;
+.account-button i {
+  color: #341c02;
 }
 
-.divider:after,
-.divider:before {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: #341c02;
-}
-
-/* Requirement-specific styling */
-.card {
+.dropdown-menu {
+  background-color: #F5E6D3;
   border: none;
-  border-radius: 15px;
-  background-color: white;
+}
+
+.dropdown-item {
+  color: #341c02;
+  padding: 8px 16px;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(52, 28, 2, 0.1);
+}
+
+.messages-area {
+  height: calc(100vh - 180px);
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.card {
+  background-color: #F5E6D3;
+  border: none;
+}
+
+.card-header {
+  background-color: rgba(52, 28, 2, 0.1);
+  color: #341c02;
+  font-weight: bold;
 }
 
 .card-body {
+  color: #341c02;
+}
+
+.chat-input-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
   background-color: #341c02;
-  border-radius: 15px 15px 0 0;
 }
 
-.card-footer {
-  border-radius: 0 0 15px 15px;
+.chat-textarea {
+  resize: none;
+  min-height: 44px;
+  max-height: 200px;
+  border-radius: 8px;
+  padding: 0.75rem;
 }
 
-/* Message animations */
-.message-enter-active,
-.message-leave-active {
-  transition: all 0.3s ease;
+.camera-button,
+.attach-button,
+.send-button {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.message-enter-from,
-.message-leave-to {
-  opacity: 0;
-  transform: translateY(20px);
+.camera-button {
+  background-color: #341c02;
+  color: #F5E6D3;
+}
+
+.attach-button {
+  background-color: #341c02;
+}
+
+.attach-button i {
+  color: white;
+}
+
+.send-button {
+  background-color: #341c02;
+  transform: scale(1);
+  transition: transform 0.2s;
+}
+
+.send-button:active {
+  transform: scale(0.9);
+}
+
+.send-button i {
+  color: #F5E6D3;
+}
+
+.file-preview {
+  position: absolute;
+  bottom: 100%;
+  left: 58px;
+  background-color: rgba(245, 230, 211, 0.9);
+  border: 1px solid #341c02;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 0.5rem;
+}
+
+.file-preview-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-name {
+  color: #341c02;
+}
+
+.remove-file {
+  background: none;
+  border: none;
+  color: #341c02;
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .messages-area {
+    height: calc(100vh - 150px);
+  }
+  
+  .card {
+    max-width: 85%;
+  }
+  
+  .chat-textarea {
+    font-size: 16px;
+  }
 }
 </style>
