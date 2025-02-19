@@ -195,109 +195,153 @@
 </template>
 
 <script>
+import { ref, computed, watchEffect } from 'vue';
+import { useAuthStore } from '@/store/authStore';
+import { storeToRefs } from 'pinia';
+import { db, auth } from '@/utils/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { updatePassword } from 'firebase/auth';
+
 export default {
   name: 'UserProfile',
-  
-  data() {
+
+  setup() {
+    const authStore = useAuthStore();
+    const { user } = storeToRefs(authStore); // ✅ Get reactive user data from Pinia
+    const profileImage = ref(null);
+    const userData = ref({
+      name: '',
+      email: '',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+
+    const isEditing = ref({
+      name: false,
+      password: false
+    });
+
+    const showPassword = ref(false);
+    const originalData = ref(null);
+
+    // ✅ Load user profile from Firestore
+    const loadUserProfile = async () => {
+      if (!user.value) return;
+
+      try {
+        const userDocRef = doc(db, 'users', user.value.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const userDataFromDB = userDocSnap.data();
+          userData.value.name = userDataFromDB.name || '';
+          userData.value.email = user.value.email;
+          profileImage.value = userDataFromDB.profileImage || null;
+          originalData.value = { ...userData.value };
+        } else {
+          console.warn('User profile not found in Firestore.');
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+
+    // ✅ Watch for user changes and load profile
+    watchEffect(() => {
+      if (user.value) {
+        loadUserProfile();
+      }
+    });
+
+    const hasChanges = computed(() => {
+      return userData.value.name !== originalData.value?.name;
+    });
+
+    // ✅ Save changes (Name, Profile Image)
+    const saveChanges = async () => {
+      if (!user.value) return;
+
+      try {
+        const userDocRef = doc(db, 'users', user.value.uid);
+        await updateDoc(userDocRef, { name: userData.value.name });
+
+        alert('Profile updated successfully!');
+        originalData.value = { ...userData.value };
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        alert('Error updating profile');
+      }
+    };
+
+    // ✅ Handle Profile Image Upload
+    const handleImageUpload = async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        profileImage.value = e.target.result;
+
+        try {
+          const userDocRef = doc(db, 'users', user.value.uid);
+          await updateDoc(userDocRef, { profileImage: profileImage.value });
+
+          alert('Profile picture updated successfully!');
+        } catch (error) {
+          console.error('Error updating profile image:', error);
+          alert('Error updating profile picture');
+        }
+      };
+
+      reader.readAsDataURL(file);
+    };
+
+    // ✅ Save Password Change
+    const savePasswordChange = async () => {
+      if (userData.value.newPassword !== userData.value.confirmPassword) {
+        alert('New passwords do not match');
+        return;
+      }
+
+      try {
+        const userAuth = auth.currentUser;
+        if (!userAuth) throw new Error('User not logged in');
+
+        await updatePassword(userAuth, userData.value.newPassword);
+        alert('Password updated successfully!');
+
+        cancelPasswordChange();
+      } catch (error) {
+        console.error('Error changing password:', error);
+        alert('Error changing password');
+      }
+    };
+
+    const cancelPasswordChange = () => {
+      userData.value.currentPassword = '';
+      userData.value.newPassword = '';
+      userData.value.confirmPassword = '';
+      isEditing.value.password = false;
+      showPassword.value = false;
+    };
+
     return {
-      userData: {
-        name: 'John Doe',
-        email: 'john@example.com',
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      },
-      originalData: null,
-      isEditing: {
-        name: false,
-        email: false,
-        password: false
-      },
-      showPassword: false,
-      profileImage: null
-    }
-  },
-
-  computed: {
-    hasChanges() {
-      return this.userData.name !== this.originalData?.name || this.userData.email !== this.originalData?.email
-    }
-  },
-
-  created() {
-    // Store original data
-    this.originalData = { ...this.userData }
-  },
-
-  methods: {
-    toggleEdit(field) {
-      if (field === 'password') {
-        this.isEditing.password = !this.isEditing.password
-        if (!this.isEditing.password) {
-          this.cancelPasswordChange()
-        }
-      } else {
-        this.isEditing[field] = !this.isEditing[field]
-        if (!this.isEditing[field] && this.hasChanges) {
-          this.saveChanges()
-        }
-      }
-    },
-
-    handleImageUpload(event) {
-      const file = event.target.files[0]
-      if (file) {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          this.profileImage = e.target.result
-        }
-        reader.readAsDataURL(file)
-      }
-    },
-
-    async saveChanges() {
-      try {
-        // Implement save logic here
-        console.log('Saving changes:', {
-          name: this.userData.name,
-          email: this.userData.email
-        })
-        
-        this.originalData = { ...this.userData }
-        alert('Changes saved successfully!')
-      } catch (error) {
-        console.error('Error saving changes:', error)
-        alert('Error saving changes')
-      }
-    },
-
-    async savePasswordChange() {
-      if (this.userData.newPassword !== this.userData.confirmPassword) {
-        alert('New passwords do not match')
-        return
-      }
-
-      try {
-        // Implement password change logic here
-        console.log('Changing password')
-        this.cancelPasswordChange()
-        alert('Password updated successfully!')
-      } catch (error) {
-        console.error('Error changing password:', error)
-        alert('Error changing password')
-      }
-    },
-
-    cancelPasswordChange() {
-      this.userData.currentPassword = ''
-      this.userData.newPassword = ''
-      this.userData.confirmPassword = ''
-      this.isEditing.password = false
-      this.showPassword = false
-    }
+      user,
+      userData,
+      profileImage,
+      isEditing,
+      showPassword,
+      hasChanges,
+      saveChanges,
+      handleImageUpload,
+      savePasswordChange,
+      cancelPasswordChange
+    };
   }
-}
+};
 </script>
+
 
 <style scoped>
 .btn-primary:hover {

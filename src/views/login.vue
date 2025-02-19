@@ -100,18 +100,19 @@
 </template>
 
 <script>
-import { ref, watchEffect } from 'vue';
+import { ref, nextTick, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/store/authStore';  // ✅ Import Pinia store
+import { useNotificationStore } from '@/store/notificationStore';  // ✅ Import correct store
 
 export default {
   name: 'LoginPage',
   setup() {
     const router = useRouter();
     const authStore = useAuthStore();  // ✅ Use Pinia store
+    const notificationStore = useNotificationStore();  // ✅ Use notification store
     const { user } = storeToRefs(authStore);  // ✅ Keep user state reactive
-
     const email = ref('');
     const password = ref('');
     const error = ref('');
@@ -127,32 +128,38 @@ export default {
 
     // ✅ API-based Login (Pinia action)
     const handleLogin = async () => {
-      try {
-        isLoading.value = true;
-        error.value = '';
+  try {
+    isLoading.value = true;
+    error.value = '';
 
-        // ✅ Log in via Pinia action
-        const response = await authStore.login(email.value, password.value);
+    // ✅ Log in via Pinia action
+    await authStore.login(email.value, password.value);
 
-        console.log("✅ Login successful:", response);
+    console.log("✅ Login successful:", authStore.user);
 
-        // ✅ Redirect on successful login
-        if (user.value) {
-          console.log("➡️ Redirecting to /userprofile...");
-          router.push('/userprofile');
-        }
-      } catch (err) {
-        console.error('❌ Login error:', err);
-        error.value = err.response?.data?.error || 'Login failed';
+    // ✅ Wait for Vue to update user state
+    await nextTick();
 
-        authStore.addNotification({
-          type: 'error',
-          message: error.value
-        });
-      } finally {
-        isLoading.value = false;
-      }
-    };
+    if (authStore.user) {
+      console.log("➡️ Redirecting to /userprofile...");
+      router.push('/userprofile');
+    } else {
+      console.error("❌ User object not set in store after login!");
+    }
+  } catch (err) {
+    console.error('❌ Login error:', err);
+    error.value = err.response?.data?.error || 'Login failed';
+
+    // ✅ Use `notificationStore.addNotification()`, not `authStore`
+    notificationStore.addNotification({
+      type: 'error',
+      message: error.value
+    });
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 
     return {
       email,
@@ -164,6 +171,7 @@ export default {
   }
 };
 </script>
+
 
 
 

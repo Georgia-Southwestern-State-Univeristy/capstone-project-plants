@@ -6,6 +6,7 @@ import landing from '@/views/landing.vue'
 import login from '@/views/login.vue'
 import register from '@/views/register.vue'
 import chat from '@/views/chat.vue'
+import { useAuthStore } from '@/store/authStore';  
 
 const routes = [
   { path: '/', name: 'Landing', component: landing },
@@ -33,18 +34,27 @@ function getUser() {
 }
 
 router.beforeEach(async (to, from, next) => {
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  const requiresGuest = to.matched.some(record => record.meta.requiresGuest)
+  const authStore = useAuthStore();
 
-  const user = await getUser(); // ✅ Ensure Firebase Auth is ready before navigating
+  if (!authStore.isAuthenticated) {
+    console.log("⏳ Waiting for authentication...");
+    await authStore.fetchUserProfile(); // ✅ Waits for authentication before checking profile
+  }
 
-  if (requiresAuth && !user) {
-    next('/login'); // ✅ Redirect to login if user is not authenticated
-  } else if (requiresGuest && user) {
-    next('/chat'); // ✅ Redirect logged-in users away from login/register
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const requiresGuest = to.matched.some(record => record.meta.requiresGuest);
+
+  if (requiresAuth && !authStore.isAuthenticated) {
+    console.warn("🚫 Not authenticated, redirecting to login.");
+    next('/login');
+  } else if (requiresGuest && authStore.isAuthenticated) {
+    next('/chat');
   } else {
-    next(); // ✅ Allow navigation
+    next();
   }
 });
+
+
+
 
 export default router;

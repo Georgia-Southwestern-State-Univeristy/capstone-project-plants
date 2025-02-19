@@ -38,11 +38,13 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    
     async login(email, password) {
       try {
         const response = await axios.post(`${API_URL}/auth/login`, { email, password });
+  
         if (response.data.success) {
-          this.user = response.data.user;
+          this.user = response.data.user; // ✅ Set user state
           return response.data;
         } else {
           throw new Error(response.data.error || 'Login failed');
@@ -51,7 +53,8 @@ export const useAuthStore = defineStore('auth', {
         throw error;
       }
     },
-
+    
+    
     async googleLogin() {
       const notificationStore = useNotificationStore();
       this.loading = true;
@@ -100,23 +103,37 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async fetchUserProfile(userId) {
+    async fetchUserProfile() {
       try {
+        // ✅ Wait for Firebase to confirm authentication state
+        const user = await new Promise((resolve) => {
+          const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+            unsubscribe(); // Stop listening after getting the user
+            resolve(firebaseUser);
+          });
+        });
+    
+        if (!user) {
+          console.warn('User not authenticated, redirecting to login.');
+          return null;
+        }
+    
+        const userId = user.uid; // ✅ Now we are sure `user.uid` exists
         const docRef = doc(db, 'users', userId);
         const docSnap = await getDoc(docRef);
-
+    
         if (docSnap.exists()) {
-          this.user = { ...this.user, profile: docSnap.data() };
+          this.user = { uid: userId, ...docSnap.data() };
           return docSnap.data();
         } else {
-          console.log('No such document!');
+          console.warn('User profile not found in Firestore.');
           return null;
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
         throw error;
       }
-    },
+    }
   },
 
   getters: {
