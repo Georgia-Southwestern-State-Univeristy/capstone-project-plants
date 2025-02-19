@@ -1,6 +1,5 @@
 
 
-# chat.vue
 <template>
   <main>
     <div id="chatBackground" class="chat-container px-4 py-5">
@@ -32,8 +31,8 @@
 
       <!-- Messages display area -->
       <div class="messages-area mb-4" ref="messagesContainer">
-        <div v-for="(msg, index) in messages" 
-             :key="index" 
+        <div v-for="msg in chatStore.messages" 
+             :key="msg.id" 
              class="card mb-3"
              :class="msg.isUser ? 'ms-auto' : 'me-auto'"
              style="max-width: 70%;">
@@ -111,6 +110,106 @@
   </main>
 </template>
 
+<script setup>
+import { ref, onMounted, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import { useChatStore } from '@/stores/chat'
+
+const router = useRouter()
+const userStore = useUserStore()
+const chatStore = useChatStore()
+
+const fileInput = ref(null)
+const textInput = ref(null)
+const messagesContainer = ref(null)
+const userInput = ref('')
+const uploadedFile = ref(null)
+
+const adjustTextarea = () => {
+  const textarea = textInput.value
+  textarea.style.height = 'auto'
+  textarea.style.height = textarea.scrollHeight + 'px'
+}
+
+const handleFileUpload = (event) => {
+  const file = event.target.files[0]
+  if (file && file.type.startsWith('image/')) {
+    uploadedFile.value = {
+      name: file.name,
+      file: file
+    }
+  }
+}
+
+const removeUpload = () => {
+  uploadedFile.value = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
+const triggerFileUpload = () => {
+  fileInput.value?.click()
+}
+
+const sendMessage = async () => {
+  if (!userInput.value.trim() && !uploadedFile.value) return
+
+  if (uploadedFile.value) {
+    await chatStore.addMessage({
+      id: Date.now(),
+      type: 'image',
+      content: URL.createObjectURL(uploadedFile.value.file),
+      isUser: true,
+      timestamp: new Date()
+    })
+    removeUpload()
+  }
+
+  if (userInput.value.trim()) {
+    await chatStore.addMessage({
+      id: Date.now(),
+      type: 'text',
+      content: userInput.value,
+      isUser: true,
+      timestamp: new Date()
+    })
+    userInput.value = ''
+    adjustTextarea()
+  }
+
+  // Scroll to bottom after new message
+  await nextTick()
+  messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+}
+
+const handleSignOut = async () => {
+  await userStore.logout()
+  router.push('/login')
+}
+
+// Auto-scroll to bottom when new messages arrive
+watch(() => chatStore.messages, async () => {
+  await nextTick()
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  }
+}, { deep: true })
+
+// Load chat history on mount
+onMounted(async () => {
+  if (userStore.isAuthenticated) {
+    await chatStore.loadChatHistory(userStore.user.uid)
+  }
+})
+</script>
+
+<style>
+@import '@/assets/styles/generalStyle.css';
+
+</style>
+
 <style scoped>
 main {
   min-height: 100vh;
@@ -119,7 +218,6 @@ main {
   overflow-x: hidden;
 }
 
-/* Account button styling */
 .account-button {
   width: 40px;
   height: 40px;
@@ -145,7 +243,6 @@ main {
   background-color: rgba(52, 28, 2, 0.1);
 }
 
-/* Messages area styling */
 .messages-area {
   height: calc(100vh - 180px);
   overflow-y: auto;
@@ -167,7 +264,6 @@ main {
   color: #341c02;
 }
 
-/* Chat input styling */
 .chat-input-container {
   position: fixed;
   bottom: 0;
@@ -211,7 +307,6 @@ main {
   font-size: 1.25rem;
 }
 
-/* File preview styling */
 .file-preview {
   position: absolute;
   bottom: 100%;
@@ -241,7 +336,6 @@ main {
   align-items: center;
 }
 
-/* Decorative flowers */
 .decorative-elements {
   position: fixed;
   bottom: 0;
@@ -267,7 +361,6 @@ main {
   transform: scaleX(-1);
 }
 
-/* Responsive styles */
 @media (max-width: 768px) {
   .decorative-flower {
     display: none;
@@ -289,261 +382,6 @@ main {
   
   .card {
     max-width: 85%;
-  }
-}
-</style>
-
-<script>
-import { ref, onMounted, watch, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
-import { useStore } from 'vuex'
-
-export default {
-  name: 'ChatView',
-  
-  setup() {
-    const router = useRouter()
-    const store = useStore()
-    const fileInput = ref(null)
-    const textInput = ref(null)
-    const messagesContainer = ref(null)
-    const messages = ref([])
-    const userInput = ref('')
-    const uploadedFile = ref(null)
-
-    const adjustTextarea = () => {
-      const textarea = textInput.value
-      textarea.style.height = 'auto'
-      textarea.style.height = textarea.scrollHeight + 'px'
-    }
-
-    const handleFileUpload = (event) => {
-      const file = event.target.files[0]
-      if (file && file.type.startsWith('image/')) {
-        uploadedFile.value = {
-          name: file.name,
-          file: file
-        }
-      }
-    }
-
-    const removeUpload = () => {
-      uploadedFile.value = null
-      if (fileInput.value) {
-        fileInput.value.value = ''
-      }
-    }
-
-    const triggerFileUpload = () => {
-      fileInput.value?.click()
-    }
-
-    const sendMessage = async () => {
-      if (!userInput.value.trim() && !uploadedFile.value) return
-
-      if (uploadedFile.value) {
-        messages.value.push({
-          type: 'image',
-          content: URL.createObjectURL(uploadedFile.value.file),
-          isUser: true
-        })
-        removeUpload()
-      }
-
-      if (userInput.value.trim()) {
-        messages.value.push({
-          type: 'text',
-          content: userInput.value,
-          isUser: true
-        })
-        userInput.value = ''
-        adjustTextarea()
-      }
-
-      // Scroll to bottom after new message
-      await nextTick()
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-    }
-
-    const handleSignOut = async () => {
-      await store.dispatch('logout')
-      router.push('/login')
-    }
-
-    // Auto-scroll to bottom when new messages arrive
-    watch(messages, async () => {
-      await nextTick()
-      if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-      }
-    })
-
-    return {
-      messages,
-      userInput,
-      uploadedFile,
-      fileInput,
-      textInput,
-      messagesContainer,
-      adjustTextarea,
-      handleFileUpload,
-      removeUpload,
-      triggerFileUpload,
-      sendMessage,
-      handleSignOut
-    }
-  }
-}
-</script>
-
-
-<style>
-@import '@/assets/styles/generalStyle.css';
-
-</style>
-
-
-<style scoped>
-
-main {
-  min-height: 100vh;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  background-color: #341c02;  /* Your brown color */
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
-
-.dropdown-item {
-  color: #072d13;
-  padding: 8px 16px;
-}
-
-.dropdown-item:hover {
-  background-color: rgba(7, 45, 19, 0.1);
-}
-
-.dropdown-menu {
-  min-width: 200px;
-  padding: 8px 0;
-  margin-top: 8px;
-  border: none;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.dropdown-divider {
-  border-top-color: #072d13;
-  opacity: 0.1;
-}
-
-
-body#chatBackground {
-    background-color: #341c02;
-
- }
-
-/* Claude AI textarea CSS */
- textarea#textBox {
-  width: 100%;
-  max-width: 800px;
-  min-height: 120px;
-  padding: 1rem 4rem 1rem 1rem;
-  margin: 0 auto;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  font-size: clamp(14px, 2vw, 16px);
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  position: fixed;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  
-  
-}
-
-/* Claude AI textarea CSS */
-.chat-textarea:focus {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  border-color: #341c02;
-  outline: none;
-}
-
-/* Claude AI textarea media queries */
-@media (max-width: 768px) {
-  .chat-textarea {
-      min-height: 100px;
-      padding: 0.75rem;
-  }
-}
-
-
-
-
-/* Claude AI flower class class */
-.decorative-elements {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.decorative-flower {
-  position: absolute;
-  bottom: clamp(10px, 3vw, 20px);
-  width: clamp(120px, 20vw, 220px);
-  height: auto;
-  opacity: 0.8;
-  transition: opacity 0.3s ease;
-}
-
-.decorative-flower--left {
-  left: clamp(10px, 3vw, 20px);
-}
-
-.decorative-flower--right {
-  right: clamp(10px, 3vw, 20px);
-  transform: scaleX(-1);
-}
-
-@media (max-width: 640px) {
-  .decorative-flower {
-      opacity: 0.5;
-      width: clamp(80px, 15vw, 120px);
-  }
-}
-
-@media (max-height: 600px) {
-  .decorative-flower {
-      display: none;
-  }
-}
-
-
-/* Handle foldable devices */
-@media (max-width: 320px) {
-  .chat-container {
-      padding: 0.5rem;
-  }
-  
-  .chat-label {
-      font-size: 14px;
-  }
-}
-
-/* Ultra-wide screen support */
-@media (min-width: 2000px) {
-  .chat-container {
-      max-width: 1800px;
-      margin: 0 auto;
   }
 }
 
