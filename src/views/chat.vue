@@ -256,10 +256,10 @@ const triggerFileUpload = () => {
   fileInput.value?.click();
 };
 
-triggerCamera = () => {
+function triggerCamera() {
   // Implement camera functionality
   console.log('Camera functionality to be implemented');
-};
+}
 
 const handleSignOut = async () => {
   await authStore.logout();
