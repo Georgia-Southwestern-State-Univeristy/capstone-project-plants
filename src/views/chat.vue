@@ -1,111 +1,128 @@
 
 
 <template>
-  <main>
-    <div id="chatBackground" class="chat-container px-4 py-5">
-      <!-- Account Icon Dropdown -->
-      <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
-        <div class="dropdown">
-          <button 
-            class="btn rounded-circle d-flex align-items-center justify-content-center account-button" 
-            type="button" 
-            data-bs-toggle="dropdown" 
-            aria-expanded="false"
-          >
-            <i class="bi bi-person-fill"></i>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li>
-              <router-link to="/userprofile" class="dropdown-item">
-                Account
-              </router-link>
-            </li>
-            <li>
-              <a href="#" class="dropdown-item" @click.prevent="handleSignOut">
-                Sign Out
-              </a>
-            </li>
-          </ul>
-        </div>
+  <main class="h-screen bg-[#341c02] relative overflow-x-hidden">
+    <!-- Account Icon Dropdown -->
+    <div class="fixed top-4 right-4 z-50">
+      <div class="dropdown">
+        <button 
+          class="w-10 h-10 rounded-full bg-[#F5E6D3] flex items-center justify-center"
+          type="button" 
+          data-bs-toggle="dropdown" 
+          aria-expanded="false"
+        >
+          <i class="bi bi-person-fill text-[#341c02]"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end bg-[#F5E6D3] border-none shadow-lg">
+          <li>
+            <router-link to="/userprofile" class="dropdown-item text-[#341c02] px-4 py-2 hover:bg-opacity-10 hover:bg-[#341c02]">
+              Account
+            </router-link>
+          </li>
+          <li>
+            <a @click.prevent="handleSignOut" href="#" class="dropdown-item text-[#341c02] px-4 py-2 hover:bg-opacity-10 hover:bg-[#341c02]">
+              Sign Out
+            </a>
+          </li>
+        </ul>
       </div>
+    </div>
 
-      <!-- Messages display area -->
-      <div class="messages-area mb-4" ref="messagesContainer">
-        <div v-for="msg in chatStore.messages" 
-             :key="msg.id" 
-             class="card mb-3"
-             :class="msg.isUser ? 'ms-auto' : 'me-auto'"
-             style="max-width: 70%;">
-          <div class="card-header">
-            {{ msg.isUser ? 'You' : 'Verdure AI' }}
+    <!-- Messages Area -->
+    <div ref="messagesContainer" class="messages-area h-[calc(100vh-180px)] overflow-y-auto p-4 bg-[#341c02]">
+      <div 
+        v-for="message in chatStore.messages" 
+        :key="message.id" 
+        class="mb-3"
+        :class="message.isUser ? 'ml-auto' : 'mr-auto'"
+        style="max-width: 70%;"
+      >
+        <div class="card bg-[#F5E6D3] border-0">
+          <div class="card-header bg-opacity-10 bg-[#341c02] text-[#341c02] font-bold">
+            {{ message.isUser ? 'You' : 'Verdure AI' }}
           </div>
-          <div class="card-body">
-            <!-- Text message -->
-            <div v-if="msg.type === 'text'" class="message-content">
-              <p class="mb-0">{{ msg.content }}</p>
-            </div>
-
+          <div class="card-body text-[#341c02]">
             <!-- Image message -->
-            <div v-else-if="msg.type === 'image'" class="image-message">
-              <img :src="msg.content" 
-                   class="img-fluid rounded" 
-                   alt="Uploaded plant image">
+            <div v-if="message.type === 'image'" class="mb-2">
+              <img 
+                :src="message.content" 
+                class="img-fluid rounded" 
+                alt="Uploaded image"
+              >
+            </div>
+            <!-- Text message -->
+            <div v-if="message.type === 'text'" class="message-content">
+              <p class="mb-0">{{ message.content }}</p>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Input area fixed at bottom -->
-      <div class="chat-input-container">
-        <!-- File preview if exists -->
-        <div v-if="uploadedFile" class="file-preview">
-          <div class="file-preview-content">
-            <span class="file-name">{{ uploadedFile.name }}</span>
-            <button class="remove-file" @click="removeUpload">
-              <i class="bi bi-x"></i>
-            </button>
-          </div>
-        </div>
-
-        <div class="input-group">
-          <!-- Hidden file input -->
-          <input type="file" 
-                 ref="fileInput" 
-                 class="d-none" 
-                 accept="image/*" 
-                 @change="handleFileUpload">
-          
-          <!-- Image upload button -->
-          <button class="attach-button" @click="triggerFileUpload">
-            <i class="bi bi-paperclip"></i>
-          </button>
-
-          <!-- Text input -->
-          <textarea
-            class="form-control chat-textarea" 
-            placeholder="Ask about your plants or upload an image..." 
-            v-model="userInput"
-            @input="adjustTextarea"
-            @keyup.enter.exact="sendMessage"
-            ref="textInput"
-          ></textarea>
-
-          <!-- Send button -->
-          <button class="send-button" @click="sendMessage">
-            <i class="bi bi-send-fill"></i>
-          </button>
         </div>
       </div>
     </div>
 
-    <!-- Decorative flowers -->
-    <div class="decorative-elements">
-      <img src="@/assets/chatFlowers.png" 
-           class="decorative-flower decorative-flower--left" 
-           alt="Decorative flower">
-      <img src="@/assets/chatFlowers.png" 
-           class="decorative-flower decorative-flower--right" 
-           alt="Decorative flower">
+    <!-- Input Area -->
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-[#341c02]">
+      <!-- File Preview -->
+      <div v-if="uploadedFile" class="file-preview absolute bottom-full left-14 bg-[#F5E6D3] bg-opacity-90 rounded px-3 py-1 mb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-[#341c02]">{{ uploadedFile.name }}</span>
+          <button @click="removeUpload" class="text-[#341c02] hover:opacity-75">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="input-group max-w-3xl mx-auto flex items-end gap-2">
+        <!-- Camera Button -->
+        <button @click="openCamera" class="w-11 h-11 rounded-lg bg-[#341c02] flex items-center justify-center">
+          <i class="bi bi-camera text-white text-xl"></i>
+        </button>
+
+        <!-- Hidden file input -->
+        <input 
+          type="file" 
+          ref="fileInput" 
+          class="hidden" 
+          accept="image/*" 
+          @change="handleFileUpload"
+        >
+        
+        <!-- Attachment Button -->
+        <button @click="triggerFileUpload" class="w-11 h-11 rounded-lg bg-[#341c02] flex items-center justify-center">
+          <i class="bi bi-paperclip text-white text-xl"></i>
+        </button>
+
+        <!-- Text Input -->
+        <textarea
+          class="form-control resize-none min-h-[44px] max-h-[200px] rounded-lg py-3 px-4 bg-white text-[#341c02]"
+          placeholder="Ask about your plants or upload an image..."
+          v-model="userInput"
+          @input="adjustTextarea"
+          @keyup.enter.exact="sendMessage"
+          ref="textInput"
+        ></textarea>
+
+        <!-- Send Button -->
+        <button 
+          @click="sendMessage" 
+          class="w-11 h-11 rounded-lg bg-[#341c02] flex items-center justify-center transform active:scale-90 transition-transform"
+        >
+          <i class="bi bi-send-fill text-white text-xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Decorative Flowers -->
+    <div class="fixed bottom-0 left-0 right-0 pointer-events-none">
+      <img 
+        src="@/assets/chatFlowers.png" 
+        class="absolute bottom-8 left-8 w-48 h-auto opacity-80 md:block hidden"
+        alt="Left decorative flower"
+      >
+      <img 
+        src="@/assets/chatFlowers.png" 
+        class="absolute bottom-8 right-8 w-48 h-auto opacity-80 transform scale-x-[-1] md:block hidden"
+        alt="Right decorative flower"
+      >
     </div>
   </main>
 </template>
@@ -113,12 +130,12 @@
 <script setup>
 import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
 import { useChatStore } from '@/stores/chat'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const userStore = useUserStore()
 const chatStore = useChatStore()
+const authStore = useAuthStore()
 
 const fileInput = ref(null)
 const textInput = ref(null)
@@ -126,12 +143,14 @@ const messagesContainer = ref(null)
 const userInput = ref('')
 const uploadedFile = ref(null)
 
+// Adjust textarea height based on content
 const adjustTextarea = () => {
   const textarea = textInput.value
   textarea.style.height = 'auto'
-  textarea.style.height = textarea.scrollHeight + 'px'
+  textarea.style.height = `${textarea.scrollHeight}px`
 }
 
+// Handle file upload
 const handleFileUpload = (event) => {
   const file = event.target.files[0]
   if (file && file.type.startsWith('image/')) {
@@ -142,6 +161,7 @@ const handleFileUpload = (event) => {
   }
 }
 
+// Remove uploaded file
 const removeUpload = () => {
   uploadedFile.value = null
   if (fileInput.value) {
@@ -149,16 +169,31 @@ const removeUpload = () => {
   }
 }
 
+// Trigger file input click
 const triggerFileUpload = () => {
   fileInput.value?.click()
 }
 
+// Open camera
+const openCamera = () => {
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        // Handle camera stream
+        // Add your camera handling logic here
+      })
+      .catch(err => {
+        console.error('Camera error:', err)
+      })
+  }
+}
+
+// Send message
 const sendMessage = async () => {
   if (!userInput.value.trim() && !uploadedFile.value) return
 
   if (uploadedFile.value) {
-    await chatStore.addMessage({
-      id: Date.now(),
+    await chatStore.sendMessage({
       type: 'image',
       content: URL.createObjectURL(uploadedFile.value.file),
       isUser: true,
@@ -168,8 +203,7 @@ const sendMessage = async () => {
   }
 
   if (userInput.value.trim()) {
-    await chatStore.addMessage({
-      id: Date.now(),
+    await chatStore.sendMessage({
       type: 'text',
       content: userInput.value,
       isUser: true,
@@ -184,8 +218,9 @@ const sendMessage = async () => {
   messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
 }
 
+// Handle sign out
 const handleSignOut = async () => {
-  await userStore.logout()
+  await authStore.logout()
   router.push('/login')
 }
 
@@ -199,8 +234,8 @@ watch(() => chatStore.messages, async () => {
 
 // Load chat history on mount
 onMounted(async () => {
-  if (userStore.isAuthenticated) {
-    await chatStore.loadChatHistory(userStore.user.uid)
+  if (authStore.isAuthenticated) {
+    await chatStore.loadChatHistory(authStore.user.uid)
   }
 })
 </script>
@@ -211,6 +246,10 @@ onMounted(async () => {
 </style>
 
 <style scoped>
+
+
+
+
 main {
   min-height: 100vh;
   background-color: #341c02;
@@ -375,7 +414,7 @@ main {
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 768px) {
   .messages-area {
     height: calc(100vh - 150px);
   }
