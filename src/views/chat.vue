@@ -192,7 +192,7 @@ color: #341c02;
   content: "";
   flex: 1;
   height: 1px;
-  background: #eee;
+  background: #341c02;
 }
 
 /* Requirement-specific styling */
@@ -203,7 +203,7 @@ color: #341c02;
 }
 
 .card-body {
-  background-color: white;
+  background-color: #341c02;
   border-radius: 15px 15px 0 0;
 }
 
