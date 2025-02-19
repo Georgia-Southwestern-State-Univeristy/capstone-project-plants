@@ -216,7 +216,7 @@ onMounted(async () => {
 }
 
 .account-dropdown {
-   background-color: #F5E6D3;
+  background-color: #F5E6D3;
   border: none;
   border-radius: 8px;
   padding: 0.5rem 0;
@@ -228,6 +228,8 @@ onMounted(async () => {
   right: 0;
   min-width: 160px;
 }
+
+
 
 .chat-container {
   min-height: 100vh;
