@@ -67,9 +67,22 @@
                  @change="handleFileUpload">
           
           <!-- Camera button -->
-          <button class="camera-button" @click="triggerCamera">
-            <i class="bi bi-camera-fill"></i>
-          </button>
+          <div v-if="isCameraActive" class="camera-preview-container">
+  <video 
+    ref="videoPreview"
+    autoplay 
+    playsinline
+    class="camera-preview"
+  ></video>
+  <div class="camera-controls">
+    <button class="capture-button" @click="captureImage">
+      <i class="bi bi-camera-fill"></i>
+    </button>
+    <button class="close-camera" @click="triggerCamera">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+</div>
 
           <!-- Image upload button -->
           <button class="attach-button" @click="triggerFileUpload">
@@ -111,6 +124,9 @@ const textInput = ref(null);
 const messagesContainer = ref(null);
 const userInput = ref('');
 const uploadedFile = ref(null);
+const videoStream = ref(null);
+const isCameraActive = ref(false);
+
 
 const adjustTextarea = () => {
   const textarea = textInput.value;
@@ -139,7 +155,7 @@ const triggerFileUpload = () => {
   fileInput.value?.click();
 };
 
-const triggerCamera = () => {
+triggerCamera = () => {
   // Implement camera functionality
   console.log('Camera functionality to be implemented');
 };
@@ -212,6 +228,43 @@ onMounted(() => {
     }
   });
 });
+
+// Modified camera trigger for localhost
+const triggerCamera = async () => {
+  try {
+    if (!isCameraActive.value) {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: true // Simplified video constraints for localhost
+      });
+      
+      const video = document.querySelector('video');
+      if (video) {
+        video.srcObject = stream;
+      }
+      videoStream.value = stream;
+      isCameraActive.value = true;
+    } else {
+      // Stop camera stream
+      if (videoStream.value) {
+        videoStream.value.getTracks().forEach(track => track.stop());
+      }
+      isCameraActive.value = false;
+    }
+  } catch (error) {
+    console.error('Camera access error:', error);
+    alert('Unable to access camera. Please ensure you have granted camera permissions.');
+  }
+};
+
+// Cleanup
+onUnmounted(() => {
+  if (videoStream.value) {
+    videoStream.value.getTracks().forEach(track => track.stop());
+  }
+});
+
+
+
 </script>
 
 <style scoped>
@@ -398,6 +451,66 @@ onMounted(() => {
   padding: 0;
   display: flex;
   align-items: center;
+}
+
+.camera-preview-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #000;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+}
+
+.camera-preview {
+  width: 100%;
+  height: calc(100% - 80px);
+  object-fit: cover;
+}
+
+.camera-controls {
+  height: 80px;
+  background-color: #341c02;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  padding: 1rem;
+}
+
+.capture-button {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #F5E6D3;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.capture-button i {
+  color: #341c02;
+  font-size: 1.5rem;
+}
+
+.close-camera {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(245, 230, 211, 0.2);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-camera i {
+  color: #F5E6D3;
+  font-size: 1.2rem;
 }
 
 @media (max-width: 768px) {
