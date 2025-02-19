@@ -1,4 +1,4 @@
-<template>
+<template id="chatTemplate">
   <section class="bg-[#072d13] min-h-screen relative">
     <!-- Requirement 1: Account Icon -->
     <div class="fixed top-4 right-4 z-50">
@@ -115,13 +115,8 @@
       </div>
     </div>
 
-    <!-- Requirement 5: Decorative Flowers -->
-    <img src="@/assets/chatFlowers.png" 
-         class="fixed bottom-20 left-8 w-48 opacity-80 hidden md:block transition-transform duration-300" 
-         alt="Decorative flower">
-    <img src="@/assets/chatFlowers.png" 
-         class="fixed bottom-20 right-8 w-48 opacity-80 hidden md:block transform scale-x-[-1] transition-transform duration-300" 
-         alt="Decorative flower">
+   
+    
   </section>
 </template>
 
@@ -172,6 +167,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
+template#chatTemplate {
+background-color: #341c02;
+
+}
+
+
+
+
 /* Basic chat styling from template */
 #chat2 .form-control {
   border-color: transparent;
@@ -216,18 +219,5 @@ onMounted(() => {
 .message-leave-to {
   opacity: 0;
   transform: translateY(20px);
-}
-
-/* Requirement 5: Responsive flowers */
-@media (max-width: 768px) {
-  .decorative-flower {
-    display: none;
-  }
-}
-
-@media (min-width: 769px) and (max-width: 1200px) {
-  .decorative-flower {
-    transform: scale(0.8);
-  }
 }
 </style>
