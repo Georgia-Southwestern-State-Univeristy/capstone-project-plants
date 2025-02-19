@@ -93,6 +93,43 @@
           </button>
         </div>
       </div>
+      <!-- Add this after your messages area -->
+<div v-if="isCameraOpen" class="camera-preview-container">
+  <!-- Loading indicator -->
+  <div v-show="isLoading" class="camera-loading">
+    <div class="loader"></div>
+  </div>
+  
+  <!-- Camera view -->
+  <div v-show="!isLoading" class="camera-box" :class="{ 'flash': isShotPhoto }">
+    <div class="camera-shutter" :class="{'flash': isShotPhoto}"></div>
+    <video 
+      v-show="!isPhotoTaken" 
+      ref="cameraRef" 
+      width="450" 
+      height="337.5" 
+      autoplay
+      playsinline
+    ></video>
+    <canvas 
+      v-show="isPhotoTaken" 
+      ref="canvasRef" 
+      width="450" 
+      height="337.5"
+    ></canvas>
+  </div>
+
+  <!-- Camera controls -->
+  <div class="camera-controls">
+    <button class="capture-button" @click="takePhoto">
+      <i class="bi bi-camera-fill"></i>
+    </button>
+    <button class="close-camera" @click="triggerCamera">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+</div>
+
     </div>
   </main>
 </template>
@@ -112,6 +149,86 @@ const textInput = ref(null);
 const messagesContainer = ref(null);
 const userInput = ref('');
 const uploadedFile = ref(null);
+const isCameraOpen = ref(false);
+const isPhotoTaken = ref(false);
+const isShotPhoto = ref(false);
+const isLoading = ref(false);
+const cameraRef = ref(null);
+const canvasRef = ref(null);
+
+
+ triggerCamera = async () => {
+  if (isCameraOpen.value) {
+    isCameraOpen.value = false;
+    isPhotoTaken.value = false;
+    isShotPhoto.value = false;
+    stopCameraStream();
+  } else {
+    isCameraOpen.value = true;
+    createCameraElement();
+  }
+};
+
+const createCameraElement = () => {
+  isLoading.value = true;
+  
+  const constraints = {
+    audio: false,
+    video: true
+  };
+
+  navigator.mediaDevices
+    .getUserMedia(constraints)
+    .then(stream => {
+      isLoading.value = false;
+      if (cameraRef.value) {
+        cameraRef.value.srcObject = stream;
+      }
+    })
+    .catch(error => {
+      isLoading.value = false;
+      alert("The browser might not support camera access or there are some errors.");
+    });
+};
+
+const stopCameraStream = () => {
+  if (cameraRef.value && cameraRef.value.srcObject) {
+    const tracks = cameraRef.value.srcObject.getTracks();
+    tracks.forEach(track => {
+      track.stop();
+    });
+  }
+};
+
+const takePhoto = () => {
+  if (!isPhotoTaken.value) {
+    isShotPhoto.value = true;
+    setTimeout(() => {
+      isShotPhoto.value = false;
+    }, 50);
+  }
+
+  isPhotoTaken.value = !isPhotoTaken.value;
+
+  if (canvasRef.value && cameraRef.value) {
+    const context = canvasRef.value.getContext('2d');
+    context.drawImage(cameraRef.value, 0, 0, 450, 337.5);
+    
+    // Convert to file and add to upload
+    canvasRef.value.toBlob((blob) => {
+      const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+      uploadedFile.value = {
+        name: 'camera-capture.jpg',
+        file: file
+      };
+      
+      // Close camera after capture
+      triggerCamera();
+    }, 'image/jpeg');
+  }
+};
+
+
 
 const adjustTextarea = () => {
   const textarea = textInput.value;
@@ -213,6 +330,10 @@ onMounted(() => {
     }
   });
 });
+
+
+
+
 </script>
 
 <style scoped>
@@ -398,6 +519,55 @@ onMounted(() => {
   padding: 0;
   display: flex;
   align-items: center;
+}
+
+.camera-box {
+  position: relative;
+  width: 450px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.camera-shutter {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.camera-shutter.flash {
+  opacity: 1;
+  animation: flash 0.05s ease-out;
+}
+
+@keyframes flash {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.camera-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #341c02;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @media (max-width: 768px) {
