@@ -168,7 +168,7 @@ onMounted(() => {
 
 <style scoped>
 template#chatTemplate {
-background-color: #341c02;
+color: #341c02;
 
 }
 
