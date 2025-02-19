@@ -61,11 +61,12 @@
 
         <div class="input-group">
           <!-- Hidden file input -->
-          <input type="file" 
-                 ref="fileInput" 
-                 class="d-none" 
-                 accept="image/*" 
-                 @change="handleFileUpload">
+          <input  type="file" 
+  ref="fileInput" 
+  class="d-none" 
+  accept="image/*" 
+  capture="environment"
+  @change="handleFileUpload">
           
           <!-- Camera button -->
           <button class="camera-button" @click="triggerCamera">
@@ -168,6 +169,10 @@ const canvasRef = ref(null);
   }
 };
 
+triggerCamera = () => {
+  fileInput.value?.click();
+};
+
 const createCameraElement = () => {
   isLoading.value = true;
   
@@ -251,6 +256,8 @@ const removeUpload = () => {
     fileInput.value.value = '';
   }
 };
+
+
 
 const triggerFileUpload = () => {
   fileInput.value?.click();
