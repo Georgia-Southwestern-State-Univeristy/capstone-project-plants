@@ -1,105 +1,73 @@
 
 
+# chat.vue
 <template>
   <main>
     <div id="chatBackground" class="chat-container px-4 py-5">
+      <!-- Account Icon Dropdown -->
+      <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
+        <div class="dropdown">
+          <button 
+            class="btn rounded-circle d-flex align-items-center justify-content-center account-button" 
+            type="button" 
+            data-bs-toggle="dropdown" 
+            aria-expanded="false"
+          >
+            <i class="bi bi-person-fill"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <router-link to="/userprofile" class="dropdown-item">
+                Account
+              </router-link>
+            </li>
+            <li>
+              <a href="#" class="dropdown-item" @click.prevent="handleSignOut">
+                Sign Out
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
       <!-- Messages display area -->
-<div class="messages-area mb-4" ref="messagesContainer">
-  <div v-for="(msg, index) in messages" 
-       :key="index" 
-       class="message-wrapper"
-       :class="msg.isUser ? 'justify-content-end' : 'justify-content-start'">
-    
-    <!-- Message card with dynamic styling -->
-    <div class="message-bubble" :class="msg.isUser ? 'user-message' : 'ai-message'">
-      <!-- Text message -->
-      <div v-if="msg.type === 'text'" 
-           class="message-content"
-           :class="{ 'typing': !msg.isUser && isTyping }">
-        <p class="mb-0" v-html="msg.content"></p>
+      <div class="messages-area mb-4" ref="messagesContainer">
+        <div v-for="(msg, index) in messages" 
+             :key="index" 
+             class="card mb-3"
+             :class="msg.isUser ? 'ms-auto' : 'me-auto'"
+             style="max-width: 70%;">
+          <div class="card-header">
+            {{ msg.isUser ? 'You' : 'Verdure AI' }}
+          </div>
+          <div class="card-body">
+            <!-- Text message -->
+            <div v-if="msg.type === 'text'" class="message-content">
+              <p class="mb-0">{{ msg.content }}</p>
+            </div>
+
+            <!-- Image message -->
+            <div v-else-if="msg.type === 'image'" class="image-message">
+              <img :src="msg.content" 
+                   class="img-fluid rounded" 
+                   alt="Uploaded plant image">
+            </div>
+          </div>
+        </div>
       </div>
-
-      <!-- Image message -->
-      <div v-else-if="msg.type === 'image'" class="image-message">
-        <img :src="msg.content" 
-             class="uploaded-image" 
-             alt="Uploaded plant image">
-        <p v-if="msg.analysis" 
-           class="mt-2 mb-0" 
-           v-html="msg.analysis"></p>
-      </div>
-
-      <!-- Timestamp -->
-      <small class="message-time">
-        {{ new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
-      </small>
-    </div>
-  </div>
-
-  <!-- Typing indicator for AI -->
-  <div v-if="isTyping" class="message-wrapper justify-content-start">
-    <div class="message-bubble ai-message typing-indicator">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-  </div>
-</div>
-
-
-
-
-    <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
-  <div class="dropdown">
-    <button 
-      class="btn btn-light rounded-circle d-flex align-items-center justify-content-center" 
-      type="button" 
-      data-bs-toggle="dropdown" 
-      aria-expanded="false"
-      style="width: 40px; height: 40px; background-color: #F5E6D3;"
-    >
-      <i class="bi bi-person-fill" style="color: #072d13;"></i>
-    </button>
-    <ul class="dropdown-menu dropdown-menu-end" style="background-color: #F5E6D3;">
-      <li>
-        <router-link 
-          to="/userprofile" 
-          class="dropdown-item d-flex align-items-center"
-        >
-          <i class="bi bi-person me-2"></i>
-          Account
-        </router-link>
-      </li>
-      <li><hr class="dropdown-divider"></li>
-      <li>
-        <a 
-          href="#" 
-          class="dropdown-item d-flex align-items-center"
-          @click.prevent="handleSignOut"
-        >
-          <i class="bi bi-box-arrow-right me-2"></i>
-          Sign Out
-        </a>
-      </li>
-    </ul>
-  </div>
-</div>
 
       <!-- Input area fixed at bottom -->
-      <div class="chat-textarea-container">
+      <div class="chat-input-container">
         <!-- File preview if exists -->
-       <!-- File upload preview -->
-<div v-if="uploadedFile" class="file-preview">
-  <div class="file-preview-content">
-    <i class="bi bi-image me-2"></i>
-    <span class="file-name">{{ uploadedFile.name }}</span>
-    <button class="remove-file" @click="removeUpload">
-      <i class="bi bi-x"></i>
-    </button>
-  </div>
-</div>
+        <div v-if="uploadedFile" class="file-preview">
+          <div class="file-preview-content">
+            <span class="file-name">{{ uploadedFile.name }}</span>
+            <button class="remove-file" @click="removeUpload">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
 
-        <!-- Input area -->
         <div class="input-group">
           <!-- Hidden file input -->
           <input type="file" 
@@ -109,251 +77,306 @@
                  @change="handleFileUpload">
           
           <!-- Image upload button -->
-          <button  id="imageAttachButton" class="btn btn-outline-secondary" 
-                  type="button" 
-                  @click="triggerFileUpload">
-            <i id="imageAttachIcon" class="bi bi-paperclip"></i>
+          <button class="attach-button" @click="triggerFileUpload">
+            <i class="bi bi-paperclip"></i>
           </button>
 
           <!-- Text input -->
-          <textarea id="textBox"
-                    class="form-control chat-textarea" 
-                    rows="1" 
-                    placeholder="Ask about your plants or upload an image..." 
-                    v-model="userInput"
-                    @keyup.enter.exact="sendMessage"
-                    ref="textInput"></textarea>
+          <textarea
+            class="form-control chat-textarea" 
+            placeholder="Ask about your plants or upload an image..." 
+            v-model="userInput"
+            @input="adjustTextarea"
+            @keyup.enter.exact="sendMessage"
+            ref="textInput"
+          ></textarea>
 
           <!-- Send button -->
-          <button class="send-button" 
-                  @click="sendMessage" 
-                  :disabled="!canSendMessage">
-            <svg id="sendArrow" viewBox="0 0 24 24">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-            </svg>
+          <button class="send-button" @click="sendMessage">
+            <i class="bi bi-send-fill"></i>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Decorative elements -->
+    <!-- Decorative flowers -->
     <div class="decorative-elements">
       <img src="@/assets/chatFlowers.png" 
-           id="chatFlowersLeft" 
            class="decorative-flower decorative-flower--left" 
-           alt="Decorative flower element" 
-           loading="lazy">
+           alt="Decorative flower">
       <img src="@/assets/chatFlowers.png" 
-           id="chatFlowersRight" 
            class="decorative-flower decorative-flower--right" 
-           alt="Decorative flower element" 
-           loading="lazy">
+           alt="Decorative flower">
     </div>
-
-
-
-
-
-
   </main>
 </template>
 
+<style scoped>
+main {
+  min-height: 100vh;
+  background-color: #341c02;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Account button styling */
+.account-button {
+  width: 40px;
+  height: 40px;
+  background-color: #F5E6D3;
+}
+
+.account-button i {
+  color: #341c02;
+}
+
+.dropdown-menu {
+  background-color: #F5E6D3;
+  border: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.dropdown-item {
+  color: #341c02;
+  padding: 8px 16px;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(52, 28, 2, 0.1);
+}
+
+/* Messages area styling */
+.messages-area {
+  height: calc(100vh - 180px);
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.card {
+  background-color: #F5E6D3;
+  border: none;
+}
+
+.card-header {
+  background-color: rgba(52, 28, 2, 0.1);
+  color: #341c02;
+  font-weight: bold;
+}
+
+.card-body {
+  color: #341c02;
+}
+
+/* Chat input styling */
+.chat-input-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  background-color: #341c02;
+}
+
+.input-group {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.chat-textarea {
+  resize: none;
+  min-height: 44px;
+  max-height: 200px;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background-color: white;
+  color: #341c02;
+}
+
+.attach-button, .send-button {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 8px;
+  background-color: #341c02;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attach-button i, .send-button i {
+  color: white;
+  font-size: 1.25rem;
+}
+
+/* File preview styling */
+.file-preview {
+  position: absolute;
+  bottom: 100%;
+  left: 58px;
+  background-color: rgba(245, 230, 211, 0.9);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 0.5rem;
+}
+
+.file-preview-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-name {
+  color: #341c02;
+}
+
+.remove-file {
+  background: none;
+  border: none;
+  color: #341c02;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Decorative flowers */
+.decorative-elements {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.decorative-flower {
+  position: absolute;
+  bottom: 2rem;
+  width: 200px;
+  height: auto;
+  opacity: 0.8;
+}
+
+.decorative-flower--left {
+  left: 2rem;
+}
+
+.decorative-flower--right {
+  right: 2rem;
+  transform: scaleX(-1);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .decorative-flower {
+    display: none;
+  }
+  
+  .input-group {
+    padding: 0 0.5rem;
+  }
+  
+  .chat-textarea {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .messages-area {
+    height: calc(100vh - 150px);
+  }
+  
+  .card {
+    max-width: 85%;
+  }
+}
+</style>
+
 <script>
-import { ref, computed, watch, nextTick, onMounted } from 'vue';
-import { useNotifications } from '@/composables/useNotifications';
-import { auth } from '../utils/firebase';
-import { storeToRefs } from 'pinia';
-import { useChatStore } from '@/store/chatStore';
+import { ref, onMounted, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
 
 export default {
   name: 'ChatView',
-
+  
   setup() {
-    const chatStore = useChatStore();  // Pinia store
-    const { showNotification } = useNotifications();
+    const router = useRouter()
+    const store = useStore()
+    const fileInput = ref(null)
+    const textInput = ref(null)
+    const messagesContainer = ref(null)
+    const messages = ref([])
+    const userInput = ref('')
+    const uploadedFile = ref(null)
 
-    // Refs for DOM elements and state
-    const messagesContainer = ref(null);
-    const fileInput = ref(null);
-    const textInput = ref(null);
-    const messages = ref([]);
-    const userInput = ref('');
-    const uploadedFile = ref(null);
-    const isProcessing = ref(false);
-    const isTyping = ref(false);
-
-    // Helper function to simulate AI typing
-    const simulateTyping = async (message) => {
-      isTyping.value = true;
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-      isTyping.value = false;
-      return message;
-    };
-
-    // Fetch plant care advice from backend API
-    const processPlantQuery = async (query) => {
-      try {
-        const response = await fetch('/api/get-plant-care-advice', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query })
-        });
-        const data = await response.json();
-        return data.naturalResponse || data;
-      } catch (error) {
-        console.error('Error processing plant query:', error);
-        return "I'm having trouble getting that information right now. Could you try rephrasing your question?";
-      }
-    };
-
-    // Handle image analysis via backend API
-    const handleImageAnalysis = async (file) => {
-      try {
-        isProcessing.value = true;
-
-        messages.value.push({
-          type: 'image',
-          content: URL.createObjectURL(file),
-          isUser: true,
-          timestamp: new Date()
-        });
-
-        const formData = new FormData();
-        formData.append('image', file);
-
-        const uploadResponse = await fetch('/api/upload-image', {
-          method: 'POST',
-          body: formData
-        });
-        const uploadData = await uploadResponse.json();
-        const imageUrl = uploadData.imageUrl;
-
-        const analysisResponse = await fetch('/api/analyze-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl })
-        });
-        const analysis = await analysisResponse.json();
-
-        messages.value.push({
-          type: 'text',
-          content: await simulateTyping(analysis.naturalResponse),
-          isUser: false,
-          timestamp: new Date()
-        });
-
-        if (analysis.analysis && analysis.analysis.careInstructions) {
-          messages.value.push({
-            type: 'text',
-            content: await simulateTyping("Here are some care instructions: " + analysis.analysis.careInstructions),
-            isUser: false,
-            timestamp: new Date()
-          });
-        }
-
-        chatStore.sendMessage({
-          type: 'analysis',
-          content: analysis,
-          timestamp: new Date()
-        });
-      } catch (error) {
-        console.error('Error in image analysis:', error);
-        messages.value.push({
-          type: 'text',
-          content: "I'm sorry, I had trouble analyzing that image. Please make sure it's a clear photo of a plant.",
-          isUser: false,
-          timestamp: new Date()
-        });
-      } finally {
-        isProcessing.value = false;
-      }
-    };
-
-    // Send message function
-    const sendMessage = async () => {
-      if (!canSendMessage.value) return;
-      isProcessing.value = true;
-
-      try {
-        if (uploadedFile.value) {
-          await handleImageAnalysis(uploadedFile.value.file);
-          removeUpload();
-        } else if (userInput.value.trim()) {
-          const userMessage = {
-            type: 'text',
-            content: userInput.value,
-            isUser: true,
-            timestamp: new Date()
-          };
-          messages.value.push(userMessage);
-          chatStore.sendMessage(userMessage);
-
-          const response = await processPlantQuery(userInput.value);
-          const aiMessage = {
-            type: 'text',
-            content: await simulateTyping(response),
-            isUser: false,
-            timestamp: new Date()
-          };
-          messages.value.push(aiMessage);
-          chatStore.sendMessage(aiMessage);
-
-          userInput.value = '';
-        }
-      } catch (error) {
-        console.error('Error in chat:', error);
-        showNotification('An error occurred while processing your message', 'error');
-      } finally {
-        isProcessing.value = false;
-      }
-    };
-
-    const triggerFileUpload = () => {
-      fileInput.value.click();
-    };
+    const adjustTextarea = () => {
+      const textarea = textInput.value
+      textarea.style.height = 'auto'
+      textarea.style.height = textarea.scrollHeight + 'px'
+    }
 
     const handleFileUpload = (event) => {
-      const file = event.target.files[0];
+      const file = event.target.files[0]
       if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          uploadedFile.value = {
-            name: file.name,
-            file: file,
-            preview: e.target.result
-          };
-        };
-        reader.readAsDataURL(file);
+        uploadedFile.value = {
+          name: file.name,
+          file: file
+        }
       }
-    };
+    }
 
     const removeUpload = () => {
-      uploadedFile.value = null;
-      fileInput.value.value = '';
-    };
+      uploadedFile.value = null
+      if (fileInput.value) {
+        fileInput.value.value = ''
+      }
+    }
 
-    const canSendMessage = computed(() => {
-      return !isProcessing.value && (userInput.value.trim() || uploadedFile.value);
-    });
+    const triggerFileUpload = () => {
+      fileInput.value?.click()
+    }
 
+    const sendMessage = async () => {
+      if (!userInput.value.trim() && !uploadedFile.value) return
+
+      if (uploadedFile.value) {
+        messages.value.push({
+          type: 'image',
+          content: URL.createObjectURL(uploadedFile.value.file),
+          isUser: true
+        })
+        removeUpload()
+      }
+
+      if (userInput.value.trim()) {
+        messages.value.push({
+          type: 'text',
+          content: userInput.value,
+          isUser: true
+        })
+        userInput.value = ''
+        adjustTextarea()
+      }
+
+      // Scroll to bottom after new message
+      await nextTick()
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    }
+
+    const handleSignOut = async () => {
+      await store.dispatch('logout')
+      router.push('/login')
+    }
+
+    // Auto-scroll to bottom when new messages arrive
     watch(messages, async () => {
-      await nextTick();
+      await nextTick()
       if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
       }
-    });
-
-    onMounted(() => {
-      if (auth.currentUser) {
-        chatStore.loadChatHistory(auth.currentUser.uid)
-          .then((history) => {
-            messages.value = history;
-          })
-          .catch((error) => {
-            console.error('Error loading chat history:', error);
-          });
-      }
-    });
+    })
 
     return {
       messages,
@@ -362,17 +385,16 @@ export default {
       fileInput,
       textInput,
       messagesContainer,
-      canSendMessage,
-      isTyping,
-      triggerFileUpload,
+      adjustTextarea,
       handleFileUpload,
       removeUpload,
-      sendMessage
-    };
+      triggerFileUpload,
+      sendMessage,
+      handleSignOut
+    }
   }
-};
+}
 </script>
-
 
 
 <style>
