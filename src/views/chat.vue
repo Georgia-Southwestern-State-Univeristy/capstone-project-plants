@@ -155,6 +155,7 @@ const isShotPhoto = ref(false);
 const isLoading = ref(false);
 const cameraRef = ref(null);
 const canvasRef = ref(null);
+const triggerCamera= ref(null);
 
 
  triggerCamera = async () => {
@@ -257,7 +258,7 @@ const triggerFileUpload = () => {
   fileInput.value?.click();
 };
 
-const triggerCamera = () => {
+triggerCamera = () => {
   // Implement camera functionality
   console.log('Camera functionality to be implemented');
 };
