@@ -3,17 +3,17 @@
     <div id="chatBackground" class="chat-container px-4 py-5">
       <!-- Account Icon Dropdown -->
      <!-- Replace the current account dropdown HTML with this -->
+<!-- Update the account dropdown HTML -->
 <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
   <div class="dropdown">
     <button 
       class="account-circle"
       type="button" 
-      data-bs-toggle="dropdown" 
-      aria-expanded="false"
+      @click="toggleDropdown"
     >
       <i class="bi bi-person-fill"></i>
     </button>
-    <ul class="account-dropdown">
+    <ul class="account-dropdown" :class="{ 'show': isDropdownOpen }">
       <li><router-link to="/userprofile" class="dropdown-item">Account</router-link></li>
       <li><a href="#" class="dropdown-item" @click.prevent="handleSignOut">Sign Out</a></li>
     </ul>
@@ -194,6 +194,24 @@ onMounted(async () => {
     await chatStore.loadChatHistory(authStore.user.uid);
   }
 });
+
+// Add this to your component's data/refs
+const isDropdownOpen = ref(false);
+
+// Add this method
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+// Optional: Close dropdown when clicking outside
+onMounted(() => {
+  document.addEventListener('click', (event) => {
+    const dropdown = document.querySelector('.dropdown');
+    if (!dropdown.contains(event.target)) {
+      isDropdownOpen.value = false;
+    }
+  });
+});
 </script>
 
 <style scoped>
@@ -223,7 +241,17 @@ onMounted(async () => {
   margin-top: 0.5rem;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   list-style: none;
+  display: none;
+  position: absolute;
+  right: 0;
+  min-width: 160px;
 }
+
+
+.account-dropdown.show {
+  display: block;
+}
+
 
 .chat-container {
   min-height: 100vh;
