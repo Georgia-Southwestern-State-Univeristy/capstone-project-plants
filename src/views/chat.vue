@@ -61,12 +61,22 @@
 
         <div class="input-group">
           <!-- Hidden file input -->
-          <input  type="file" 
+          <<input 
+  type="file" 
   ref="fileInput" 
   class="d-none" 
   accept="image/*" 
+  @change="handleFileUpload"
+/>
+
+<input
+  type="file"
+  ref="cameraInput"
+  class="d-none"
+  accept="image/*"
   capture="environment"
-  @change="handleFileUpload">
+  @change="handleFileUpload"
+/>
           
           <!-- Camera button -->
           <button class="camera-button" @click="triggerCamera">
@@ -147,6 +157,7 @@ const chatStore = useChatStore();
 
 const fileInput = ref(null);
 const textInput = ref(null);
+const cameraInput = ref(null);
 const messagesContainer = ref(null);
 const userInput = ref('');
 const uploadedFile = ref(null);
@@ -156,7 +167,7 @@ const canvasRef = ref(null);
 
 
 const triggerCamera = () => {
-  fileInput.value?.click();
+  cameraInput.value?.click();
 };
 
 
