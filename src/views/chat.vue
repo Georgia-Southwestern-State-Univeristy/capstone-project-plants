@@ -1,4 +1,5 @@
 <template id="chatTemplate">
+  <body id="bodyTemplate">
   <section class="bg-[#072d13] min-h-screen relative">
     <!-- Requirement 1: Account Icon -->
     <div class="fixed top-4 right-4 z-50">
@@ -118,6 +119,7 @@
    
     
   </section>
+</body>
 </template>
 
 <script setup>
@@ -167,7 +169,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-template#chatTemplate {
+body#bodyTemplate {
 color: #341c02;
 
 }
