@@ -67,22 +67,9 @@
                  @change="handleFileUpload">
           
           <!-- Camera button -->
-         <div v-if="isCameraActive" class="camera-preview-container">
-  <video 
-    ref="videoPreview"
-    autoplay 
-    playsinline
-    class="camera-preview"
-  ></video>
-  <div class="camera-controls">
-    <button class="capture-button" @click="captureImage">
-      <i class="bi bi-camera-fill"></i>
-    </button>
-    <button class="close-camera" @click="triggerCamera">
-      <i class="bi bi-x-lg"></i>
-    </button>
-  </div>
-</div>
+          <button class="camera-button" @click="triggerCamera">
+            <i class="bi bi-camera-fill"></i>
+          </button>
 
           <!-- Image upload button -->
           <button class="attach-button" @click="triggerFileUpload">
@@ -124,9 +111,6 @@ const textInput = ref(null);
 const messagesContainer = ref(null);
 const userInput = ref('');
 const uploadedFile = ref(null);
-const videoStream = ref(null);
-const isCameraActive = ref(false);
-
 
 const adjustTextarea = () => {
   const textarea = textInput.value;
@@ -155,7 +139,7 @@ const triggerFileUpload = () => {
   fileInput.value?.click();
 };
 
-triggerCamera = () => {
+const triggerCamera = () => {
   // Implement camera functionality
   console.log('Camera functionality to be implemented');
 };
@@ -210,61 +194,6 @@ onMounted(async () => {
     await chatStore.loadChatHistory(authStore.user.uid);
   }
 });
-
-// Add this to your component's data/refs
-const isDropdownOpen = ref(false);
-
-// Add this method
-const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value;
-};
-
-// Optional: Close dropdown when clicking outside
-onMounted(() => {
-  document.addEventListener('click', (event) => {
-    const dropdown = document.querySelector('.dropdown');
-    if (!dropdown.contains(event.target)) {
-      isDropdownOpen.value = false;
-    }
-  });
-});
-
-// Modified camera trigger for localhost
-const triggerCamera = async () => {
-  try {
-    if (!isCameraActive.value) {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true // Simplified video constraints for localhost
-      });
-      
-      const video = document.querySelector('video');
-      if (video) {
-        video.srcObject = stream;
-      }
-      videoStream.value = stream;
-      isCameraActive.value = true;
-    } else {
-      // Stop camera stream
-      if (videoStream.value) {
-        videoStream.value.getTracks().forEach(track => track.stop());
-      }
-      isCameraActive.value = false;
-    }
-  } catch (error) {
-    console.error('Camera access error:', error);
-    alert('Unable to access camera. Please ensure you have granted camera permissions.');
-  }
-};
-
-// Cleanup
-onUnmounted(() => {
-  if (videoStream.value) {
-    videoStream.value.getTracks().forEach(track => track.stop());
-  }
-});
-
-
-
 </script>
 
 <style scoped>
@@ -294,17 +223,7 @@ onUnmounted(() => {
   margin-top: 0.5rem;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   list-style: none;
-  display: none;
-  position: absolute;
-  right: 0;
-  min-width: 160px;
 }
-
-
-.account-dropdown.show {
-  display: block;
-}
-
 
 .chat-container {
   min-height: 100vh;
