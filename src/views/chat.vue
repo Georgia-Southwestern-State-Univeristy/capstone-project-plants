@@ -128,7 +128,8 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { useChatStore } from '@/stores/chatStore'
+import { useChatStore } from '@/store/chatStore'
+
 
 const store = useChatStore()
 const messageText = ref('')
