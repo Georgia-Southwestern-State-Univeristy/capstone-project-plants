@@ -100,60 +100,59 @@
 </template>
 
 <script>
-import { ref, watchEffect } from 'vue'
-import { useRouter } from 'vue-router'
-import { useStore } from 'vuex'
+import { ref, watchEffect } from 'vue';
+import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { useAuthStore } from '@/store/authStore';  // ✅ Import Pinia store
 
 export default {
   name: 'LoginPage',
   setup() {
     const router = useRouter();
-    const store = useStore();
+    const authStore = useAuthStore();  // ✅ Use Pinia store
+    const { user } = storeToRefs(authStore);  // ✅ Keep user state reactive
+
     const email = ref('');
     const password = ref('');
     const error = ref('');
     const isLoading = ref(false);
 
-    // ✅ Watch Vuex user state, redirect if logged in
+    // ✅ Watch Pinia user state, redirect if logged in
     watchEffect(() => {
-      if (store.state.user) {
-        console.log("✅ User logged in, redirecting to /chat");
-        router.push('/chat');
+      if (user.value) {
+        console.log("✅ User logged in, redirecting to /userprofile...");
+        router.push('/userprofile');  // ✅ Ensure this matches your route
       }
     });
 
-    // ✅ API-based Login (Vuex action)
+    // ✅ API-based Login (Pinia action)
     const handleLogin = async () => {
-  try {
-    isLoading.value = true;
-    error.value = '';
+      try {
+        isLoading.value = true;
+        error.value = '';
 
-    // ✅ Log in via Vuex action
-    const response = await store.dispatch('login', { email: email.value, password: password.value });
+        // ✅ Log in via Pinia action
+        const response = await authStore.login(email.value, password.value);
 
-    console.log("✅ Login successful:", response);
+        console.log("✅ Login successful:", response);
 
-    // ✅ Manually check Vuex store state
-    console.log("🔍 Vuex state user:", store.state.user);
+        // ✅ Redirect on successful login
+        if (user.value) {
+          console.log("➡️ Redirecting to /userprofile...");
+          router.push('/userprofile');
+        }
+      } catch (err) {
+        console.error('❌ Login error:', err);
+        error.value = err.response?.data?.error || 'Login failed';
 
-    // ✅ Redirect on successful login
-    if (store.state.user) {
-      console.log("➡️ Redirecting to /chat...");
-      router.push('/chat');  // ✅ Ensure this matches your route
-    }
-  } catch (err) {
-    console.error('❌ Login error:', err);
-    error.value = err.response?.data?.error || 'Login failed';
-
-    store.dispatch('addNotification', {
-      type: 'error',
-      message: error.value
-    });
-  } finally {
-    isLoading.value = false;
-  }
-};
-
+        authStore.addNotification({
+          type: 'error',
+          message: error.value
+        });
+      } finally {
+        isLoading.value = false;
+      }
+    };
 
     return {
       email,
@@ -163,8 +162,9 @@ export default {
       handleLogin
     };
   }
-}
+};
 </script>
+
 
 
 

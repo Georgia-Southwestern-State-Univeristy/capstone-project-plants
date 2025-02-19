@@ -141,25 +141,29 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { registerUser } from '@/api';
-import { useStore } from 'vuex'
+import { useAuthStore } from '@/store/authStore';
+import { useNotificationStore } from '@/store/notificationStore';
+import { storeToRefs } from 'pinia';
 
 export default {
   name: 'RegisterPage',
   setup() {
-    const router = useRouter()
-    const store = useStore()
-    
+    const router = useRouter();
+    const authStore = useAuthStore(); // ✅ Use Pinia store
+    const { user } = storeToRefs(authStore); // ✅ Reactive state
+    const notificationStore = useNotificationStore();
+
     // Form data
-    const name = ref('')
-    const email = ref('')
-    const password = ref('')
-    const confirmPassword = ref('')
-    const termsAccepted = ref(false)
-    const error = ref('')
-    const isLoading = ref(false)
+    const name = ref('');
+    const email = ref('');
+    const password = ref('');
+    const confirmPassword = ref('');
+    const termsAccepted = ref(false);
+    const error = ref('');
+    const isLoading = ref(false);
 
     // Computed property for form validation
     const isFormValid = computed(() => {
@@ -167,48 +171,47 @@ export default {
              email.value.trim() &&
              password.value &&
              password.value === confirmPassword.value &&
-             termsAccepted.value
-    })
+             termsAccepted.value;
+    });
 
     const handleRegister = async () => {
-    if (!isFormValid.value) {
+      if (!isFormValid.value) {
         error.value = 'Please fill all fields correctly and accept the terms';
         return;
-    }
+      }
 
-    try {
+      try {
         isLoading.value = true;
         error.value = '';
 
         // ✅ Call the backend API instead of Firebase directly
         const response = await registerUser(email.value, password.value, name.value);
-        
+
         if (!response.success) {
-            throw new Error(response.error || 'Registration failed');
+          throw new Error(response.error || 'Registration failed');
         }
 
-        // ✅ Use Vuex store to save user data
-        store.commit('SET_USER', response.user);
-        store.dispatch('addNotification', {
-            type: 'success',
-            message: 'Registration successful!'
+        // ✅ Use Pinia store to save user data
+        authStore.user = response.user;
+        notificationStore.addNotification({
+          type: 'success',
+          message: 'Registration successful!'
         });
 
         // ✅ Navigate after successful registration
         router.push('/chat');
-    } catch (err) {
+      } catch (err) {
         console.error("❌ Registration error:", err);
         error.value = err.message;
 
-        store.dispatch('addNotification', {
-            type: 'error',
-            message: err.message || 'Registration failed'
+        notificationStore.addNotification({
+          type: 'error',
+          message: err.message || 'Registration failed'
         });
-    } finally {
+      } finally {
         isLoading.value = false;
-    }
-};
-
+      }
+    };
 
     return {
       name,
@@ -220,10 +223,11 @@ export default {
       isLoading,
       isFormValid,
       handleRegister
-    }
+    };
   }
-}
+};
 </script>
+
 
 <style>
 @import '@/assets/styles/generalStyle.css';
