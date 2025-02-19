@@ -159,35 +159,36 @@
 </template>
 
 <script>
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
-import { useStore } from 'vuex'
-import { useNotifications } from '@/composables/useNotifications'
-import { auth } from '../utils/firebase'
+import { ref, computed, watch, nextTick, onMounted } from 'vue';
+import { useNotifications } from '@/composables/useNotifications';
+import { auth } from '../utils/firebase';
+import { storeToRefs } from 'pinia';
+import { useChatStore } from '@/store/chatStore';
 
 export default {
   name: 'ChatView',
 
   setup() {
-    const store = useStore()
-    const { showNotification } = useNotifications()
+    const chatStore = useChatStore();  // Pinia store
+    const { showNotification } = useNotifications();
 
     // Refs for DOM elements and state
-    const messagesContainer = ref(null)
-    const fileInput = ref(null)
-    const textInput = ref(null)
-    const messages = ref([])
-    const userInput = ref('')
-    const uploadedFile = ref(null)
-    const isProcessing = ref(false)
-    const isTyping = ref(false)
+    const messagesContainer = ref(null);
+    const fileInput = ref(null);
+    const textInput = ref(null);
+    const messages = ref([]);
+    const userInput = ref('');
+    const uploadedFile = ref(null);
+    const isProcessing = ref(false);
+    const isTyping = ref(false);
 
     // Helper function to simulate AI typing
     const simulateTyping = async (message) => {
-      isTyping.value = true
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000))
-      isTyping.value = false
-      return message
-    }
+      isTyping.value = true;
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+      isTyping.value = false;
+      return message;
+    };
 
     // Fetch plant care advice from backend API
     const processPlantQuery = async (query) => {
@@ -196,54 +197,50 @@ export default {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query })
-        })
-        const data = await response.json()
-        return data.naturalResponse || data
+        });
+        const data = await response.json();
+        return data.naturalResponse || data;
       } catch (error) {
-        console.error('Error processing plant query:', error)
-        return "I'm having trouble getting that information right now. Could you try rephrasing your question?"
+        console.error('Error processing plant query:', error);
+        return "I'm having trouble getting that information right now. Could you try rephrasing your question?";
       }
-    }
+    };
 
     // Handle image analysis via backend API
     const handleImageAnalysis = async (file) => {
       try {
-        isProcessing.value = true
+        isProcessing.value = true;
 
-        // Add user's image message
         messages.value.push({
           type: 'image',
           content: URL.createObjectURL(file),
           isUser: true,
           timestamp: new Date()
-        })
+        });
 
-        // Upload image via backend API
-        const formData = new FormData()
-        formData.append('image', file)
+        const formData = new FormData();
+        formData.append('image', file);
 
         const uploadResponse = await fetch('/api/upload-image', {
           method: 'POST',
           body: formData
-        })
-        const uploadData = await uploadResponse.json()
-        const imageUrl = uploadData.imageUrl
+        });
+        const uploadData = await uploadResponse.json();
+        const imageUrl = uploadData.imageUrl;
 
-        // Get analysis using the uploaded image URL
         const analysisResponse = await fetch('/api/analyze-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ imageUrl })
-        })
-        const analysis = await analysisResponse.json()
+        });
+        const analysis = await analysisResponse.json();
 
-        // Add AI's response messages
         messages.value.push({
           type: 'text',
           content: await simulateTyping(analysis.naturalResponse),
           isUser: false,
           timestamp: new Date()
-        })
+        });
 
         if (analysis.analysis && analysis.analysis.careInstructions) {
           messages.value.push({
@@ -251,122 +248,112 @@ export default {
             content: await simulateTyping("Here are some care instructions: " + analysis.analysis.careInstructions),
             isUser: false,
             timestamp: new Date()
-          })
+          });
         }
 
-        // Save to store
-        store.dispatch('sendMessage', {
+        chatStore.sendMessage({
           type: 'analysis',
           content: analysis,
           timestamp: new Date()
-        })
-
+        });
       } catch (error) {
-        console.error('Error in image analysis:', error)
+        console.error('Error in image analysis:', error);
         messages.value.push({
           type: 'text',
           content: "I'm sorry, I had trouble analyzing that image. Please make sure it's a clear photo of a plant.",
           isUser: false,
           timestamp: new Date()
-        })
+        });
       } finally {
-        isProcessing.value = false
+        isProcessing.value = false;
       }
-    }
+    };
 
     // Send message function
     const sendMessage = async () => {
-      if (!canSendMessage.value) return
-      isProcessing.value = true
+      if (!canSendMessage.value) return;
+      isProcessing.value = true;
 
       try {
         if (uploadedFile.value) {
-          await handleImageAnalysis(uploadedFile.value.file)
-          removeUpload()
+          await handleImageAnalysis(uploadedFile.value.file);
+          removeUpload();
         } else if (userInput.value.trim()) {
-          // Add user message
           const userMessage = {
             type: 'text',
             content: userInput.value,
             isUser: true,
             timestamp: new Date()
-          }
-          messages.value.push(userMessage)
-          store.dispatch('sendMessage', userMessage)
+          };
+          messages.value.push(userMessage);
+          chatStore.sendMessage(userMessage);
 
-          // Process query and get AI response
-          const response = await processPlantQuery(userInput.value)
-
-          // Add AI response
+          const response = await processPlantQuery(userInput.value);
           const aiMessage = {
             type: 'text',
             content: await simulateTyping(response),
             isUser: false,
             timestamp: new Date()
-          }
-          messages.value.push(aiMessage)
-          store.dispatch('sendMessage', aiMessage)
+          };
+          messages.value.push(aiMessage);
+          chatStore.sendMessage(aiMessage);
 
-          userInput.value = ''
+          userInput.value = '';
         }
       } catch (error) {
-        console.error('Error in chat:', error)
-        showNotification('An error occurred while processing your message', 'error')
+        console.error('Error in chat:', error);
+        showNotification('An error occurred while processing your message', 'error');
       } finally {
-        isProcessing.value = false
+        isProcessing.value = false;
       }
-    }
+    };
 
-    // File handling functions
     const triggerFileUpload = () => {
-      fileInput.value.click()
-    }
+      fileInput.value.click();
+    };
 
     const handleFileUpload = (event) => {
-      const file = event.target.files[0]
+      const file = event.target.files[0];
       if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader()
+        const reader = new FileReader();
         reader.onload = (e) => {
           uploadedFile.value = {
             name: file.name,
             file: file,
             preview: e.target.result
-          }
-        }
-        reader.readAsDataURL(file)
+          };
+        };
+        reader.readAsDataURL(file);
       }
-    }
+    };
 
     const removeUpload = () => {
-      uploadedFile.value = null
-      fileInput.value.value = ''
-    }
+      uploadedFile.value = null;
+      fileInput.value.value = '';
+    };
 
-    // Computed properties
     const canSendMessage = computed(() => {
-      return !isProcessing.value && (userInput.value.trim() || uploadedFile.value)
-    })
+      return !isProcessing.value && (userInput.value.trim() || uploadedFile.value);
+    });
 
-    // Auto-scroll to bottom when new messages arrive
     watch(messages, async () => {
-      await nextTick()
+      await nextTick();
       if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
       }
-    })
+    });
 
-    // Load chat history on mount
     onMounted(() => {
       if (auth.currentUser) {
-        store.dispatch('loadChatHistory', auth.currentUser.uid)
+        chatStore.loadChatHistory(auth.currentUser.uid)
           .then((history) => {
-            messages.value = history
+            messages.value = history;
           })
           .catch((error) => {
-            console.error('Error loading chat history:', error)
-          })
+            console.error('Error loading chat history:', error);
+          });
       }
-    })
+    });
 
     return {
       messages,
@@ -381,10 +368,11 @@ export default {
       handleFileUpload,
       removeUpload,
       sendMessage
-    }
+    };
   }
-}
+};
 </script>
+
 
 
 <style>

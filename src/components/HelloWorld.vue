@@ -22,24 +22,34 @@
     <h3>Ecosystem</h3>
     <ul>
       <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
+      <li><a href="https://pinia.vuejs.org" target="_blank" rel="noopener">Pinia</a></li>
       <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
       <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
       <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
     </ul>
+    <button @click="updateMessage">Change Message</button>
   </div>
 </template>
 
 <script>
+import { useMessageStore } from '@/store/messageStore';
+import { storeToRefs } from 'pinia';
+
 export default {
   name: 'HelloWorld',
-  props: {
-    msg: String
+  setup() {
+    const messageStore = useMessageStore();
+    const { msg } = storeToRefs(messageStore);
+
+    const updateMessage = () => {
+      messageStore.setMessage('Hello from Pinia!');
+    };
+
+    return { msg, updateMessage };
   }
-}
+};
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 h3 {
   margin: 40px 0 0;
@@ -54,5 +64,13 @@ li {
 }
 a {
   color: #42b983;
+}
+button {
+  margin-top: 20px;
+  padding: 10px;
+  border: none;
+  background-color: #42b983;
+  color: white;
+  cursor: pointer;
 }
 </style>
