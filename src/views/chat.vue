@@ -38,9 +38,12 @@
             {{ msg.isUser ? 'You' : 'Verdure AI' }}
           </div>
           <div class="card-body">
+            <!-- Text message -->
             <div v-if="msg.type === 'text'" class="message-content">
               <p class="mb-0">{{ msg.content }}</p>
             </div>
+
+            <!-- Image message -->
             <div v-else-if="msg.type === 'image'" class="image-message">
               <img :src="msg.content" 
                    class="img-fluid rounded" 
@@ -50,8 +53,9 @@
         </div>
       </div>
 
-      <!-- Input area -->
+      <!-- Input area fixed at bottom -->
       <div class="chat-input-container">
+        <!-- File preview if exists -->
         <div v-if="uploadedFile" class="file-preview">
           <div class="file-preview-content">
             <span class="file-name">{{ uploadedFile.name }}</span>
@@ -62,20 +66,24 @@
         </div>
 
         <div class="input-group">
+          <!-- Hidden file input -->
           <input type="file" 
                  ref="fileInput" 
                  class="d-none" 
                  accept="image/*" 
                  @change="handleFileUpload">
           
+          <!-- Camera button -->
           <button class="camera-button" @click="triggerCamera">
             <i class="bi bi-camera-fill"></i>
           </button>
 
+          <!-- Image upload button -->
           <button class="attach-button" @click="triggerFileUpload">
             <i class="bi bi-paperclip"></i>
           </button>
 
+          <!-- Text input -->
           <textarea
             class="form-control chat-textarea" 
             placeholder="Ask about your plants or upload an image..." 
@@ -85,6 +93,7 @@
             ref="textInput"
           ></textarea>
 
+          <!-- Send button -->
           <button class="send-button" @click="sendMessage">
             <i class="bi bi-send-fill"></i>
           </button>
@@ -94,118 +103,104 @@
   </main>
 </template>
 
-<script>
+<script setup>
 import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/user';
-import { useChatStore } from '@/stores/chat';
+import { useAuthStore } from '@/stores/authStore';
+import { useChatStore } from '@/stores/chatStore';
 
-export default {
-  name: 'ChatInterface',
-  setup() {
-    const router = useRouter();
-    const userStore = useUserStore();
-    const chatStore = useChatStore();
+const router = useRouter();
+const authStore = useAuthStore();
+const chatStore = useChatStore();
 
-    const fileInput = ref(null);
-    const textInput = ref(null);
-    const messagesContainer = ref(null);
-    const userInput = ref('');
-    const uploadedFile = ref(null);
+const fileInput = ref(null);
+const textInput = ref(null);
+const messagesContainer = ref(null);
+const userInput = ref('');
+const uploadedFile = ref(null);
 
-    const adjustTextarea = () => {
-      const textarea = textInput.value;
-      textarea.style.height = 'auto';
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    };
+const adjustTextarea = () => {
+  const textarea = textInput.value;
+  textarea.style.height = 'auto';
+  textarea.style.height = textarea.scrollHeight + 'px';
+};
 
-    const handleFileUpload = (event) => {
-      const file = event.target.files[0];
-      if (file && file.type.startsWith('image/')) {
-        uploadedFile.value = {
-          name: file.name,
-          file: file
-        };
-      }
-    };
-
-    const removeUpload = () => {
-      uploadedFile.value = null;
-      if (fileInput.value) {
-        fileInput.value.value = '';
-      }
-    };
-
-    const triggerFileUpload = () => {
-      fileInput.value?.click();
-    };
-
-    const handleSignOut = async () => {
-      await userStore.logout();
-      router.push('/login');
-    };
-
-    const sendMessage = async () => {
-      if (!userInput.value.trim() && !uploadedFile.value) return;
-
-      if (uploadedFile.value) {
-        await chatStore.addMessage({
-          id: Date.now(),
-          type: 'image',
-          content: URL.createObjectURL(uploadedFile.value.file),
-          isUser: true,
-          timestamp: new Date()
-        });
-        removeUpload();
-      }
-
-      if (userInput.value.trim()) {
-        await chatStore.addMessage({
-          id: Date.now(),
-          type: 'text',
-          content: userInput.value,
-          isUser: true,
-          timestamp: new Date()
-        });
-        userInput.value = '';
-        adjustTextarea();
-      }
-
-      await nextTick();
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-    };
-
-    watch(() => chatStore.messages, async () => {
-      await nextTick();
-      if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-      }
-    }, { deep: true });
-
-    onMounted(async () => {
-      if (userStore.isAuthenticated) {
-        await chatStore.loadChatHistory(userStore.user.uid);
-      }
-    });
-
-    return {
-      fileInput,
-      textInput,
-      messagesContainer,
-      userInput,
-      uploadedFile,
-      adjustTextarea,
-      handleFileUpload,
-      removeUpload,
-      triggerFileUpload,
-      handleSignOut,
-      sendMessage
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (file && file.type.startsWith('image/')) {
+    uploadedFile.value = {
+      name: file.name,
+      file: file
     };
   }
 };
 
+const removeUpload = () => {
+  uploadedFile.value = null;
+  if (fileInput.value) {
+    fileInput.value.value = '';
+  }
+};
 
+const triggerFileUpload = () => {
+  fileInput.value?.click();
+};
 
+const triggerCamera = () => {
+  // Implement camera functionality
+  console.log('Camera functionality to be implemented');
+};
+
+const handleSignOut = async () => {
+  await authStore.logout();
+  router.push('/login');
+};
+
+const sendMessage = async () => {
+  if (!userInput.value.trim() && !uploadedFile.value) return;
+
+  if (uploadedFile.value) {
+    await chatStore.addMessage({
+      id: Date.now(),
+      type: 'image',
+      content: URL.createObjectURL(uploadedFile.value.file),
+      isUser: true,
+      timestamp: new Date()
+    });
+    removeUpload();
+  }
+
+  if (userInput.value.trim()) {
+    await chatStore.addMessage({
+      id: Date.now(),
+      type: 'text',
+      content: userInput.value,
+      isUser: true,
+      timestamp: new Date()
+    });
+    userInput.value = '';
+    adjustTextarea();
+  }
+
+  // Scroll to bottom after new message
+  await nextTick();
+  messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+};
+
+// Auto-scroll to bottom when new messages arrive
+watch(() => chatStore.messages, async () => {
+  await nextTick();
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  }
+}, { deep: true });
+
+// Load chat history on mount
+onMounted(async () => {
+  if (authStore.isAuthenticated) {
+    await chatStore.loadChatHistory(authStore.user.uid);
+  }
+});
 </script>
 
 <style scoped>
@@ -213,6 +208,7 @@ export default {
   min-height: 100vh;
   background-color: #341c02;
   position: relative;
+  overflow-x: hidden;
 }
 
 .account-button {
@@ -228,6 +224,7 @@ export default {
 .dropdown-menu {
   background-color: #F5E6D3;
   border: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .dropdown-item {
@@ -269,12 +266,22 @@ export default {
   background-color: #341c02;
 }
 
+.input-group {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
 .chat-textarea {
   resize: none;
   min-height: 44px;
   max-height: 200px;
   border-radius: 8px;
   padding: 0.75rem;
+  background-color: white;
+  color: #341c02;
 }
 
 .camera-button,
@@ -284,18 +291,14 @@ export default {
   height: 44px;
   border: none;
   border-radius: 8px;
+  background-color: #341c02;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.camera-button {
-  background-color: #341c02;
+.camera-button i {
   color: #F5E6D3;
-}
-
-.attach-button {
-  background-color: #341c02;
 }
 
 .attach-button i {
@@ -303,7 +306,6 @@ export default {
 }
 
 .send-button {
-  background-color: #341c02;
   transform: scale(1);
   transition: transform 0.2s;
 }
@@ -342,6 +344,8 @@ export default {
   border: none;
   color: #341c02;
   padding: 0;
+  display: flex;
+  align-items: center;
 }
 
 @media (max-width: 768px) {
