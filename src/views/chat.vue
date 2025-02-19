@@ -216,13 +216,17 @@ onMounted(async () => {
 }
 
 .account-dropdown {
-  background-color: #F5E6D3;
+   background-color: #F5E6D3;
   border: none;
   border-radius: 8px;
   padding: 0.5rem 0;
   margin-top: 0.5rem;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   list-style: none;
+  display: none;
+  position: absolute;
+  right: 0;
+  min-width: 160px;
 }
 
 .chat-container {
