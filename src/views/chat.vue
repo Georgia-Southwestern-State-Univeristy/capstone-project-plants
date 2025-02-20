@@ -44,6 +44,16 @@
         </div>
       </div>
 
+
+      <!-- Add this before chat-input-container -->
+      <div v-if="showCamera" class="camera-overlay">
+        <div class="camera-container">
+             <Camera 
+      @capture="onCapture"
+      @close="showCamera = false"
+    />
+        </div>
+      </div>
       <!-- Input area fixed at bottom -->
       <div class="chat-input-container">
         <!-- File preview if exists -->
@@ -103,6 +113,8 @@ import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
+// Add at the top with other imports
+import { Camera } from 'simple-vue-camera'
 
 // Store and router setup
 const router = useRouter();
@@ -122,55 +134,33 @@ const uploadedFile = ref(null);
 const isDropdownOpen = ref(false);
 
 
-// Camera section
+// Camera refs
+// Add with your other refs
+const showCamera = ref(false);
 
-// Add to your script section with other methods
-const triggerCamera = async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      video: {
-        facingMode: "environment" // Prefers back camera on mobile
-      }
-    });
-    
-    // Create a temporary video element to capture the image
-    const video = document.createElement('video');
-    video.srcObject = stream;
-    
-    // When video is ready, take picture
-    video.onloadedmetadata = () => {
-      video.play();
-      
-      // Create canvas to capture image
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      // Draw video frame to canvas
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      
-      // Convert to file
-      canvas.toBlob((blob) => {
-        // Stop camera stream
-        stream.getTracks().forEach(track => track.stop());
-        
-        // Create file from blob
-        const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
-        
-        // Use your existing upload handler
-        uploadedFile.value = {
-          name: 'camera-capture.jpg',
-          file: file
-        };
-      }, 'image/jpeg');
-    };
-  } catch (error) {
-    console.error('Error accessing camera:', error);
-    // Fallback to file input if camera access fails
-    fileInput.value?.click();
-  }
+// Camera section
+// Add below your imports
+const components = {
+  Camera
+}
+
+const triggerCamera = () => {
+  showCamera.value = true;
 };
 
+const onCapture = (blob) => {
+  // Create file from blob
+  const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+  
+  // Use existing upload handler
+  uploadedFile.value = {
+    name: 'camera-capture.jpg',
+    file: file
+  };
+  
+  // Close camera
+  showCamera.value = false;
+};
 
 
 
@@ -269,6 +259,29 @@ watch(() => chatStore.messages, async () => {
 </script>
 
 <style scoped>
+
+.camera-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.camera-container {
+  width: 100%;
+  max-width: 600px;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+
 .account-circle {
   width: 40px;
   height: 40px;
