@@ -67,13 +67,13 @@
           />
 
           <input
-            type="file"
-            ref="cameraInput"
-            class="d-none"
-            accept="image/*"
-            caoture="camera"
-            @change="handleFileUpload"
-          />
+  type="file"
+  ref="cameraInput"
+  class="d-none"
+  accept="image/*"
+  capture="user"
+  @change="handleFileUpload"
+/>
           
           <!-- Camera button -->
           <button class="camera-button" @click="triggerCamera">
