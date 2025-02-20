@@ -312,6 +312,10 @@ watch(() => chatStore.messages, async () => {
   overflow: hidden;
 }
 
+.camera-button {
+  color: #F5E6D3;
+}
+
 
 .account-circle {
   width: 40px;
