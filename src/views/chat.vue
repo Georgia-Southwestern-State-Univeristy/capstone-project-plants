@@ -19,30 +19,36 @@
       </div>
 
       <!-- Messages display area -->
-      <div class="messages-area mb-4" ref="messagesContainer">
-        <div v-for="msg in chatStore.messages" 
-             :key="msg.id" 
-             class="card mb-3"
-             :class="msg.isUser ? 'ms-auto' : 'me-auto'"
-             style="max-width: 70%;">
-          <div class="card-header">
-            {{ msg.isUser ? 'You' : 'Verdure AI' }}
-          </div>
-          <div class="card-body">
-            <!-- Text message -->
-            <div v-if="msg.type === 'text'" class="message-content">
-              <p class="mb-0">{{ msg.content }}</p>
-            </div>
-
-            <!-- Image message -->
-            <div v-else-if="msg.type === 'image'" class="image-message">
-              <img :src="msg.content" 
-                   class="img-fluid rounded" 
-                   alt="Uploaded plant image">
-            </div>
-          </div>
-        </div>
+      <!-- Messages display area -->
+<div class="messages-area mb-4" ref="messagesContainer">
+  <div v-for="msg in chatStore.messages" 
+       :key="msg.id" 
+       class="card mb-3"
+       :class="[
+         msg.isUser ? 'me-auto user-message' : 'ms-auto ai-message',
+         'message-card'
+       ]"
+       style="max-width: 70%;">
+    <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
+      {{ msg.isUser ? 'You' : 'Verdure AI' }}
+    </div>
+    <div class="card-body">
+      <!-- Text message -->
+      <div v-if="msg.type === 'text'" class="message-content">
+        <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'">
+          {{ msg.content }}
+        </p>
       </div>
+
+      <!-- Image message -->
+      <div v-else-if="msg.type === 'image'" class="image-message">
+        <img :src="msg.content" 
+             class="img-fluid rounded" 
+             alt="Uploaded plant image">
+      </div>
+    </div>
+  </div>
+</div>
 
 
  
@@ -429,6 +435,58 @@ watch(() => chatStore.messages, async () => {
   align-items: center;
   cursor: pointer;
 }
+
+
+.message-card {
+  border: none;
+  margin: 1rem 0;
+}
+
+.user-message {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  background-color: #F5E6D3;
+}
+
+.ai-message {
+  margin-right: 0 !important;
+  margin-left: auto !important;
+  background-color: #F5E6D3;
+}
+
+.user-header {
+  background-color: #341c02;
+  color: #F5E6D3;
+  font-weight: bold;
+}
+
+.ai-header {
+  background-color: #341c02;
+  color: #F5E6D3;
+  font-weight: bold;
+}
+
+.user-text {
+  color: #341c02;
+}
+
+.ai-text {
+  color: #341c02;
+}
+
+.messages-area {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.image-message img {
+  max-width: 100%;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
 
 
 @media (max-width: 768px) {
