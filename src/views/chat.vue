@@ -45,24 +45,7 @@
       </div>
 
 
-      <!-- Add this before the chat-input-container -->
-<div v-if="showCamera" class="camera-overlay">
-  <div class="camera-container">
-    <Webcam
-      ref="webcam"
-      width="100%"
-      height="auto"
-    />
-    <div class="camera-controls">
-      <button class="capture-button" @click="onCapture">
-        <i class="bi bi-camera-fill"></i>
-      </button>
-      <button class="close-button" @click="showCamera = false">
-        <i class="bi bi-x-lg"></i>
-      </button>
-    </div>
-  </div>
-</div>
+ 
 
       <!-- Input area fixed at bottom -->
       <div class="chat-input-container">
@@ -86,11 +69,7 @@
             @change="handleFileUpload"
           />
 
-          <!--Camera upload button-->
-            <!-- Camera button -->
-  <button class="camera-button" id="cameraBoxStyle">
-    <i class="bi bi-camera-fill" id="cameraStyle"></i>
-  </button>
+ 
         
           <!-- Image upload button -->
           <button class="attach-button" @click="triggerFileUpload">
@@ -122,7 +101,7 @@ import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
-import { Webcam } from 'vue-web-cam';
+
 
 
 // Store and router setup
@@ -141,33 +120,7 @@ const userInput = ref('');
 const uploadedFile = ref(null);
 const isDropdownOpen = ref(false);
 
-// Camera refs
-// Add these with your other refs
-const showCamera = ref(false);
-const webcam = ref(null);
 
-
-// Camera code
-const triggerCamera = () => {
-  showCamera.value = true;
-};
-
-const onCapture = () => {
-  if (webcam.value) {
-    const photo = webcam.value.snapshot();
-    // Convert base64 to blob
-    fetch(photo)
-      .then(res => res.blob())
-      .then(blob => {
-        const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
-        uploadedFile.value = {
-          name: 'camera-capture.jpg',
-          file: file
-        };
-        showCamera.value = false;
-      });
-  }
-};
 
 
 // Text input handling
@@ -272,55 +225,7 @@ watch(() => chatStore.messages, async () => {
 <style scoped>
 
 
-.camera-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
 
-.camera-container {
-  width: 100%;
-  max-width: 600px;
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
-  position: relative;
-}
-
-.camera-controls {
-  position: absolute;
-  bottom: 20px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-}
-
-.capture-button,
-.close-button {
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 50%;
-  background-color: #341c02;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.capture-button i,
-.close-button i {
-  color: #F5E6D3;
-}
 
 .account-circle {
   width: 40px;
