@@ -71,7 +71,7 @@
             ref="cameraInput"
             class="d-none"
             accept="image/*"
-            capture
+            caoture="camera"
             @change="handleFileUpload"
           />
           
