@@ -399,16 +399,25 @@ watch(() => chatStore.messages, async () => {
 
 .file-preview-leave-to {
   opacity: 0;
-  transform: translateY(-20px);
+  transform: translateY(20px); /* Changed from -20px to 20px for sliding down */
 }
 
 .file-preview-move {
   transition: transform 0.3s ease-out;
 }
 
+.file-preview-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* This will push the X to the right */
+  gap: 0.5rem;
+  width: 100%; /* Ensure it takes full width */
+}
+
 .file-name {
   color: #341c02;
   font-weight: bold;
+  margin: 0;
 }
 
 .remove-file {
@@ -418,6 +427,7 @@ watch(() => chatStore.messages, async () => {
   padding: 0;
   display: flex;
   align-items: center;
+  cursor: pointer;
 }
 
 
