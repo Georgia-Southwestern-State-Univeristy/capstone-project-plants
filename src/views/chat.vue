@@ -45,15 +45,7 @@
       </div>
 
 
-      <!-- Add this before chat-input-container -->
-      <div v-if="showCamera" class="camera-overlay">
-        <div class="camera-container">
-             <Camera 
-      @capture="onCapture"
-      @close="showCamera = false"
-    />
-        </div>
-      </div>
+    
       <!-- Input area fixed at bottom -->
       <div class="chat-input-container">
         <!-- File preview if exists -->
@@ -79,9 +71,26 @@
           
           
           <!-- Camera button -->
+          <!-- Add this before chat-input-container -->
+<div v-if="showCamera" class="camera-overlay">
+  <div class="camera-container">
+    <Camera 
+      @capture="onCapture"
+      @close="showCamera = false"
+    >
+      <template #controls>
+        <div class="camera-controls">
           <button class="camera-button" @click="triggerCamera">
             <i class="bi bi-camera-fill"></i>
           </button>
+          <button class="close-camera" @click="showCamera = false">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      </template>
+    </Camera>
+  </div>
+</div>
 
           <!-- Image upload button -->
           <button class="attach-button" @click="triggerFileUpload">
@@ -259,6 +268,28 @@ watch(() => chatStore.messages, async () => {
 </script>
 
 <style scoped>
+
+.camera-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.close-camera {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 8px;
+  background-color: #341c02;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #F5E6D3;
+}
 
 .camera-overlay {
   position: fixed;
