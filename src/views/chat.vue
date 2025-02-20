@@ -50,14 +50,24 @@
       <!-- Input area fixed at bottom -->
       <div class="chat-input-container">
         <!-- File preview if exists -->
-        <div v-if="uploadedFile" class="file-preview">
-          <div class="file-preview-content">
-            <span class="file-name">{{ uploadedFile.name }}</span>
-            <button class="remove-file" @click="removeUpload">
-              <i class="bi bi-x"></i>
-            </button>
-          </div>
-        </div>
+        <TransitionGroup 
+          name="file-preview"
+          tag="div"
+        class="file-previews-container"
+>
+          <div 
+    v-for="file in uploadedFiles" 
+    :key="file.id"
+    class="file-preview"
+  >
+    <div class="file-preview-content">
+      <span class="file-name">{{ file.name }}</span>
+      <button class="remove-file" @click="() => removeUpload(file.id)">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+  </div>
+</TransitionGroup>
 
         <div class="input-group">
           <!-- Hidden file inputs -->
@@ -101,6 +111,7 @@ import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
+import { Transition } from 'vue';
 
 
 
@@ -117,7 +128,8 @@ const messagesContainer = ref(null);
 
 // State refs
 const userInput = ref('');
-const uploadedFile = ref(null);
+// Change from single file to array
+const uploadedFiles = ref([]);
 const isDropdownOpen = ref(false);
 
 
@@ -134,17 +146,16 @@ const adjustTextarea = () => {
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
   if (file && file.type.startsWith('image/')) {
-    uploadedFile.value = {
+    uploadedFiles.value.push({
+      id: Date.now(), // Add unique id for transition
       name: file.name,
       file: file
-    };
+    });
   }
 };
 
-const removeUpload = () => {
-  uploadedFile.value = null;
-  if (fileInput.value) fileInput.value.value = '';
- 
+const removeUpload = (id) => {
+  uploadedFiles.value = uploadedFiles.value.filter(file => file.id !== id);
 };
 
 const triggerFileUpload = () => {
@@ -153,18 +164,18 @@ const triggerFileUpload = () => {
 
 // Message handling
 const sendMessage = async () => {
-  if (!userInput.value.trim() && !uploadedFile.value) return;
+  if (!uploadedFiles.value.length && !userInput.value.trim()) return;
 
-  if (uploadedFile.value) {
+  for (const uploadedFile of uploadedFiles.value) {
     await chatStore.addMessage({
       id: Date.now(),
       type: 'image',
-      content: URL.createObjectURL(uploadedFile.value.file),
+      content: URL.createObjectURL(uploadedFile.file),
       isUser: true,
       timestamp: new Date()
     });
-    removeUpload();
   }
+  uploadedFiles.value = []; // Clear all files after sending
 
   if (userInput.value.trim()) {
     await chatStore.addMessage({
@@ -357,26 +368,47 @@ watch(() => chatStore.messages, async () => {
   transform: scale(0.9);
 }
 
-.file-preview {
+.file-previews-container {
   position: absolute;
   bottom: 100%;
   left: 58px;
-  background-color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.file-preview {
+  background-color: #F5E6D3;
   border: 2px solid #341c02;
   border-radius: 4px;
   padding: 4px 8px;
   margin-bottom: 0.5rem;
+  transition: all 0.3s ease-out;
+
 }
 
-.file-preview-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+.file-preview-enter-active,
+.file-preview-leave-active {
+  transition: all 0.3s ease-out;
+}
+
+.file-preview-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.file-preview-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.file-preview-move {
+  transition: transform 0.3s ease-out;
 }
 
 .file-name {
   color: #341c02;
+  font-weight: bold;
 }
 
 .remove-file {
