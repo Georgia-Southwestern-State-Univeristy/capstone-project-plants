@@ -298,26 +298,7 @@ watch(() => chatStore.messages, async () => {
   overflow-x: hidden;
 }
 
-.messages-area {
-  height: calc(100vh - 180px);
-  overflow-y: auto;
-  padding: 1rem;
-}
 
-.card {
-  background-color: #F5E6D3;
-  border: none;
-}
-
-.card-header {
-  background-color: rgba(52, 28, 2, 0.1);
-  color: #341c02;
-  font-weight: bold;
-}
-
-.card-body {
-  color: #341c02;
-}
 
 .chat-input-container {
   position: fixed;
@@ -441,20 +422,47 @@ watch(() => chatStore.messages, async () => {
 
 
 .message-card {
+  width: 70%;
+  margin-bottom: 15px;
   border: none;
-  margin: 1rem 0;
+}
+
+.messages-area {
+  height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding: 20px;
+  margin-bottom: 100px; /* Space for input area */
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  background-color: #F5E6D3;
+  border: none;
+}
+
+.card-header {
+  background-color: rgba(52, 28, 2, 0.1);
+  color: #341c02;
+  font-weight: bold;
+}
+
+.card-body {
+  color: #341c02;
 }
 
 .user-message {
   margin-left: 0 !important;
   margin-right: auto !important;
   background-color: #F5E6D3;
+  align-self: flex-start;
 }
 
 .ai-message {
   margin-right: 0 !important;
   margin-left: auto !important;
   background-color: #F5E6D3;
+  align-self: flex-end;
 }
 
 .user-header {
@@ -477,12 +485,7 @@ watch(() => chatStore.messages, async () => {
   color: #341c02;
 }
 
-.messages-area {
-  display: flex;
-  flex-direction: column;
-  padding: 1rem;
-  overflow-y: auto;
-}
+
 
 .image-message img {
   max-width: 100%;
