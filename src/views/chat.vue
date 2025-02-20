@@ -71,6 +71,9 @@
           
           
           <!-- Camera button -->
+          <button class="camera-button" @click="triggerCamera">
+            <i class="bi bi-camera-fill"></i>
+          </button>
           <!-- Add this before chat-input-container -->
 <div v-if="showCamera" class="camera-overlay">
   <div class="camera-container">
@@ -80,9 +83,7 @@
     >
       <template #controls>
         <div class="camera-controls">
-          <button class="camera-button" @click="triggerCamera">
-            <i class="bi bi-camera-fill"></i>
-          </button>
+          
           <button class="close-camera" @click="showCamera = false">
             <i class="bi bi-x-lg"></i>
           </button>
