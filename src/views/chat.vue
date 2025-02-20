@@ -1,775 +1,511 @@
-
-
 <template>
   <main>
     <div id="chatBackground" class="chat-container px-4 py-5">
+      <!-- Account Icon Dropdown -->
+      <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
+        <div class="dropdown">
+          <button 
+            class="account-circle"
+            type="button" 
+            @click="toggleDropdown"
+          >
+            <i class="bi bi-person-fill"></i>
+          </button>
+          <ul class="account-dropdown" :class="{ 'show': isDropdownOpen }">
+            <li><router-link to="/userprofile" class="dropdown-item">Account</router-link></li>
+            <li><a href="#" class="dropdown-item" @click.prevent="handleSignOut">Sign Out</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Messages display area -->
       <!-- Messages display area -->
 <div class="messages-area mb-4" ref="messagesContainer">
-  <div v-for="(msg, index) in messages" 
-       :key="index" 
-       class="message-wrapper"
-       :class="msg.isUser ? 'justify-content-end' : 'justify-content-start'">
-    
-    <!-- Message card with dynamic styling -->
-    <div class="message-bubble" :class="msg.isUser ? 'user-message' : 'ai-message'">
+  <div v-for="msg in chatStore.messages" 
+       :key="msg.id" 
+       class="card mb-3"
+       :class="[
+         msg.isUser ? 'me-auto user-message' : 'ms-auto ai-message',
+         'message-card'
+       ]"
+       style="max-width: 70%;">
+    <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
+      {{ msg.isUser ? 'You' : 'Verdure AI' }}
+    </div>
+    <div class="card-body">
       <!-- Text message -->
-      <div v-if="msg.type === 'text'" 
-           class="message-content"
-           :class="{ 'typing': !msg.isUser && isTyping }">
-        <p class="mb-0" v-html="msg.content"></p>
+      <div v-if="msg.type === 'text'" class="message-content">
+        <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'">
+          {{ msg.content }}
+        </p>
       </div>
 
       <!-- Image message -->
       <div v-else-if="msg.type === 'image'" class="image-message">
         <img :src="msg.content" 
-             class="uploaded-image" 
+             class="img-fluid rounded" 
              alt="Uploaded plant image">
-        <p v-if="msg.analysis" 
-           class="mt-2 mb-0" 
-           v-html="msg.analysis"></p>
       </div>
-
-      <!-- Timestamp -->
-      <small class="message-time">
-        {{ new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
-      </small>
-    </div>
-  </div>
-
-  <!-- Typing indicator for AI -->
-  <div v-if="isTyping" class="message-wrapper justify-content-start">
-    <div class="message-bubble ai-message typing-indicator">
-      <span></span>
-      <span></span>
-      <span></span>
     </div>
   </div>
 </div>
 
 
-
-
-    <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
-  <div class="dropdown">
-    <button 
-      class="btn btn-light rounded-circle d-flex align-items-center justify-content-center" 
-      type="button" 
-      data-bs-toggle="dropdown" 
-      aria-expanded="false"
-      style="width: 40px; height: 40px; background-color: #F5E6D3;"
-    >
-      <i class="bi bi-person-fill" style="color: #072d13;"></i>
-    </button>
-    <ul class="dropdown-menu dropdown-menu-end" style="background-color: #F5E6D3;">
-      <li>
-        <router-link 
-          to="/userprofile" 
-          class="dropdown-item d-flex align-items-center"
-        >
-          <i class="bi bi-person me-2"></i>
-          Account
-        </router-link>
-      </li>
-      <li><hr class="dropdown-divider"></li>
-      <li>
-        <a 
-          href="#" 
-          class="dropdown-item d-flex align-items-center"
-          @click.prevent="handleSignOut"
-        >
-          <i class="bi bi-box-arrow-right me-2"></i>
-          Sign Out
-        </a>
-      </li>
-    </ul>
-  </div>
-</div>
+ 
 
       <!-- Input area fixed at bottom -->
-      <div class="chat-textarea-container">
+      <div class="chat-input-container">
         <!-- File preview if exists -->
-       <!-- File upload preview -->
-<div v-if="uploadedFile" class="file-preview">
-  <div class="file-preview-content">
-    <i class="bi bi-image me-2"></i>
-    <span class="file-name">{{ uploadedFile.name }}</span>
-    <button class="remove-file" @click="removeUpload">
-      <i class="bi bi-x"></i>
-    </button>
+        <TransitionGroup 
+          name="file-preview"
+          tag="div"
+        class="file-previews-container"
+>
+          <div 
+    v-for="file in uploadedFiles" 
+    :key="file.id"
+    class="file-preview"
+  >
+    <div class="file-preview-content">
+      <span class="file-name">{{ file.name }}</span>
+      <button class="remove-file" @click="() => removeUpload(file.id)">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
   </div>
-</div>
+</TransitionGroup>
 
-        <!-- Input area -->
         <div class="input-group">
-          <!-- Hidden file input -->
-          <input type="file" 
-                 ref="fileInput" 
-                 class="d-none" 
-                 accept="image/*" 
-                 @change="handleFileUpload">
-          
+          <!-- Hidden file inputs -->
+          <input 
+            type="file" 
+            ref="fileInput" 
+            class="d-none" 
+            accept="image/*" 
+            @change="handleFileUpload"
+          />
+
+ 
+        
           <!-- Image upload button -->
-          <button  id="imageAttachButton" class="btn btn-outline-secondary" 
-                  type="button" 
-                  @click="triggerFileUpload">
-            <i id="imageAttachIcon" class="bi bi-paperclip"></i>
+          <button class="attach-button" @click="triggerFileUpload">
+            <i class="bi bi-paperclip"></i>
           </button>
 
           <!-- Text input -->
-          <textarea id="textBox"
-                    class="form-control chat-textarea" 
-                    rows="1" 
-                    placeholder="Ask about your plants or upload an image..." 
-                    v-model="userInput"
-                    @keyup.enter.exact="sendMessage"
-                    ref="textInput"></textarea>
+          <textarea
+            class="form-control chat-textarea" 
+            placeholder="Ask about your plants or upload an image..." 
+            v-model="userInput"
+            @input="adjustTextarea"
+            @keyup.enter.exact="sendMessage"
+            ref="textInput"
+          ></textarea>
 
           <!-- Send button -->
-          <button class="send-button" 
-                  @click="sendMessage" 
-                  :disabled="!canSendMessage">
-            <svg id="sendArrow" viewBox="0 0 24 24">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-            </svg>
+          <button class="send-button" @click="sendMessage">
+            <i class="bi bi-send-fill"></i>
           </button>
         </div>
       </div>
     </div>
-
-    <!-- Decorative elements -->
-    <div class="decorative-elements">
-      <img src="@/assets/chatFlowers.png" 
-           id="chatFlowersLeft" 
-           class="decorative-flower decorative-flower--left" 
-           alt="Decorative flower element" 
-           loading="lazy">
-      <img src="@/assets/chatFlowers.png" 
-           id="chatFlowersRight" 
-           class="decorative-flower decorative-flower--right" 
-           alt="Decorative flower element" 
-           loading="lazy">
-    </div>
-
-
-
-
-
-
   </main>
 </template>
 
-<script>
-import { ref, computed, watch, nextTick, onMounted } from 'vue';
-import { useNotifications } from '@/composables/useNotifications';
-import { auth } from '../utils/firebase';
-import { storeToRefs } from 'pinia';
+<script setup>
+import { ref, onMounted, watch, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
+import { Transition } from 'vue';
 
-export default {
-  name: 'ChatView',
 
-  setup() {
-    const chatStore = useChatStore();  // Pinia store
-    const { showNotification } = useNotifications();
 
-    // Refs for DOM elements and state
-    const messagesContainer = ref(null);
-    const fileInput = ref(null);
-    const textInput = ref(null);
-    const messages = ref([]);
-    const userInput = ref('');
-    const uploadedFile = ref(null);
-    const isProcessing = ref(false);
-    const isTyping = ref(false);
+// Store and router setup
+const router = useRouter();
+const authStore = useAuthStore();
+const chatStore = useChatStore();
 
-    // Helper function to simulate AI typing
-    const simulateTyping = async (message) => {
-      isTyping.value = true;
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-      isTyping.value = false;
-      return message;
-    };
+// Refs for DOM elements
+const fileInput = ref(null);
+const textInput = ref(null);
+const messagesContainer = ref(null);
 
-    // Fetch plant care advice from backend API
-    const processPlantQuery = async (query) => {
-      try {
-        const response = await fetch('/api/get-plant-care-advice', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query })
-        });
-        const data = await response.json();
-        return data.naturalResponse || data;
-      } catch (error) {
-        console.error('Error processing plant query:', error);
-        return "I'm having trouble getting that information right now. Could you try rephrasing your question?";
-      }
-    };
 
-    // Handle image analysis via backend API
-    const handleImageAnalysis = async (file) => {
-      try {
-        isProcessing.value = true;
+// State refs
+const userInput = ref('');
+// Change from single file to array
+const uploadedFiles = ref([]);
+const isDropdownOpen = ref(false);
 
-        messages.value.push({
-          type: 'image',
-          content: URL.createObjectURL(file),
-          isUser: true,
-          timestamp: new Date()
-        });
 
-        const formData = new FormData();
-        formData.append('image', file);
 
-        const uploadResponse = await fetch('/api/upload-image', {
-          method: 'POST',
-          body: formData
-        });
-        const uploadData = await uploadResponse.json();
-        const imageUrl = uploadData.imageUrl;
 
-        const analysisResponse = await fetch('/api/analyze-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl })
-        });
-        const analysis = await analysisResponse.json();
+// Text input handling
+const adjustTextarea = () => {
+  const textarea = textInput.value;
+  textarea.style.height = 'auto';
+  textarea.style.height = textarea.scrollHeight + 'px';
+};
 
-        messages.value.push({
-          type: 'text',
-          content: await simulateTyping(analysis.naturalResponse),
-          isUser: false,
-          timestamp: new Date()
-        });
-
-        if (analysis.analysis && analysis.analysis.careInstructions) {
-          messages.value.push({
-            type: 'text',
-            content: await simulateTyping("Here are some care instructions: " + analysis.analysis.careInstructions),
-            isUser: false,
-            timestamp: new Date()
-          });
-        }
-
-        chatStore.sendMessage({
-          type: 'analysis',
-          content: analysis,
-          timestamp: new Date()
-        });
-      } catch (error) {
-        console.error('Error in image analysis:', error);
-        messages.value.push({
-          type: 'text',
-          content: "I'm sorry, I had trouble analyzing that image. Please make sure it's a clear photo of a plant.",
-          isUser: false,
-          timestamp: new Date()
-        });
-      } finally {
-        isProcessing.value = false;
-      }
-    };
-
-    // Send message function
-    const sendMessage = async () => {
-      if (!canSendMessage.value) return;
-      isProcessing.value = true;
-
-      try {
-        if (uploadedFile.value) {
-          await handleImageAnalysis(uploadedFile.value.file);
-          removeUpload();
-        } else if (userInput.value.trim()) {
-          const userMessage = {
-            type: 'text',
-            content: userInput.value,
-            isUser: true,
-            timestamp: new Date()
-          };
-          messages.value.push(userMessage);
-          chatStore.sendMessage(userMessage);
-
-          const response = await processPlantQuery(userInput.value);
-          const aiMessage = {
-            type: 'text',
-            content: await simulateTyping(response),
-            isUser: false,
-            timestamp: new Date()
-          };
-          messages.value.push(aiMessage);
-          chatStore.sendMessage(aiMessage);
-
-          userInput.value = '';
-        }
-      } catch (error) {
-        console.error('Error in chat:', error);
-        showNotification('An error occurred while processing your message', 'error');
-      } finally {
-        isProcessing.value = false;
-      }
-    };
-
-    const triggerFileUpload = () => {
-      fileInput.value.click();
-    };
-
-    const handleFileUpload = (event) => {
-      const file = event.target.files[0];
-      if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          uploadedFile.value = {
-            name: file.name,
-            file: file,
-            preview: e.target.result
-          };
-        };
-        reader.readAsDataURL(file);
-      }
-    };
-
-    const removeUpload = () => {
-      uploadedFile.value = null;
-      fileInput.value.value = '';
-    };
-
-    const canSendMessage = computed(() => {
-      return !isProcessing.value && (userInput.value.trim() || uploadedFile.value);
+// File handling
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (file && file.type.startsWith('image/')) {
+    uploadedFiles.value.push({
+      id: Date.now(), // Add unique id for transition
+      name: file.name,
+      file: file
     });
-
-    watch(messages, async () => {
-      await nextTick();
-      if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-      }
-    });
-
-    onMounted(() => {
-      if (auth.currentUser) {
-        chatStore.loadChatHistory(auth.currentUser.uid)
-          .then((history) => {
-            messages.value = history;
-          })
-          .catch((error) => {
-            console.error('Error loading chat history:', error);
-          });
-      }
-    });
-
-    return {
-      messages,
-      userInput,
-      uploadedFile,
-      fileInput,
-      textInput,
-      messagesContainer,
-      canSendMessage,
-      isTyping,
-      triggerFileUpload,
-      handleFileUpload,
-      removeUpload,
-      sendMessage
-    };
   }
 };
+
+const removeUpload = (id) => {
+  uploadedFiles.value = uploadedFiles.value.filter(file => file.id !== id);
+};
+
+const triggerFileUpload = () => {
+  fileInput.value?.click();
+};
+
+// Message handling
+const sendMessage = async () => {
+  if (!uploadedFiles.value.length && !userInput.value.trim()) return;
+
+  // Send text message if there is text input
+  if (userInput.value.trim()) {
+    chatStore.sendMessage({  // Use sendMessage instead of addMessage
+      id: Date.now(),
+      type: 'text',
+      content: userInput.value,
+      isUser: true,
+      timestamp: new Date()
+    });
+    userInput.value = '';
+    adjustTextarea();
+  }
+
+  // Send image messages if there are uploaded files
+  for (const uploadedFile of uploadedFiles.value) {
+    chatStore.sendMessage({  // Use sendMessage instead of addMessage
+      id: Date.now() + Math.random(),
+      type: 'image',
+      content: URL.createObjectURL(uploadedFile.file),
+      isUser: true,
+      timestamp: new Date()
+    });
+  }
+  uploadedFiles.value = []; // Clear files after sending
+
+  await nextTick();
+  messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+};
+
+
+// Authentication
+const handleSignOut = async () => {
+  await authStore.logout();
+  router.push('/login');
+};
+
+// Dropdown handling
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+// Lifecycle hooks
+onMounted(async () => {
+  if (authStore.isAuthenticated) {
+    await chatStore.loadChatHistory(authStore.user.uid);
+  }
+
+  document.addEventListener('click', (event) => {
+    const dropdown = document.querySelector('.dropdown');
+    if (!dropdown.contains(event.target)) {
+      isDropdownOpen.value = false;
+    }
+  });
+});
+
+
+// Watch for new messages
+watch(() => chatStore.messages, async () => {
+  await nextTick();
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  }
+}, { deep: true });
+
+
+
+
+
 </script>
-
-
-
-<style>
-@import '@/assets/styles/generalStyle.css';
-
-</style>
-
 
 <style scoped>
 
-main {
-  min-height: 100vh;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  background-color: #341c02;  /* Your brown color */
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
 
-.dropdown-item {
-  color: #072d13;
-  padding: 8px 16px;
-}
 
-.dropdown-item:hover {
-  background-color: rgba(7, 45, 19, 0.1);
-}
 
-.dropdown-menu {
-  min-width: 200px;
-  padding: 8px 0;
-  margin-top: 8px;
+.account-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #F5E6D3;
   border: none;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.dropdown-divider {
-  border-top-color: #072d13;
-  opacity: 0.1;
-}
-
-
-body#chatBackground {
-    background-color: #341c02;
-
- }
-
-/* Claude AI textarea CSS */
- textarea#textBox {
-  width: 100%;
-  max-width: 800px;
-  min-height: 120px;
-  padding: 1rem 4rem 1rem 1rem;
-  margin: 0 auto;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  font-size: clamp(14px, 2vw, 16px);
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  position: fixed;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  
-  
-}
-
-/* Claude AI textarea CSS */
-.chat-textarea:focus {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  border-color: #341c02;
-  outline: none;
-}
-
-/* Claude AI textarea media queries */
-@media (max-width: 768px) {
-  .chat-textarea {
-      min-height: 100px;
-      padding: 0.75rem;
-  }
-}
-
-
-
-
-/* Claude AI flower class class */
-.decorative-elements {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.decorative-flower {
-  position: absolute;
-  bottom: clamp(10px, 3vw, 20px);
-  width: clamp(120px, 20vw, 220px);
-  height: auto;
-  opacity: 0.8;
-  transition: opacity 0.3s ease;
-}
-
-.decorative-flower--left {
-  left: clamp(10px, 3vw, 20px);
-}
-
-.decorative-flower--right {
-  right: clamp(10px, 3vw, 20px);
-  transform: scaleX(-1);
-}
-
-@media (max-width: 640px) {
-  .decorative-flower {
-      opacity: 0.5;
-      width: clamp(80px, 15vw, 120px);
-  }
-}
-
-@media (max-height: 600px) {
-  .decorative-flower {
-      display: none;
-  }
-}
-
-
-/* Handle foldable devices */
-@media (max-width: 320px) {
-  .chat-container {
-      padding: 0.5rem;
-  }
-  
-  .chat-label {
-      font-size: 14px;
-  }
-}
-
-/* Ultra-wide screen support */
-@media (min-width: 2000px) {
-  .chat-container {
-      max-width: 1800px;
-      margin: 0 auto;
-  }
-}
-
-/* Claude AI chat container and label CSS */
-.chat-container {
-  min-height: 100vh;
-  background: var(--chat-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(1rem, 5vw, 3rem);
-
+  cursor: pointer;
 }
 
-.chat-label {
-  color: var(--chat-text);
-  font-size: clamp(16px, 2.5vw, 20px);
-  font-weight: 500;
-  letter-spacing: -0.01em;
+.account-circle i {
+  color: #341c02;
+  font-size: 1.2rem;
 }
 
-/* Claude AI arrow send button CSS */
-
-
-
- .send-button {
-  position: fixed;
-  bottom: 3rem;
-  right: calc(50% - 380px); /* Positions relative to textarea */
-  background: none;
+.account-dropdown {
+  background-color: #F5E6D3;
   border: none;
-  padding: 0.5rem;
-  cursor: pointer;
-  z-index: 1001;
-  transition: transform 0.2s ease;
- }
- 
- svg#sendArrow {
-  width: 1.5rem;
-  height: 1.5rem;
-  fill: #341c02;
- }
- 
- .send-button:active {
-  transform: scale(0.9);
- }
+  border-radius: 16px;
+  padding: 0.75rem 0;
+  margin-top: 0.5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  list-style: none;
+  display: none;
+  position: absolute;
+  right: 0;
+  min-width: 160px;
+}
 
- /* Image attach */
+.dropdown-item {
+  color: #341c02;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  display: block;
+  font-weight: 700;
+  transition: background-color 0.2s;
+}
 
- 
-button#imageAttachButton {
+.account-dropdown.show {
+  display: block;
+}
+
+.chat-container {
+  min-height: 100vh;
+  background-color: #341c02;
+  position: relative;
+  overflow-x: hidden;
+}
+
+
+
+.chat-input-container {
   position: fixed;
-  bottom: 3rem;
-  right: calc(50% - 340px); /* Positions relative to textarea */
-  background: none;
-border: none;
-  padding: 0.5rem;
-  cursor: pointer;
-  z-index: 1001;
-}
-
-i#ImageAttachIcon {
-
-fill: #341c02;
-
-}
-
-/* Message container styles */
-.messages-area {
-  height: calc(100vh - 180px);
-  overflow-y: auto;
+  bottom: 0;
+  left: 0;
+  right: 0;
   padding: 1rem;
   background-color: #341c02;
 }
 
-.message-wrapper {
+.input-group {
+  max-width: 800px;
+  margin: 0 auto;
   display: flex;
-  margin-bottom: 1rem;
-  animation: fadeIn 0.3s ease-in-out;
+  align-items: flex-end;
+  gap: 0.5rem;
 }
 
-/* Message bubble styles */
-.message-bubble {
-  max-width: 70%;
-  padding: 0.8rem 1rem;
-  border-radius: 1rem;
-  position: relative;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.user-message {
-  background-color: #F5E6D3; /* Cream color */
+.chat-textarea {
+  resize: none;
+  min-height: 44px;
+  max-height: 200px;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background-color: white;
   color: #341c02;
-  border-top-right-radius: 0.2rem;
-  margin-left: auto;
 }
 
-.ai-message {
-  background-color: #FFF8F0; /* Lighter cream */
-  color: #341c02;
-  border-top-left-radius: 0.2rem;
-  margin-right: auto;
+
+.attach-button,
+.send-button {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 8px;
+  background-color: #341c02;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Message content styles */
-.message-content {
-  word-wrap: break-word;
-  font-size: 0.95rem;
-  line-height: 1.4;
+
+.send-button i {
+  color: #F5E6D3;
 }
 
-/* Image message styles */
-.image-message {
-  width: 100%;
+.attach-button i {
+  color:#F5E6D3;
 }
 
-.uploaded-image {
-  max-width: 100%;
-  border-radius: 0.5rem;
-  margin-bottom: 0.5rem;
+.send-button {
+  transform: scale(1);
+  transition: transform 0.2s;
 }
 
-/* Timestamp styles */
-.message-time {
-  display: block;
-  font-size: 0.75rem;
-  color: #666;
-  margin-top: 0.25rem;
-  opacity: 0.8;
+.send-button:active {
+  transform: scale(0.9);
 }
 
-/* File preview styles */
-.file-preview {
+.file-previews-container {
   position: absolute;
-  bottom: 70px;
-  left: 0;
-  right: 0;
-  background-color: rgba(255, 248, 240, 0.95);
-  padding: 0.5rem 1rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  bottom: 100%;
+  left: 58px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.file-preview {
+  background-color: #F5E6D3;
+  border: 2px solid #341c02;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease-out;
+
+}
+
+.file-preview-enter-active,
+.file-preview-leave-active {
+  transition: all 0.3s ease-out;
+}
+
+.file-preview-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.file-preview-leave-to {
+  opacity: 0;
+  transform: translateY(20px); /* Changed from -20px to 20px for sliding down */
+}
+
+.file-preview-move {
+  transition: transform 0.3s ease-out;
 }
 
 .file-preview-content {
   display: flex;
   align-items: center;
-  max-width: 800px;
-  margin: 0 auto;
+  justify-content: space-between; /* This will push the X to the right */
+  gap: 0.5rem;
+  width: 100%; /* Ensure it takes full width */
 }
 
 .file-name {
-  flex-grow: 1;
-  margin-right: 1rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: #341c02;
+  font-weight: bold;
+  margin: 0;
 }
 
 .remove-file {
   background: none;
   border: none;
   color: #341c02;
-  padding: 0.25rem;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-
-.remove-file:hover {
-  opacity: 1;
-}
-
-/* Typing indicator animation */
-.typing-indicator {
-  padding: 0.5rem 1rem;
+  padding: 0;
   display: flex;
   align-items: center;
+  cursor: pointer;
 }
 
-.typing-indicator span {
-  height: 8px;
-  width: 8px;
+
+.message-card {
+  width: 70%;
+  margin-bottom: 15px;
+  border: none;
+}
+
+.messages-area {
+  height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding: 20px;
+  margin-bottom: 100px; /* Space for input area */
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  background-color: #F5E6D3;
+  border: none;
+}
+
+.card-header {
+  background-color: rgba(52, 28, 2, 0.1);
+  color: #341c02;
+  font-weight: bold;
+}
+
+.card-body {
+  color: #341c02;
+}
+
+.user-message {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  background-color: #F5E6D3;
+  align-self: flex-start;
+}
+
+.ai-message {
+  margin-right: 0 !important;
+  margin-left: auto !important;
+  background-color: #F5E6D3;
+  align-self: flex-end;
+}
+
+.user-header {
   background-color: #341c02;
-  border-radius: 50%;
-  margin: 0 2px;
-  display: inline-block;
-  animation: bounce 1.4s infinite ease-in-out;
+  color: #F5E6D3;
+  font-weight: bold;
 }
 
-.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-
-@keyframes bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+.ai-header {
+  background-color: #341c02;
+  color: #F5E6D3;
+  font-weight: bold;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.user-text {
+  color: #341c02;
 }
 
-/* Scrollbar styling */
-.messages-area::-webkit-scrollbar {
-  width: 6px;
+.ai-text {
+  color: #341c02;
 }
 
-.messages-area::-webkit-scrollbar-track {
-  background: rgba(255, 248, 240, 0.1);
+
+
+.image-message img {
+  max-width: 100%;
+  border-radius: 4px;
+  margin-top: 0.5rem;
 }
 
-.messages-area::-webkit-scrollbar-thumb {
-  background-color: rgba(52, 28, 2, 0.3);
-  border-radius: 3px;
-}
 
-/* Responsive adjustments */
+
 @media (max-width: 768px) {
-  .message-bubble {
+  .messages-area {
+    height: calc(100vh - 150px);
+  }
+  
+  .card {
     max-width: 85%;
   }
   
-  .messages-area {
-    height: calc(100vh - 160px);
+  .chat-textarea {
+    font-size: 16px;
   }
 }
-
- 
- /* Mobile adjustments */
- @media (max-width: 768px) {
-  .send-button {
-    bottom: 0.75rem;
-    right: 0.75rem;
-  }
-  
-  svg#sendArrow {
-    width: 1.25rem;
-    height: 1.25rem;
-  }
- }
-
- @media (max-width: 840px) {
-  .send-button {
-    right: 1rem;
-  }
-  
-  button#imageAttachButton {
-    right: 3.5rem;
-  }
-}
-
 </style>

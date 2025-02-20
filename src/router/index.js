@@ -12,8 +12,8 @@ const routes = [
   { path: '/', name: 'Landing', component: landing },
   { path: '/login', name: 'Login', component: login, meta: { requiresGuest: true } },
   { path: '/register', name: 'Register', component: register, meta: { requiresGuest: true } },
-  { path: '/chat', name: 'Chat', component: chat, meta: { requiresAuth: true } }, 
-  { path: '/userprofile', name: 'Profile', component: () => import('@/views/userprofile.vue'), meta: { requiresAuth: true } }
+  { path: '/chat', name: 'Chat', component: chat, /*meta: { requiresAuth: true }*/ }, 
+  { path: '/userprofile', name: 'Profile', component: () => import('@/views/userprofile.vue'), /*meta: { requiresAuth: true }*/ }
 ]
 
 const router = createRouter({
