@@ -112,7 +112,6 @@ import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
-import { ref } from 'vue';
 import { Camera } from 'simple-vue-camera';
 
 // Store and router setup
