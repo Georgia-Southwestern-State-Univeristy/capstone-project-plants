@@ -45,7 +45,15 @@
       </div>
 
 
-    
+    <!-- Camera overlay -->
+<div v-if="showCamera" class="camera-overlay">
+  <div class="camera-container">
+    <Camera 
+      @capture="onCapture"
+      @close="showCamera = false"
+    />
+  </div>
+</div>
       <!-- Input area fixed at bottom -->
       <div class="chat-input-container">
         <!-- File preview if exists -->
@@ -68,31 +76,12 @@
             @change="handleFileUpload"
           />
 
-          
-          
-          <!-- Camera button -->
-          <button class="camera-button" @click="triggerCamera">
-            <i class="bi bi-camera-fill"></i>
-          </button>
-          <!-- Add this before chat-input-container -->
-<div v-if="showCamera" class="camera-overlay">
-  <div class="camera-container">
-    <Camera 
-      @capture="onCapture"
-      @close="showCamera = false"
-    >
-      <template #controls>
-        <div class="camera-controls">
-          
-          <button class="close-camera" @click="showCamera = false">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-      </template>
-    </Camera>
-  </div>
-</div>
-
+          <!--Camera upload button-->
+            <!-- Camera button -->
+  <button class="camera-button" @click="triggerCamera">
+    <i class="bi bi-camera-fill"></i>
+  </button>
+        
           <!-- Image upload button -->
           <button class="attach-button" @click="triggerFileUpload">
             <i class="bi bi-paperclip"></i>
@@ -119,12 +108,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
-// Add at the top with other imports
-import { Camera } from 'simple-vue-camera'
+import { ref } from 'vue';
+import { Camera } from 'simple-vue-camera';
 
 // Store and router setup
 const router = useRouter();
@@ -134,7 +123,6 @@ const chatStore = useChatStore();
 // Refs for DOM elements
 const fileInput = ref(null);
 const textInput = ref(null);
-const cameraInput = ref(null);
 const messagesContainer = ref(null);
 
 
@@ -143,34 +131,9 @@ const userInput = ref('');
 const uploadedFile = ref(null);
 const isDropdownOpen = ref(false);
 
-
 // Camera refs
-// Add with your other refs
 const showCamera = ref(false);
 
-// Camera section
-// Add below your imports
-const components = {
-  Camera
-}
-
-const triggerCamera = () => {
-  showCamera.value = true;
-};
-
-const onCapture = (blob) => {
-  // Create file from blob
-  const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
-  
-  // Use existing upload handler
-  uploadedFile.value = {
-    name: 'camera-capture.jpg',
-    file: file
-  };
-  
-  // Close camera
-  showCamera.value = false;
-};
 
 
 
@@ -195,7 +158,7 @@ const handleFileUpload = (event) => {
 const removeUpload = () => {
   uploadedFile.value = null;
   if (fileInput.value) fileInput.value.value = '';
-  if (cameraInput.value) cameraInput.value.value = '';
+ 
 };
 
 const triggerFileUpload = () => {
@@ -266,30 +229,40 @@ watch(() => chatStore.messages, async () => {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
   }
 }, { deep: true });
+
+
+// Camera script
+const triggerCamera = () => {
+  showCamera.value = true;
+};
+
+const onCapture = (blob) => {
+  const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+  uploadedFile.value = {
+    name: 'camera-capture.jpg',
+    file: file
+  };
+  showCamera.value = false;
+};
+
+
 </script>
 
 <style scoped>
-
-.camera-controls {
-  position: absolute;
-  bottom: 20px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-}
-
-.close-camera {
+.camera-button {
   width: 44px;
   height: 44px;
   border: none;
   border-radius: 8px;
-  background-color: #341c02;
+  background-color: #F5E6D3;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #F5E6D3;
+  cursor: pointer;
+}
+
+.camera-button i {
+  color: #341c02;
 }
 
 .camera-overlay {
@@ -313,9 +286,6 @@ watch(() => chatStore.messages, async () => {
   overflow: hidden;
 }
 
-.camera-button {
-  color: #F5E6D3;
-}
 
 
 .account-circle {
@@ -417,7 +387,7 @@ watch(() => chatStore.messages, async () => {
   color: #341c02;
 }
 
-.camera-button,
+
 .attach-button,
 .send-button {
   width: 44px;
@@ -430,7 +400,7 @@ watch(() => chatStore.messages, async () => {
   justify-content: center;
 }
 
-.camera-button i,
+
 .send-button i {
   color: #F5E6D3;
 }
