@@ -71,7 +71,7 @@
             ref="cameraInput"
             class="d-none"
             accept="image/*"
-            capture="environment"
+            capture
             @change="handleFileUpload"
           />
           
@@ -127,6 +127,12 @@ const messagesContainer = ref(null);
 const userInput = ref('');
 const uploadedFile = ref(null);
 const isDropdownOpen = ref(false);
+
+
+// Add this with your other methods in the script section
+const triggerCamera = () => {
+  cameraInput.value?.click();
+};
 
 // Text input handling
 const adjustTextarea = () => {
