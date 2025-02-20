@@ -2,24 +2,21 @@
   <main>
     <div id="chatBackground" class="chat-container px-4 py-5">
       <!-- Account Icon Dropdown -->
-     <!-- Replace the current account dropdown HTML with this -->
-<!-- Update the account dropdown HTML -->
-
-<div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
-  <div class="dropdown">
-    <button 
-      class="account-circle"
-      type="button" 
-      @click="toggleDropdown"
-    >
-      <i class="bi bi-person-fill"></i>
-    </button>
-    <ul class="account-dropdown" :class="{ 'show': isDropdownOpen }">
-      <li><router-link to="/userprofile" class="dropdown-item">Account</router-link></li>
-      <li><a href="#" class="dropdown-item" @click.prevent="handleSignOut">Sign Out</a></li>
-    </ul>
-  </div>
-</div>
+      <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
+        <div class="dropdown">
+          <button 
+            class="account-circle"
+            type="button" 
+            @click="toggleDropdown"
+          >
+            <i class="bi bi-person-fill"></i>
+          </button>
+          <ul class="account-dropdown" :class="{ 'show': isDropdownOpen }">
+            <li><router-link to="/userprofile" class="dropdown-item">Account</router-link></li>
+            <li><a href="#" class="dropdown-item" @click.prevent="handleSignOut">Sign Out</a></li>
+          </ul>
+        </div>
+      </div>
 
       <!-- Messages display area -->
       <div class="messages-area mb-4" ref="messagesContainer">
@@ -47,6 +44,40 @@
         </div>
       </div>
 
+      <!-- Camera Preview Container -->
+      <div v-if="isCameraOpen" class="camera-preview-container">
+        <div v-show="isLoading" class="camera-loading">
+          <div class="loader"></div>
+        </div>
+        
+        <div v-show="!isLoading" class="camera-box" :class="{ 'flash': isShotPhoto }">
+          <div class="camera-shutter" :class="{'flash': isShotPhoto}"></div>
+          <video 
+            v-show="!isPhotoTaken" 
+            ref="cameraRef" 
+            width="450" 
+            height="337.5" 
+            autoplay
+            playsinline
+          ></video>
+          <canvas 
+            v-show="isPhotoTaken" 
+            ref="canvasRef" 
+            width="450" 
+            height="337.5"
+          ></canvas>
+        </div>
+
+        <div class="camera-controls">
+          <button class="capture-button" @click="takePhoto">
+            <i class="bi bi-camera-fill"></i>
+          </button>
+          <button class="close-camera" @click="stopCamera">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      </div>
+
       <!-- Input area fixed at bottom -->
       <div class="chat-input-container">
         <!-- File preview if exists -->
@@ -60,23 +91,23 @@
         </div>
 
         <div class="input-group">
-          <!-- Hidden file input -->
-          <<input 
-  type="file" 
-  ref="fileInput" 
-  class="d-none" 
-  accept="image/*" 
-  @change="handleFileUpload"
-/>
+          <!-- Hidden file inputs -->
+          <input 
+            type="file" 
+            ref="fileInput" 
+            class="d-none" 
+            accept="image/*" 
+            @change="handleFileUpload"
+          />
 
-<input
-  type="file"
-  ref="cameraInput"
-  class="d-none"
-  accept="image/*"
-  capture="environment"
-  @change="handleFileUpload"
-/>
+          <input
+            type="file"
+            ref="cameraInput"
+            class="d-none"
+            accept="image/*"
+            capture="environment"
+            @change="handleFileUpload"
+          />
           
           <!-- Camera button -->
           <button class="camera-button" @click="triggerCamera">
@@ -104,72 +135,99 @@
           </button>
         </div>
       </div>
-      <!-- Add this after your messages area -->
-<div v-if="isCameraOpen" class="camera-preview-container">
-  <!-- Loading indicator -->
-  <div v-show="isLoading" class="camera-loading">
-    <div class="loader"></div>
-  </div>
-  
-  <!-- Camera view -->
-  <div v-show="!isLoading" class="camera-box" :class="{ 'flash': isShotPhoto }">
-    <div class="camera-shutter" :class="{'flash': isShotPhoto}"></div>
-    <video 
-      v-show="!isPhotoTaken" 
-      ref="cameraRef" 
-      width="450" 
-      height="337.5" 
-      autoplay
-      playsinline
-    ></video>
-    <canvas 
-      v-show="isPhotoTaken" 
-      ref="canvasRef" 
-      width="450" 
-      height="337.5"
-    ></canvas>
-  </div>
-
-  <!-- Camera controls -->
-  <div class="camera-controls">
-    <button class="capture-button" @click="takePhoto">
-      <i class="bi bi-camera-fill"></i>
-    </button>
-    <button class="close-camera" @click="triggerCamera">
-      <i class="bi bi-x-lg"></i>
-    </button>
-  </div>
-</div>
-
     </div>
   </main>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 
+// Store and router setup
 const router = useRouter();
 const authStore = useAuthStore();
 const chatStore = useChatStore();
 
+// Refs for DOM elements
 const fileInput = ref(null);
 const textInput = ref(null);
 const cameraInput = ref(null);
 const messagesContainer = ref(null);
-const userInput = ref('');
-const uploadedFile = ref(null);
-const isLoading = ref(false);
 const cameraRef = ref(null);
 const canvasRef = ref(null);
 
+// State refs
+const userInput = ref('');
+const uploadedFile = ref(null);
+const isLoading = ref(false);
+const isCameraOpen = ref(false);
+const isPhotoTaken = ref(false);
+const isShotPhoto = ref(false);
+const isDropdownOpen = ref(false);
 
-const triggerCamera = () => {
-  cameraInput.value?.click();
+// Text input handling
+const adjustTextarea = () => {
+  const textarea = textInput.value;
+  textarea.style.height = 'auto';
+  textarea.style.height = textarea.scrollHeight + 'px';
 };
 
+// File handling
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (file && file.type.startsWith('image/')) {
+    uploadedFile.value = {
+      name: file.name,
+      file: file
+    };
+  }
+};
+
+const removeUpload = () => {
+  uploadedFile.value = null;
+  if (fileInput.value) fileInput.value.value = '';
+  if (cameraInput.value) cameraInput.value.value = '';
+};
+
+const triggerFileUpload = () => {
+  fileInput.value?.click();
+};
+
+// Camera handling
+const triggerCamera = async () => {
+  if (isCameraOpen.value) {
+    stopCamera();
+  } else {
+    startCamera();
+  }
+};
+
+const startCamera = async () => {
+  try {
+    isLoading.value = true;
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    if (cameraRef.value) {
+      cameraRef.value.srcObject = stream;
+    }
+    isCameraOpen.value = true;
+  } catch (error) {
+    console.error('Error accessing camera:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const stopCamera = () => {
+  if (cameraRef.value && cameraRef.value.srcObject) {
+    const tracks = cameraRef.value.srcObject.getTracks();
+    tracks.forEach(track => track.stop());
+    cameraRef.value.srcObject = null;
+  }
+  isCameraOpen.value = false;
+  isPhotoTaken.value = false;
+};
 
 const takePhoto = () => {
   if (!isPhotoTaken.value) {
@@ -185,57 +243,18 @@ const takePhoto = () => {
     const context = canvasRef.value.getContext('2d');
     context.drawImage(cameraRef.value, 0, 0, 450, 337.5);
     
-    // Convert to file and add to upload
     canvasRef.value.toBlob((blob) => {
       const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
       uploadedFile.value = {
         name: 'camera-capture.jpg',
         file: file
       };
-      
-      // Close camera after capture
-      triggerCamera();
+      stopCamera();
     }, 'image/jpeg');
   }
 };
 
-
-
-const adjustTextarea = () => {
-  const textarea = textInput.value;
-  textarea.style.height = 'auto';
-  textarea.style.height = textarea.scrollHeight + 'px';
-};
-
-const handleFileUpload = (event) => {
-  const file = event.target.files[0];
-  if (file && file.type.startsWith('image/')) {
-    uploadedFile.value = {
-      name: file.name,
-      file: file
-    };
-  }
-};
-
-const removeUpload = () => {
-  uploadedFile.value = null;
-  if (fileInput.value) {
-    fileInput.value.value = '';
-  }
-};
-
-
-
-const triggerFileUpload = () => {
-  fileInput.value?.click();
-};
-
-
-const handleSignOut = async () => {
-  await authStore.logout();
-  router.push('/login');
-};
-
+// Message handling
 const sendMessage = async () => {
   if (!userInput.value.trim() && !uploadedFile.value) return;
 
@@ -262,36 +281,27 @@ const sendMessage = async () => {
     adjustTextarea();
   }
 
-  // Scroll to bottom after new message
   await nextTick();
   messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
 };
 
-// Auto-scroll to bottom when new messages arrive
-watch(() => chatStore.messages, async () => {
-  await nextTick();
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-  }
-}, { deep: true });
+// Authentication
+const handleSignOut = async () => {
+  await authStore.logout();
+  router.push('/login');
+};
 
-// Load chat history on mount
-onMounted(async () => {
-  if (authStore.isAuthenticated) {
-    await chatStore.loadChatHistory(authStore.user.uid);
-  }
-});
-
-// Add this to your component's data/refs
-const isDropdownOpen = ref(false);
-
-// Add this method
+// Dropdown handling
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
 };
 
-// Optional: Close dropdown when clicking outside
-onMounted(() => {
+// Lifecycle hooks
+onMounted(async () => {
+  if (authStore.isAuthenticated) {
+    await chatStore.loadChatHistory(authStore.user.uid);
+  }
+
   document.addEventListener('click', (event) => {
     const dropdown = document.querySelector('.dropdown');
     if (!dropdown.contains(event.target)) {
@@ -300,13 +310,20 @@ onMounted(() => {
   });
 });
 
+onUnmounted(() => {
+  stopCamera();
+});
 
-
-
+// Watch for new messages
+watch(() => chatStore.messages, async () => {
+  await nextTick();
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  }
+}, { deep: true });
 </script>
 
 <style scoped>
-
 .account-circle {
   width: 40px;
   height: 40px;
@@ -336,7 +353,6 @@ onMounted(() => {
   position: absolute;
   right: 0;
   min-width: 160px;
-
 }
 
 .account-dropdown.show {
@@ -348,34 +364,6 @@ onMounted(() => {
   background-color: #341c02;
   position: relative;
   overflow-x: hidden;
-}
-
-.account-button {
-  width: 40px;
-  height: 40px;
-  background-color: #F5E6D3;
-}
-
-.account-button i {
-  color: #341c02;
-}
-
-.dropdown-menu {
-  background-color: #F5E6D3;
-  border: none;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.dropdown-item {
-  color: #341c02;
-  padding: 0.5rem 1rem;
-  text-decoration: none;
-  display: block;
-  font-weight: 500;
-}
-
-.dropdown-item:hover {
-  background-color: rgba(52, 28, 2, 0.1);
 }
 
 .messages-area {
@@ -439,7 +427,8 @@ onMounted(() => {
   justify-content: center;
 }
 
-.camera-button i {
+.camera-button i,
+.send-button i {
   color: #F5E6D3;
 }
 
@@ -456,16 +445,12 @@ onMounted(() => {
   transform: scale(0.9);
 }
 
-.send-button i {
-  color: #F5E6D3;
-}
-
 .file-preview {
   position: absolute;
   bottom: 100%;
   left: 58px;
-  background-color: rgba(245, 230, 211, 0.9);
-  border: 1px solid #341c02;
+  background-color: white;
+  border: 2px solid #341c02;
   border-radius: 4px;
   padding: 4px 8px;
   margin-bottom: 0.5rem;
@@ -474,6 +459,7 @@ onMounted(() => {
 .file-preview-content {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
 }
 
@@ -490,12 +476,24 @@ onMounted(() => {
   align-items: center;
 }
 
+.camera-preview-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.9);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
 .camera-box {
   position: relative;
   width: 450px;
   max-width: 100%;
   margin: 0 auto;
 }
+
 
 .camera-shutter {
   position: absolute;
