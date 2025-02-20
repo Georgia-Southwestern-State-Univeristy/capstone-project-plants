@@ -172,19 +172,9 @@ const triggerFileUpload = () => {
 const sendMessage = async () => {
   if (!uploadedFiles.value.length && !userInput.value.trim()) return;
 
-  for (const uploadedFile of uploadedFiles.value) {
-    await chatStore.addMessage({
-      id: Date.now(),
-      type: 'image',
-      content: URL.createObjectURL(uploadedFile.file),
-      isUser: true,
-      timestamp: new Date()
-    });
-  }
-  uploadedFiles.value = []; // Clear all files after sending
-
+  // Send text message if there is text input
   if (userInput.value.trim()) {
-    await chatStore.addMessage({
+    chatStore.sendMessage({  // Use sendMessage instead of addMessage
       id: Date.now(),
       type: 'text',
       content: userInput.value,
@@ -195,9 +185,22 @@ const sendMessage = async () => {
     adjustTextarea();
   }
 
+  // Send image messages if there are uploaded files
+  for (const uploadedFile of uploadedFiles.value) {
+    chatStore.sendMessage({  // Use sendMessage instead of addMessage
+      id: Date.now() + Math.random(),
+      type: 'image',
+      content: URL.createObjectURL(uploadedFile.file),
+      isUser: true,
+      timestamp: new Date()
+    });
+  }
+  uploadedFiles.value = []; // Clear files after sending
+
   await nextTick();
   messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
 };
+
 
 // Authentication
 const handleSignOut = async () => {
