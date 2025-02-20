@@ -66,14 +66,7 @@
             @change="handleFileUpload"
           />
 
-          <input
-  type="file"
-  ref="cameraInput"
-  class="d-none"
-  accept="image/*"
-  capture="user"
-  @change="handleFileUpload"
-/>
+          
           
           <!-- Camera button -->
           <button class="camera-button" @click="triggerCamera">
@@ -129,10 +122,57 @@ const uploadedFile = ref(null);
 const isDropdownOpen = ref(false);
 
 
-// Add this with your other methods in the script section
-const triggerCamera = () => {
-  cameraInput.value?.click();
+// Camera section
+
+// Add to your script section with other methods
+const triggerCamera = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: {
+        facingMode: "environment" // Prefers back camera on mobile
+      }
+    });
+    
+    // Create a temporary video element to capture the image
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    
+    // When video is ready, take picture
+    video.onloadedmetadata = () => {
+      video.play();
+      
+      // Create canvas to capture image
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      // Draw video frame to canvas
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      
+      // Convert to file
+      canvas.toBlob((blob) => {
+        // Stop camera stream
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Create file from blob
+        const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+        
+        // Use your existing upload handler
+        uploadedFile.value = {
+          name: 'camera-capture.jpg',
+          file: file
+        };
+      }, 'image/jpeg');
+    };
+  } catch (error) {
+    console.error('Error accessing camera:', error);
+    // Fallback to file input if camera access fails
+    fileInput.value?.click();
+  }
 };
+
+
+
 
 // Text input handling
 const adjustTextarea = () => {
