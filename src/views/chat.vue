@@ -44,40 +44,6 @@
         </div>
       </div>
 
-      <!-- Camera Preview Container -->
-      <div v-if="isCameraOpen" class="camera-preview-container">
-        <div v-show="isLoading" class="camera-loading">
-          <div class="loader"></div>
-        </div>
-        
-        <div v-show="!isLoading" class="camera-box" :class="{ 'flash': isShotPhoto }">
-          <div class="camera-shutter" :class="{'flash': isShotPhoto}"></div>
-          <video 
-            v-show="!isPhotoTaken" 
-            ref="cameraRef" 
-            width="450" 
-            height="337.5" 
-            autoplay
-            playsinline
-          ></video>
-          <canvas 
-            v-show="isPhotoTaken" 
-            ref="canvasRef" 
-            width="450" 
-            height="337.5"
-          ></canvas>
-        </div>
-
-        <div class="camera-controls">
-          <button class="capture-button" @click="takePhoto">
-            <i class="bi bi-camera-fill"></i>
-          </button>
-          <button class="close-camera" @click="stopCamera">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-      </div>
-
       <!-- Input area fixed at bottom -->
       <div class="chat-input-container">
         <!-- File preview if exists -->
@@ -155,16 +121,11 @@ const fileInput = ref(null);
 const textInput = ref(null);
 const cameraInput = ref(null);
 const messagesContainer = ref(null);
-const cameraRef = ref(null);
-const canvasRef = ref(null);
+
 
 // State refs
 const userInput = ref('');
 const uploadedFile = ref(null);
-const isLoading = ref(false);
-const isCameraOpen = ref(false);
-const isPhotoTaken = ref(false);
-const isShotPhoto = ref(false);
 const isDropdownOpen = ref(false);
 
 // Text input handling
@@ -193,65 +154,6 @@ const removeUpload = () => {
 
 const triggerFileUpload = () => {
   fileInput.value?.click();
-};
-
-// Camera handling
-const triggerCamera = async () => {
-  if (isCameraOpen.value) {
-    stopCamera();
-  } else {
-    startCamera();
-  }
-};
-
-const startCamera = async () => {
-  try {
-    isLoading.value = true;
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    if (cameraRef.value) {
-      cameraRef.value.srcObject = stream;
-    }
-    isCameraOpen.value = true;
-  } catch (error) {
-    console.error('Error accessing camera:', error);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-const stopCamera = () => {
-  if (cameraRef.value && cameraRef.value.srcObject) {
-    const tracks = cameraRef.value.srcObject.getTracks();
-    tracks.forEach(track => track.stop());
-    cameraRef.value.srcObject = null;
-  }
-  isCameraOpen.value = false;
-  isPhotoTaken.value = false;
-};
-
-const takePhoto = () => {
-  if (!isPhotoTaken.value) {
-    isShotPhoto.value = true;
-    setTimeout(() => {
-      isShotPhoto.value = false;
-    }, 50);
-  }
-
-  isPhotoTaken.value = !isPhotoTaken.value;
-
-  if (canvasRef.value && cameraRef.value) {
-    const context = canvasRef.value.getContext('2d');
-    context.drawImage(cameraRef.value, 0, 0, 450, 337.5);
-    
-    canvasRef.value.toBlob((blob) => {
-      const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
-      uploadedFile.value = {
-        name: 'camera-capture.jpg',
-        file: file
-      };
-      stopCamera();
-    }, 'image/jpeg');
-  }
 };
 
 // Message handling
@@ -310,9 +212,6 @@ onMounted(async () => {
   });
 });
 
-onUnmounted(() => {
-  stopCamera();
-});
 
 // Watch for new messages
 watch(() => chatStore.messages, async () => {
@@ -344,8 +243,8 @@ watch(() => chatStore.messages, async () => {
 .account-dropdown {
   background-color: #F5E6D3;
   border: none;
-  border-radius: 8px;
-  padding: 0.5rem 0;
+  border-radius: 16px;
+  padding: 0.75rem 0;
   margin-top: 0.5rem;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   list-style: none;
@@ -353,6 +252,15 @@ watch(() => chatStore.messages, async () => {
   position: absolute;
   right: 0;
   min-width: 160px;
+}
+
+.dropdown-item {
+  color: #341c02;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  display: block;
+  font-weight: 700;
+  transition: background-color 0.2s;
 }
 
 .account-dropdown.show {
@@ -476,66 +384,6 @@ watch(() => chatStore.messages, async () => {
   align-items: center;
 }
 
-.camera-preview-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.9);
-  padding: 1rem;
-  border-radius: 8px;
-}
-
-.camera-box {
-  position: relative;
-  width: 450px;
-  max-width: 100%;
-  margin: 0 auto;
-}
-
-
-.camera-shutter {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #fff;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.camera-shutter.flash {
-  opacity: 1;
-  animation: flash 0.05s ease-out;
-}
-
-@keyframes flash {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-.camera-loading {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.loader {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #341c02;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
 
 @media (max-width: 768px) {
   .messages-area {
