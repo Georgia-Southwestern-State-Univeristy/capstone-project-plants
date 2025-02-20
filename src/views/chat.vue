@@ -46,12 +46,22 @@
 
 
     <!-- Camera overlay -->
+<!-- Camera overlay -->
 <div v-if="showCamera" class="camera-overlay">
   <div class="camera-container">
     <Camera 
-      @capture="onCapture"
-      @close="showCamera = false"
+      :resolution="{ width: 375, height: 812 }" 
+      ref="camera" 
+      autoplay
     />
+    <div class="camera-controls">
+      <button class="snapshot-button" @click="snapshot">
+        <i class="bi bi-camera-fill"></i>
+      </button>
+      <button class="close-camera" @click="showCamera = false">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
   </div>
 </div>
       <!-- Input area fixed at bottom -->
@@ -113,6 +123,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { Camera } from 'simple-vue-camera';
+import { defineComponent } from 'vue';
 
 // Store and router setup
 const router = useRouter();
@@ -132,7 +143,7 @@ const isDropdownOpen = ref(false);
 
 // Camera refs
 const showCamera = ref(false);
-
+const camera = ref(null);
 
 
 
@@ -235,35 +246,22 @@ const triggerCamera = () => {
   showCamera.value = true;
 };
 
-const onCapture = (blob) => {
-  const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
-  uploadedFile.value = {
-    name: 'camera-capture.jpg',
-    file: file
-  };
-  showCamera.value = false;
+const snapshot = async () => {
+  if (camera.value) {
+    const blob = await camera.value.snapshot();
+    if (blob) {
+      uploadedFile.value = {
+        name: 'camera-capture.jpg',
+        file: new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' })
+      };
+      showCamera.value = false;
+    }
+  }
 };
-
 
 </script>
 
 <style scoped>
-.camera-button {
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 8px;
-  background-color: #F5E6D3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.camera-button i {
-  color: #341c02;
-}
-
 .camera-overlay {
   position: fixed;
   top: 0;
@@ -279,10 +277,38 @@ const onCapture = (blob) => {
 
 .camera-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 375px;
   background: #000;
   border-radius: 8px;
   overflow: hidden;
+  position: relative;
+}
+
+.camera-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.snapshot-button,
+.close-camera {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.snapshot-button i,
+.close-camera i {
+  color: #F5E6D3;
 }
 
 
