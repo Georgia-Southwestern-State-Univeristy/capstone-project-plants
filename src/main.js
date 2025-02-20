@@ -6,7 +6,7 @@ import App from './App.vue';
 import router from './router';
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
-import Camera from "simple-vue-camera";
+
 
 import '@/assets/styles/generalStyle.css';
 
@@ -19,4 +19,3 @@ app.mount('#app');
 
 
 
-createApp(App).component("camera", Camera).mount("#app");

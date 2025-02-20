@@ -45,25 +45,25 @@
       </div>
 
 
-    <!-- Camera overlay -->
-<!-- Camera overlay -->
+      <!-- Add this before the chat-input-container -->
 <div v-if="showCamera" class="camera-overlay">
   <div class="camera-container">
-    <Camera 
-      :resolution="{ width: 375, height: 812 }" 
-      ref="camera" 
-      autoplay
+    <Webcam
+      ref="webcam"
+      width="100%"
+      height="auto"
     />
     <div class="camera-controls">
-      <button class="snapshot-button" @click="snapshot">
+      <button class="capture-button" @click="onCapture">
         <i class="bi bi-camera-fill"></i>
       </button>
-      <button class="close-camera" @click="showCamera = false">
+      <button class="close-button" @click="showCamera = false">
         <i class="bi bi-x-lg"></i>
       </button>
     </div>
   </div>
 </div>
+
       <!-- Input area fixed at bottom -->
       <div class="chat-input-container">
         <!-- File preview if exists -->
@@ -88,8 +88,8 @@
 
           <!--Camera upload button-->
             <!-- Camera button -->
-  <button class="camera-button" @click="triggerCamera">
-    <i class="bi bi-camera-fill"></i>
+  <button class="camera-button" id="cameraBoxStyle">
+    <i class="bi bi-camera-fill" id="cameraStyle"></i>
   </button>
         
           <!-- Image upload button -->
@@ -122,8 +122,8 @@ import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
-import { Camera } from 'simple-vue-camera';
-import { defineComponent } from 'vue';
+import { Webcam } from 'vue-web-cam';
+
 
 // Store and router setup
 const router = useRouter();
@@ -142,9 +142,32 @@ const uploadedFile = ref(null);
 const isDropdownOpen = ref(false);
 
 // Camera refs
+// Add these with your other refs
 const showCamera = ref(false);
-const camera = ref(null);
+const webcam = ref(null);
 
+
+// Camera code
+const triggerCamera = () => {
+  showCamera.value = true;
+};
+
+const onCapture = () => {
+  if (webcam.value) {
+    const photo = webcam.value.snapshot();
+    // Convert base64 to blob
+    fetch(photo)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+        uploadedFile.value = {
+          name: 'camera-capture.jpg',
+          file: file
+        };
+        showCamera.value = false;
+      });
+  }
+};
 
 
 // Text input handling
@@ -241,27 +264,14 @@ watch(() => chatStore.messages, async () => {
 }, { deep: true });
 
 
-// Camera script
-const triggerCamera = () => {
-  showCamera.value = true;
-};
 
-const snapshot = async () => {
-  if (camera.value) {
-    const blob = await camera.value.snapshot();
-    if (blob) {
-      uploadedFile.value = {
-        name: 'camera-capture.jpg',
-        file: new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' })
-      };
-      showCamera.value = false;
-    }
-  }
-};
+
 
 </script>
 
 <style scoped>
+
+
 .camera-overlay {
   position: fixed;
   top: 0;
@@ -277,7 +287,7 @@ const snapshot = async () => {
 
 .camera-container {
   width: 100%;
-  max-width: 375px;
+  max-width: 600px;
   background: #000;
   border-radius: 8px;
   overflow: hidden;
@@ -294,24 +304,23 @@ const snapshot = async () => {
   gap: 20px;
 }
 
-.snapshot-button,
-.close-camera {
+.capture-button,
+.close-button {
   width: 44px;
   height: 44px;
   border: none;
   border-radius: 50%;
+  background-color: #341c02;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
 }
 
-.snapshot-button i,
-.close-camera i {
+.capture-button i,
+.close-button i {
   color: #F5E6D3;
 }
-
-
 
 .account-circle {
   width: 40px;
@@ -431,7 +440,7 @@ const snapshot = async () => {
 }
 
 .attach-button i {
-  color: white;
+  color:#F5E6D3;
 }
 
 .send-button {
