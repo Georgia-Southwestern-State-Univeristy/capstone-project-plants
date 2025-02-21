@@ -1,14 +1,18 @@
 import vision from '@google-cloud/vision';
-// import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
-// import { getStorage } from 'firebase-admin/storage';
+import path from 'path';
 
-dotenv.config();
-process.env.GOOGLE_APPLICATION_CREDENTIALS = process.env.VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY;
+dotenv.config(); // Load environment variables
 
+// ✅ Ensure Google Credentials Path is Set Correctly
+if (!process.env.VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY) {
+    throw new Error("❌ Missing VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY in .env file!");
+}
+
+process.env.VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY = path.resolve(process.env.VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY);
 const client = new vision.ImageAnnotatorClient(); // Uses GOOGLE_APPLICATION_CREDENTIALS
 
-//Analyze image
+// ✅ Analyze Image Function
 export const analyzeImage = async (imageBuffer) => {
     try {
         const [result] = await client.annotateImage({
@@ -25,6 +29,7 @@ export const analyzeImage = async (imageBuffer) => {
         throw new Error('Failed to analyze image.');
     }
 };
+
 
 //  Upload Image to Firebase Storage 
 // ================WIll DECIDE LATER==============================================
