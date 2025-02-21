@@ -232,18 +232,18 @@
 </template>
 
 <script>
-import { ref, computed, watchEffect, onMounted } from 'vue';
+import { ref, computed, /* TESTING KENDRICK watchEffect, onMounted*/ } from 'vue';
 import { useAuthStore } from '@/store/authStore';
 // TESTING KENDRICK import { storeToRefs } from 'pinia';
-import { db, auth } from '@/utils/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { updatePassword } from 'firebase/auth';
+// TESTING KENDRICK import { db, auth } from '@/utils/firebase';
+// TESTING KENDRICK import { doc, getDoc, updateDoc } from 'firebase/firestore';
+//TESTING KENDRICK import { updatePassword } from 'firebase/auth';
 
 export default {
   name: 'UserProfile',
 
   setup() {
-    const authStore = useAuthStore();
+    // TESTING KENDRICK const authStore = useAuthStore();
     // TESTING KENDRICK const { user } = storeToRefs(authStore); // ✅ Get reactive user data from Pinia
     const profileImage = ref(null);
     // TESTING KENDRICK - userData function with hard coded values
