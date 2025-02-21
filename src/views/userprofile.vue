@@ -16,31 +16,35 @@
 
       <div class="row" style="background-color: #F5E6D3;">
         <!-- Profile Image Column -->
-        <div class="col-lg-4" id="profileBox">
-          <div class="card mb-4">
-            <div class="card-body text-center" id="profileBox">
-              <!-- Profile Image with Upload -->
-              <div class="position-relative d-inline-block">
-                <img 
-                  :src="profileImage || '/api/placeholder/150/150'" 
-                  alt="Profile"
-                  class="rounded-circle"
-                  style="width: 150px; height: 150px; object-fit: cover;"
-                >
-                <label class="position-absolute bottom-0 end-0 p-2 bg-primary rounded-circle" 
-                       style="cursor: pointer; background-color: #072d13 !important">
-                  <i class="fas fa-camera text-white"></i>
-                  <input 
-                    type="file" 
-                    class="d-none" 
-                    accept="image/*"
-                    @change="handleImageUpload"
-                  >
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Profile Image Column -->
+<div class="col-lg-4">
+  <div class="profile-image-container d-flex justify-content-center align-items-center">
+    <div class="position-relative">
+      <!-- Profile Image with Placeholder Text -->
+      <div class="profile-image-circle" :class="{'has-image': profileImage}">
+        <img 
+          v-if="profileImage" 
+          :src="profileImage" 
+          alt="Profile" 
+          class="profile-img"
+        >
+        <div v-else class="placeholder-text">Add image</div>
+      </div>
+      
+      <!-- Upload Button Circle -->
+      <label class="upload-button-circle" for="profile-upload">
+        <span class="plus-icon">+</span>
+        <input 
+          id="profile-upload"
+          type="file" 
+          class="d-none" 
+          accept="image/*"
+          @change="handleImageUpload"
+        >
+      </label>
+    </div>
+  </div>
+</div>
 
         <!-- Profile Details Column -->
         <div class="col-lg-8">
@@ -406,6 +410,68 @@ export default {
 div#profileBox {
     height: 100px;
 
+}
+
+/* Profile Image Styling */
+.profile-image-container {
+  padding: 20px 0;
+  height: 100%;
+}
+
+.profile-image-circle {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 3px solid #341c02; /* Brown border */
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0; /* Light gray background for placeholder */
+  border-width: 5px;
+} 
+
+.profile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholder-text {
+  color: #341c02; /* Brown text */
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.upload-button-circle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #341c02; /* Brown background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  border: 2px solid #F5E6D3; /* Cream-colored border */
+}
+
+.plus-icon {
+  color: #F5E6D3; /* Cream-colored plus sign */
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 1;
+  margin-top: -2px; /* Slight adjustment for vertical centering */
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .profile-image-container {
+    margin-bottom: 30px;
+  }
 }
 
 </style>
