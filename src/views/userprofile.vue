@@ -234,7 +234,7 @@
 <script>
 import { ref, computed, watchEffect, onMounted } from 'vue';
 import { useAuthStore } from '@/store/authStore';
-import { storeToRefs } from 'pinia';
+// TESTING KENDRICK import { storeToRefs } from 'pinia';
 import { db, auth } from '@/utils/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { updatePassword } from 'firebase/auth';
@@ -244,11 +244,12 @@ export default {
 
   setup() {
     const authStore = useAuthStore();
-    const { user } = storeToRefs(authStore); // ✅ Get reactive user data from Pinia
+    // TESTING KENDRICK const { user } = storeToRefs(authStore); // ✅ Get reactive user data from Pinia
     const profileImage = ref(null);
+    // TESTING KENDRICK - userData function with hard coded values
     const userData = ref({
-      name: '',
-      email: '',
+      name: 'Test User',
+      email: 'test@example.com',
       currentPassword: '',
       newPassword: '',
       confirmPassword: ''
@@ -261,7 +262,14 @@ export default {
     });
 
     const showPassword = ref(false);
-    const originalData = ref(null);
+    // TESTING KENDRICK const originalData = ref(null);
+    // TESTING KENDRICK - originalData function with hard coded values
+    const originalData = ref({
+    name: 'Test User',
+    email: 'test@example.com'
+  });
+
+    /* TESTING KENDRICK - commented out loaduserOrofile
 
     // ✅ Load user profile from Firestore
     const loadUserProfile = async () => {
@@ -305,12 +313,16 @@ export default {
   }
 });
 
+*/
+
     const hasChanges = computed(() => {
       return userData.value.name !== originalData.value?.name;
     });
 
     // ✅ Save changes (Name, Profile Image)
     const saveChanges = async () => {
+/* TESTING KENDRICK - comented out saveChanges Firebase dependencies 
+
       if (!user.value) return;
 
       try {
@@ -324,9 +336,16 @@ export default {
         alert('Error updating profile');
       }
     };
+    */
+    alert('Profile would be updated (dev mode)');
+    originalData.value = { ...userData.value };
+  };
+
 
     // ✅ Handle Profile Image Upload
     const handleImageUpload = async (event) => {
+
+      /* TESTING KENDRICK - handleImageUpload commented out temp
       const file = event.target.files[0];
       if (!file) return;
 
@@ -347,10 +366,24 @@ export default {
 
       reader.readAsDataURL(file);
     };
+    */
+
+     const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      profileImage.value = e.target.result;
+      alert('Profile picture would be updated (dev mode)');
+    };
+
+    reader.readAsDataURL(file);
+  };
 
     // ✅ Save Password Change
     const savePasswordChange = async () => {
       if (userData.value.newPassword !== userData.value.confirmPassword) {
+        /* TESTING KENDRICK - commented out savePasswordChange
         alert('New passwords do not match');
         return;
       }
@@ -368,6 +401,14 @@ export default {
         alert('Error changing password');
       }
     };
+    */
+    if (userData.value.newPassword !== userData.value.confirmPassword) {
+      alert('New passwords do not match');
+      return;
+    }
+    alert('Password would be updated (dev mode)');
+    cancelPasswordChange();
+  };
 
     const cancelPasswordChange = () => {
       userData.value.currentPassword = '';
@@ -383,12 +424,12 @@ export default {
         };
 
     return {
-      user,
+      // TESTING KENDRICK user,
       userData,
       profileImage,
       isEditing,
       showPassword,
-      hasChanges,
+      hasChanges: computed(() => true), // TESTING KENDRICK
       saveChanges,
       handleImageUpload,
       savePasswordChange,
@@ -397,7 +438,8 @@ export default {
 
     };
   }
-};
+  }
+}
 </script>
 
 
