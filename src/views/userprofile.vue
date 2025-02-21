@@ -5,9 +5,9 @@
     <div class="container py-5">
       <div class="row">
         <div class="col">
-          <nav aria-label="breadcrumb" class="bg-body-tertiary rounded-3 p-3 mb-4">
+          <nav aria-label="breadcrumb" class="bg-body-tertiary rounded-3 p-3 mb-4 navBar">
             <ol class="breadcrumb mb-0">
-              <li class="breadcrumb-item"><router-link to="/chat">Return to Chat</router-link></li>
+              <li class="breadcrumb-item chatReturn" ><router-link to="/chat">Return to Chat</router-link></li>
               
             </ol>
           </nav>
@@ -371,6 +371,13 @@ export default {
   min-height: 100vh;
 }
 
+.chatReturn {
+text-decoration: none;
+color: #F5E6D3;
+}
 
+.navBar {
+  background-color: #341c02;
+}
 
 </style>
