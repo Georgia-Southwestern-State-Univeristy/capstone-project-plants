@@ -117,9 +117,7 @@ import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
-import { Transition } from 'vue';
-
-
+import axios from 'axios'; // ✅ Import Axios for API calls
 
 // Store and router setup
 const router = useRouter();
@@ -131,89 +129,111 @@ const fileInput = ref(null);
 const textInput = ref(null);
 const messagesContainer = ref(null);
 
-
 // State refs
 const userInput = ref('');
-// Change from single file to array
-const uploadedFiles = ref([]);
+const uploadedFiles = ref([]); // ✅ Supports multiple file uploads
 const isDropdownOpen = ref(false);
 
-
-
-
-// Text input handling
+// 🔹 Adjust textarea height dynamically
 const adjustTextarea = () => {
   const textarea = textInput.value;
   textarea.style.height = 'auto';
   textarea.style.height = textarea.scrollHeight + 'px';
 };
 
-// File handling
+// 🔹 Handle file uploads (images only)
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
   if (file && file.type.startsWith('image/')) {
     uploadedFiles.value.push({
-      id: Date.now(), // Add unique id for transition
+      id: Date.now(),
       name: file.name,
       file: file
     });
   }
 };
 
+// 🔹 Remove uploaded files
 const removeUpload = (id) => {
   uploadedFiles.value = uploadedFiles.value.filter(file => file.id !== id);
 };
 
+// 🔹 Trigger file input click
 const triggerFileUpload = () => {
   fileInput.value?.click();
 };
 
-// Message handling
+// 🔹 Send Message (Handles Text & Image Upload)
 const sendMessage = async () => {
   if (!uploadedFiles.value.length && !userInput.value.trim()) return;
 
-  // Send text message if there is text input
-  if (userInput.value.trim()) {
-    chatStore.sendMessage({  // Use sendMessage instead of addMessage
-      id: Date.now(),
-      type: 'text',
-      content: userInput.value,
-      isUser: true,
-      timestamp: new Date()
-    });
-    userInput.value = '';
-    adjustTextarea();
+  // ✅ Add user message to chat before sending request
+  const userMessage = {
+    id: Date.now(),
+    type: uploadedFiles.value.length ? 'image' : 'text',
+    content: userInput.value || "📷 Image Uploaded",
+    isUser: true,
+    timestamp: new Date()
+  };
+  chatStore.sendMessage(userMessage);
+
+  // ✅ Prepare data for API request
+  const formData = new FormData();
+  formData.append('message', userInput.value);
+
+  if (uploadedFiles.value.length) {
+    formData.append('image', uploadedFiles.value[0].file); // Send first image only
   }
 
-  // Send image messages if there are uploaded files
-  for (const uploadedFile of uploadedFiles.value) {
-    chatStore.sendMessage({  // Use sendMessage instead of addMessage
-      id: Date.now() + Math.random(),
-      type: 'image',
-      content: URL.createObjectURL(uploadedFile.file),
-      isUser: true,
+  // ✅ Send request to backend OpenAI API
+  try {
+    const response = await axios.post('/api/chat', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+    // ✅ Add AI response to chat
+    chatStore.sendMessage({
+      id: Date.now() + 1,
+      type: "text",
+      content: response.data.message, // AI response
+      isUser: false,
       timestamp: new Date()
     });
-  }
-  uploadedFiles.value = []; // Clear files after sending
 
+  } catch (error) {
+    console.error("❌ Chat API Error:", error);
+  }
+
+  // ✅ Reset input fields
+  userInput.value = '';
+  uploadedFiles.value = [];
+  adjustTextarea();
+
+  // ✅ Auto-scroll to the latest message
   await nextTick();
   messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
 };
 
-
-// Authentication
+// 🔹 Handle user sign-out
 const handleSignOut = async () => {
   await authStore.logout();
   router.push('/login');
 };
 
-// Dropdown handling
+// 🔹 Toggle account dropdown
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
 };
 
-// Lifecycle hooks
+// 🔹 Auto-scroll when messages update
+watch(() => chatStore.messages, async () => {
+  await nextTick();
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  }
+}, { deep: true });
+
+// 🔹 Load chat history on mount
 onMounted(async () => {
   if (authStore.isAuthenticated) {
     await chatStore.loadChatHistory(authStore.user.uid);
@@ -226,21 +246,8 @@ onMounted(async () => {
     }
   });
 });
-
-
-// Watch for new messages
-watch(() => chatStore.messages, async () => {
-  await nextTick();
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-  }
-}, { deep: true });
-
-
-
-
-
 </script>
+
 
 <style scoped>
 
