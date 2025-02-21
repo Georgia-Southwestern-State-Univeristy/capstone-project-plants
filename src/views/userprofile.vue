@@ -1,6 +1,7 @@
 # UserProfile.vue
 <template>
-  <section style="background-color: #eee;">
+  <div class="profile-page">
+  <section>
     <div class="container py-5">
       <div class="row">
         <div class="col">
@@ -13,7 +14,7 @@
         </div>
       </div>
 
-      <div class="row">
+      <div class="row" style="background-color: #F5E6D3;">
         <!-- Profile Image Column -->
         <div class="col-lg-4">
           <div class="card mb-4">
@@ -192,6 +193,7 @@
       </div>
     </div>
   </section>
+</div>
 </template>
 
 <script>
@@ -361,4 +363,14 @@ export default {
 .fa-pen:hover {
   opacity: 1;
 }
+
+
+/* Apply the cream background to the entire page */
+.profile-page {
+  background-color: #F5E6D3;
+  min-height: 100vh;
+}
+
+
+
 </style>
