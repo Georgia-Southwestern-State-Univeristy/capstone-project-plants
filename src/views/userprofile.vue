@@ -206,8 +206,7 @@
       <!-- Add Plant Button -->
       <div class="mb-3">
         <button class="btn add-plant-btn">
-          <i class="fas fa-plus me-2"></i>
-          <span>Add a new plant</span>
+          <span><router-link to='/add' id="addButtonProfile">Add a new plant</router-link></span>
         </button>
       </div>
       
@@ -559,5 +558,11 @@ div#detailsCard {
     width: 100%;
   }
 }
+
+#addButtonProfile {
+  text-decoration: none;
+  color: white;
+}
+
 
 </style>
