@@ -5,20 +5,20 @@
     <div class="container py-5">
       <div class="row">
         <div class="col">
-          <nav aria-label="breadcrumb" class="bg-body-tertiary rounded-3 p-3 mb-4 navBar">
-            <ol class="breadcrumb mb-0">
-              <li class="breadcrumb-item chatReturn" ><router-link to="/chat">Return to Chat</router-link></li>
-              
-            </ol>
-          </nav>
+          <!-- For the navigation bar itself -->
+<nav aria-label="breadcrumb" class="custom-nav rounded-3 p-3 mb-4 d-flex justify-content-center" id="profile-nav">
+  <ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><router-link to="/chat" id="return-link">Return to Chat</router-link></li>
+  </ol>
+</nav>
         </div>
       </div>
 
       <div class="row" style="background-color: #F5E6D3;">
         <!-- Profile Image Column -->
-        <div class="col-lg-4">
+        <div class="col-lg-4" id="profileBox">
           <div class="card mb-4">
-            <div class="card-body text-center">
+            <div class="card-body text-center" id="profileBox">
               <!-- Profile Image with Upload -->
               <div class="position-relative d-inline-block">
                 <img 
@@ -371,13 +371,41 @@ export default {
   min-height: 100vh;
 }
 
-.chatReturn {
-text-decoration: none;
-color: #F5E6D3;
+
+
+ /* #341c02; */
+
+
+.custom-nav {
+  background-color: #341c02; 
 }
 
-.navBar {
-  background-color: #341c02;
+#profile-nav {
+  background-color: #341c02; 
+  width: 15%;
+ 
+}
+
+#return-link {
+  color: #F5E6D3; 
+  text-decoration: none;
+  font-weight: bold;
+  
+  
+}
+
+#return-link:hover {
+  text-decoration: underline;
+}
+
+
+.breadcrumb-item a {
+  color: #F5E6D3;  
+}
+
+div#profileBox {
+    height: 100px;
+
 }
 
 </style>
