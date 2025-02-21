@@ -3,12 +3,18 @@
       <div class="container py-5">
         <div class="row justify-content-center">
           <div class="col-md-8 col-lg-6">
-            <div class="card shadow">
-              <div class="card-header text-center py-3">
-                <h4 class="card-title mb-0">Add a New Plant</h4>
+            <!-- Bootstrap Card -->
+            <div class="card text-center">
+              <!-- Card Header -->
+              <div class="card-header">
+                Add a New Plant
               </div>
+              
+              <!-- Card Body with Form -->
               <div class="card-body">
-                <form @submit.prevent="handleSubmit">
+                <h5 class="card-title">Plant Information</h5>
+                
+                <form>
                   <!-- Plant Name -->
                   <div class="mb-3">
                     <label for="plantName" class="form-label">Plant Name</label>
@@ -91,13 +97,15 @@
                   </div>
   
                   <!-- Submit Button -->
-                  <div class="d-grid">
-                    <button type="submit" class="add-plant-btn">
-                      <i class="bi bi-plus-circle me-2"></i>
-                      Add Plant
-                    </button>
-                  </div>
+                  <button type="button" class="btn" id="add-plant-btn" @click="handleSubmit">
+                    Add Plant
+                  </button>
                 </form>
+              </div>
+              
+              <!-- Card Footer -->
+              <div class="card-footer text-muted">
+                Your plant will be added to your profile
               </div>
             </div>
           </div>
@@ -157,58 +165,72 @@
   
   <style scoped>
   .add-plant-page {
-    background-color: #072d13; /* Dark green background */
+    background-color: #072d13; /* Dark green background matching other pages */
     min-height: 100vh;
     display: flex;
     align-items: center;
   }
   
   .card {
-    border-radius: 15px;
-    border: none;
     background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
   }
   
   .card-header {
-    background-color: #F5E6D3; /* Cream color header */
-    border-bottom: 2px solid #072d13;
-    border-radius: 15px 15px 0 0 !important;
+    background-color: #072d13;
+    color: white;
+    font-weight: bold;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 15px 0;
+    border-radius: 8px 8px 0 0;
   }
   
   .card-title {
     color: #072d13;
     font-weight: bold;
+    margin-bottom: 20px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
   
   .form-label {
     color: #072d13;
     font-weight: bold;
+    text-align: left;
+    display: block;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
   
-  .add-plant-btn {
+  .card-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid rgba(0, 0, 0, 0.125);
+    padding: 10px 0;
+    color: #6c757d;
+  }
+  
+  #add-plant-btn {
     background-color: #072d13;
     color: white;
-    border-radius: 25px;
-    padding: 10px 20px;
+    border-radius: 20px;
+    padding: 8px 25px;
     font-weight: bold;
     border: none;
     transition: all 0.3s ease;
+    margin-top: 10px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
   
-  .add-plant-btn:hover {
+  #add-plant-btn:hover {
     background-color: #0a3b1e;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   }
   
   .form-control, .form-select {
     border: 1px solid #ced4da;
-    border-radius: 8px;
-    padding: 10px 15px;
-    transition: all 0.3s ease;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 5px;
   }
   
   .form-control:focus, .form-select:focus {
@@ -219,17 +241,18 @@
   /* Responsive adjustments */
   @media (max-width: 768px) {
     .card-body {
-      padding: 1.5rem;
+      padding: 1.25rem;
     }
   }
   
   @media (max-width: 576px) {
-    .add-plant-page {
-      padding: 1rem;
+    .form-label {
+      font-size: 14px;
     }
     
-    .card-body {
-      padding: 1rem;
+    .card-header, .card-footer {
+      padding: 10px 0;
     }
   }
   </style>
+  
