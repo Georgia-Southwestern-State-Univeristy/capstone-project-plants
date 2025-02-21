@@ -117,7 +117,7 @@ import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
-import axios from 'axios'; // ✅ Import Axios for API calls
+import axios from 'axios';
 
 // Store and router setup
 const router = useRouter();
@@ -131,7 +131,7 @@ const messagesContainer = ref(null);
 
 // State refs
 const userInput = ref('');
-const uploadedFiles = ref([]); // ✅ Supports multiple file uploads
+const uploadedFiles = ref([]);
 const isDropdownOpen = ref(false);
 
 // 🔹 Adjust textarea height dynamically
@@ -185,9 +185,9 @@ const sendMessage = async () => {
     formData.append('image', uploadedFiles.value[0].file); // Send first image only
   }
 
-  // ✅ Send request to backend OpenAI API
+  // ✅ Send request to backend `/api/chat`
   try {
-    const response = await axios.post('/api/chat', formData, {
+    const response = await axios.post('/api/chat/chat', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
 
