@@ -48,12 +48,12 @@
 
         <!-- Profile Details Column -->
         <div class="col-lg-8">
-          <div class="card mb-4">
+          <div class="card mb-4" id="detailsCard">
             <div class="card-body">
               <!-- Name Field -->
               <div class="row mb-4">
                 <div class="col-sm-3">
-                  <p class="mb-0">Name</p>
+                  <p class="mb-0" id="nameDetails">Name</p>
                 </div>
                 <div class="col-sm-9">
                   <div class="d-flex align-items-center">
@@ -62,6 +62,7 @@
                         type="text" 
                         v-model="userData.name" 
                         class="form-control"
+                        
                         @keyup.enter="toggleEdit('name')"
                       >
                       <button 
@@ -85,7 +86,7 @@
               <!-- Email Field -->
               <div class="row mb-4">
                 <div class="col-sm-3">
-                  <p class="mb-0">Email</p>
+                  <p class="mb-0" id="emailDetails">Email</p>
                 </div>
                 <div class="col-sm-9">
                   <div class="d-flex align-items-center">
@@ -117,7 +118,7 @@
               <!-- Password Field -->
               <div class="row mb-4">
                 <div class="col-sm-3">
-                  <p class="mb-0">Password</p>
+                  <p class="mb-0" id="passwordDetails">Password</p>
                 </div>
                 <div class="col-sm-9">
                   <div class="d-flex align-items-center">
@@ -186,7 +187,7 @@
                   @click="saveChanges" 
                   class="btn btn-primary"
                   :disabled="!hasChanges"
-                  style="background-color: #072d13; border: none;"
+                  style="background-color: #072d13; border: none; font-weight:bold"
                 >
                   Save Changes
                 </button>
@@ -194,6 +195,37 @@
             </div>
           </div>
         </div>
+
+<!-- Plants Section -->
+<div class="col-12 mt-4">
+  <div class="card" style="border-width: 2px; border-color: #341c02;">
+    <div class="card-body">
+      <!-- Plants Heading -->
+      <h3 style="color: #072d13; font-weight: bold; margin-bottom: 20px;">Your Plants</h3>
+      
+      <!-- Add Plant Button -->
+      <div class="mb-3">
+        <button class="btn add-plant-btn">
+          <i class="fas fa-plus me-2"></i>
+          <span>Add a new plant</span>
+        </button>
+      </div>
+      
+      <!-- Plants List Container (will expand with new plants) -->
+      <div class="plants-container">
+        <!-- Plants will be dynamically added here -->
+        <!-- This is just a placeholder - your backend would populate this -->
+        <div class="text-center text-muted py-4">
+          <p>No plants added yet. Add your first plant to get started!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
       </div>
     </div>
   </section>
@@ -471,6 +503,60 @@ div#profileBox {
 @media (max-width: 992px) {
   .profile-image-container {
     margin-bottom: 30px;
+  }
+}
+
+
+p#nameDetails {
+  font-weight: bold;
+  color: #072d13;
+}
+
+
+p#passwordDetails {
+  font-weight: bold;
+  color: #072d13;
+}
+
+p#emailDetails {
+  font-weight: bold;
+  color: #072d13;
+}
+
+div#detailsCard {
+  border-width: 3px;
+  border-color: #341c02;
+}
+
+/* Plants section styling */
+.add-plant-btn {
+  background-color: #072d13;
+  color: white;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 14px;
+  border: none;
+  transition: all 0.2s;
+}
+
+.add-plant-btn:hover {
+  background-color: #0a5623;
+  transform: translateY(-2px);
+}
+
+.plants-container {
+  min-height: 100px;
+  width: 100%;
+}
+
+/* Responsive design for plants section */
+@media (max-width: 768px) {
+  h3 {
+    font-size: 1.5rem;
+  }
+  
+  .add-plant-btn {
+    width: 100%;
   }
 }
 
