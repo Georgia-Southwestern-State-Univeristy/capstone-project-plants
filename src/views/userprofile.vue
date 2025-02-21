@@ -232,7 +232,7 @@
 </template>
 
 <script>
-import { ref, computed, watchEffect } from 'vue';
+import { ref, computed, watchEffect, onMounted } from 'vue';
 import { useAuthStore } from '@/store/authStore';
 import { storeToRefs } from 'pinia';
 import { db, auth } from '@/utils/firebase';
@@ -256,6 +256,7 @@ export default {
 
     const isEditing = ref({
       name: false,
+      email: false,
       password: false
     });
 
@@ -264,7 +265,12 @@ export default {
 
     // ✅ Load user profile from Firestore
     const loadUserProfile = async () => {
-      if (!user.value) return;
+      if (!user.value) {
+    console.log("No user value available");
+    return;
+  }
+
+
 
       try {
         const userDocRef = doc(db, 'users', user.value.uid);
@@ -273,7 +279,7 @@ export default {
         if (userDocSnap.exists()) {
           const userDataFromDB = userDocSnap.data();
           userData.value.name = userDataFromDB.name || '';
-          userData.value.email = user.value.email;
+          userData.value.email = user.value.email || '';
           profileImage.value = userDataFromDB.profileImage || null;
           originalData.value = { ...userData.value };
         } else {
@@ -290,6 +296,14 @@ export default {
         loadUserProfile();
       }
     });
+
+    onMounted(async () => {
+  if (!user.value) {
+    await authStore.fetchUserProfile();
+  } else {
+    await loadUserProfile();
+  }
+});
 
     const hasChanges = computed(() => {
       return userData.value.name !== originalData.value?.name;
@@ -363,6 +377,11 @@ export default {
       showPassword.value = false;
     };
 
+
+    const toggleEdit = (field) => {
+      isEditing.value[field] = !isEditing.value[field];
+        };
+
     return {
       user,
       userData,
@@ -373,7 +392,9 @@ export default {
       saveChanges,
       handleImageUpload,
       savePasswordChange,
-      cancelPasswordChange
+      cancelPasswordChange,
+      toggleEdit
+
     };
   }
 };
