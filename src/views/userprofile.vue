@@ -222,7 +222,7 @@ import { useAuthStore } from '@/store/authStore';
 import { storeToRefs } from 'pinia';
 import { db, auth } from '@/utils/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-//TESTING KENDRICK import { updatePassword } from 'firebase/auth';
+import { updatePassword } from 'firebase/auth';
 
 export default {
   name: 'UserProfile',
@@ -232,13 +232,14 @@ export default {
     const { user } = storeToRefs(authStore); // ✅ Get reactive user data from Pinia
     const profileImage = ref(null);
     const userData = ref({
-      name: 'Test User',
-      email: 'test@example.com',
+      name: '',
+      email: '',
       currentPassword: '',
       newPassword: '',
       confirmPassword: ''
     });
 
+   
     const isEditing = ref({
       name: true,
       email: true,
@@ -246,10 +247,18 @@ export default {
     });
 
     const showPassword = ref(false);
-   const originalData = ref(null);
-   
-   
 
+    // KENDRICK - edited originalData to match user data initially
+   const originalData = ref({
+      name: '',
+      email: '',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+   });
+   
+   
+// KENDRICK = Edited toggleEdit with if statement
   const toggleEdit = (field) => {
       isEditing.value[field] = !isEditing.value[field];
        if (!isEditing.value[field]) {
@@ -302,6 +311,7 @@ export default {
   }
 });
 
+    
 
     const hasChanges = computed(() => {
       return userData.value.name !== originalData.value?.name || 
