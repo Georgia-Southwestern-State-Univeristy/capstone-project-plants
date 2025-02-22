@@ -2,12 +2,25 @@
     <div>
       <nav id="landingPageTitleBackground" class="navbar navbar-expand-lg navbar-dark">
         <div class="container px-5">
-          <div class="fs-4 mb-3">
+          <div class="d-flex align-items-center">
             <svg id="flowerLandingPage" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-flower3" viewBox="0 0 16 16">
               <!-- SVG path from original -->
             </svg>
             <router-link id="landingPageTitle" class="navbar-brand" to="/">Verdure AI</router-link>
           </div>
+
+          <button 
+      class="navbar-toggler" 
+      type="button" 
+      data-bs-toggle="collapse" 
+      data-bs-target="#navbarSupportedContent" 
+      aria-controls="navbarSupportedContent" 
+      aria-expanded="false" 
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
           <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
               <li id="landingPageLogLink" class="nav-item">
@@ -22,8 +35,8 @@
       </nav>
   
       <div id="landingPageContentBody">
-        <div>
-          <div id="healthcareComment" class="card">
+        <div class="content-section">
+          <div id="healthcareComment" class="card mb-4">
             <div class="card-body">
               The Best in Plant Healthcare
             </div>
@@ -35,34 +48,36 @@
             <li>Quick Information and No Hassle</li>
           </ul>
           
-          <div id="button-container">
+          <div class="button-section">
 
-            <button id="logInButton">
-            <router-link to="/login" style="text-decoration: none; color: inherit;">
-              Log in
-            </router-link>
-              </button>
-
-
-              <button id="createAccountButton">
-            <router-link to="/register" 
+            
+            <router-link class="btn-link" to="/login" 
             style="text-decoration: none; color: inherit;">
-              Create Account
+              <button id="logInButton">Log in</button>
             </router-link>
-          </button>
+              
 
-            <router-link to="/chat">
-        <button class="btn btn-primary" >Go to Chat</button>
+
+              
+            <router-link class="btn-link" to="/register" 
+            style="text-decoration: none; color: inherit;">
+            <button id="createAccountButton">Create Account</button>
+            </router-link>
+          
+
+            <router-link class="btn-link" to="/chat">
+        <button class="btn btn-primary" id="chatButton" >Go to Chat</button>
             </router-link>
           </div>
         </div>
         
-        <div class="img-container">
-          <img id="landingPageImageRim" src="@/assets/landingPagePicBackgroundRim.jpg" class="rounded-circle">
-          <img id="landingPageImage" src="@/assets/landingPagePicBackground.jpg" class="rounded-circle">
-          <img id="landingImagePlant" src="@/assets/mainPlantImage.png">
-        </div>
+
+       <div class="image-section">
+    <div class="circular-container">
+      <img id="landingImagePlant" src="@/assets/mainPlantImage.png" alt="Plant">
+    </div>
       </div>
+    </div>
     </div>
 
     
@@ -103,11 +118,11 @@ a:active {
 }
 
 /* Claude AI keyframes */
-  @keyframes float {
-    0% { transform: translateY(0px) scale(1); }
-    50% { transform: translateY(-20px) scale(1.02); }
-    100% { transform: translateY(0px) scale(1); }
-  }
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0px); }
+}
   
   /* Claude AI Transform Commands */
   .image-container img {
@@ -117,19 +132,34 @@ a:active {
 
 img#landingImagePlant {
  
-  max-width: 100%; /* Claude AI */
+  max-width: 85%;
+  max-height: 85%;
   animation: float 6s ease-in-out infinite; /* Claude AI */
   position: relative; /* Claude AI */
-  height: auto; /* Claude AI */
   object-fit: contain; /* Claude AI */
   transform-origin: center; /* Claude AI */
 }
 
 .image-container {
-  position: relative; /* Claude AI */
-  width: 100%; /* Claude AI */
-  aspect-ratio: 1; /* Claude AI */
-  overflow: hidden; /* Claude AI */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+
+}
+
+.circular-container {
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, rgba(144, 238, 144, 0.5) 100%);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 5px solid white;
+  position: relative;
+  animation: float 6s ease-in-out infinite;
 }
 
 
@@ -167,8 +197,9 @@ ul#promotionBullets{
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin-top: 75px;
   margin-left: 100px;
-  line-height: 1.5; /* Claude AI */
+  line-height: 2; /* Claude AI */
   font-size: clamp(0.875rem, 2vw, 1rem); /* Claude AI */
+  margin-bottom: 2.5rem;
 }
 
 div#healthcareComment {
@@ -183,9 +214,18 @@ div#healthcareComment {
     border: 5px solid;
     color: white;
     width: fit-content;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 20px;
     margin-bottom: 2rem;
+}
+
+
+#healthcareComment .card-body {
+  color: white;
+  font-weight: bold;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 0;
+  text-align: center;
 }
 
 
@@ -229,7 +269,7 @@ button#createAccountButton {
   display: flex; /* Claude AI */
   flex-direction: column; /* Claude AI */
   gap: 1rem; /* Claude AI */
-  margin-top: 2rem; /* Claude AI */
+  max-width: 300px;
 }
 
  li#landingPageLogLink{
@@ -244,7 +284,7 @@ li#landingPageSignLink{
 
  nav#landingPageTitleBackground {
   background-color: #072d13;
-  padding: 1rem; /* Claude AI */
+  padding: 1rem 0; /* Claude AI */
   width: 100%; /* Claude AI */
 }
 
@@ -257,6 +297,8 @@ li#landingPageSignLink{
 a#landingPageTitle {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-weight: bold;
+  color: white;
+  text-decoration: none;
 }
 
 header#greenHeaderPlantPicture {
@@ -274,84 +316,15 @@ div#landingPageContentBody{
 
 }
 
-/* Claude AI media queries */
-@media (max-width: 768px) {
-  div#landingPageContentBody {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm)
-  }
-
-  @media (max-width: 480px) {
-    .image-container {
-      aspect-ratio: 3/4;
-    }
-  }
-  
-  .button-container {
-    align-items: center;
-  }
-  
-  ul#promotionBullets {
-    margin-left: 0;
-    padding-left: 0;
-    list-style-position: inside;
-  }
-
-  @media (min-width: 768px) and (max-width: 1024px) {
-    .card-body {
-      font-size: clamp(1.125rem, 3vw, 1.5rem);
-    }
-  }
-
-  @media (screen-spanning: single-fold-vertical) {
-    div#landingPageContentBody {
-      grid-template-columns: 1fr;
-      gap: var(--spacing-lg);
-    }
-  }
-  
-  /* iPads and tablets */
-  @media only screen 
-  and (min-device-width: 768px) 
-  and (max-device-width: 1024px) {
-    .image-container {
-      max-width: 80%;
-      margin: 0 auto;
-    }
-  }
-  
-  /* Smaller phones */
-  @media only screen 
-  and (max-device-width: 375px) {
-    ul#promotionBullets {
-      padding-left: var(--spacing-sm);
-    }
-    
-    .card {
-      margin: var(--spacing-sm);
-    }
-  }
-
-  @media 
-  (-webkit-min-device-pixel-ratio: 2), 
-  (min-resolution: 192dpi) {
-    img#landingImagePlant {
-      transform: translateZ(0); /* Hardware acceleration */
-    }
-  }
-
-  @media (orientation: landscape) and (max-height: 600px) {
-    div#landingPageContentBody {
-      min-height: auto;
-      padding: var(--spacing-md);
-    }
-    
-    .image-container {
-      aspect-ratio: 16/9;
-    }
-  }
+.content-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1rem;
 }
 
+
+/* Claude AI media queries */
 
 
 /* Claude AI card body rules */
@@ -359,6 +332,59 @@ div#landingPageContentBody{
   font-size: clamp(1rem, 2.5vw, 1.25rem);
 }
 
+@media (max-width: 992px) {
+  #landingPageContentBody {
+    grid-template-columns: 1fr;
+  }
+  
+  .content-section {
+    text-align: center;
+    align-items: center;
+  }
+  
+  .button-section {
+    margin: 0 auto;
+  }
+  
+  .image-section {
+    margin-top: 2rem;
+  }
+  
+  .circular-container {
+    width: 300px;
+    height: 300px;
+  }
+  
+  #promotionBullets {
+    text-align: left;
+    display: inline-block;
+  }
+}
 
+@media (max-width: 576px) {
+  .circular-container {
+    width: 250px;
+    height: 250px;
+  }
+  
+  #healthcareComment {
+    width: auto;
+    max-width: 80%;
+  }
+  
+  .button-section {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Ensure hamburger works correctly */
+.navbar-toggler:focus {
+  box-shadow: none;
+}
+
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
 
   </style>

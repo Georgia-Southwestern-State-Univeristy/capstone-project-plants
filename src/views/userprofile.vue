@@ -239,7 +239,7 @@ export default {
       confirmPassword: ''
     });
 
-   
+   // KENDRICK - switched isEditing fields to true
     const isEditing = ref({
       name: true,
       email: true,
@@ -414,7 +414,7 @@ export default {
       handleImageUpload,
       savePasswordChange,
       cancelPasswordChange,
-      toggleEdit
+      toggleEdit // KENDRICK - added toggleEdit to return section
 
       };
     }
