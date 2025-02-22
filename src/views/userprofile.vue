@@ -65,12 +65,7 @@
                         
                         @keyup.enter="toggleEdit('name')"
                       >
-                      <button 
-                        class="btn btn-outline-secondary" 
-                        @click="toggleEdit('name')"
-                      >
-                        <i class="fas fa-save"></i>
-                      </button>
+                    
                     </div>
                     <p v-else class="text-muted mb-0">
                       {{ userData.name }}
@@ -97,12 +92,7 @@
                         class="form-control"
                         @keyup.enter="toggleEdit('email')"
                       >
-                      <button 
-                        class="btn btn-outline-secondary" 
-                        @click="toggleEdit('email')"
-                      >
-                        <i class="fas fa-save"></i>
-                      </button>
+                
                     </div>
                     <p v-else class="text-muted mb-0">
                       {{ userData.email }}
@@ -146,25 +136,20 @@
                           class="form-control"
                           placeholder="Confirm New Password"
                         >
-                        <button 
-                          class="btn btn-outline-secondary" 
-                          type="button"
-                          @click="showPassword = !showPassword"
-                        >
-                          <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
-                        </button>
+                        
                       </div>
                       <div class="d-flex justify-content-end gap-2">
                         <button 
                           class="btn btn-secondary" 
                           @click="cancelPasswordChange"
+                          style="font-weight:bold;"
                         >
                           Cancel
                         </button>
                         <button 
                           class="btn btn-primary" 
                           @click="savePasswordChange"
-                          style="background-color: #072d13; border: none;"
+                          style="background-color: #072d13; border: none; font-weight: bold;"
                         >
                           Update Password
                         </button>
@@ -232,21 +217,20 @@
 </template>
 
 <script>
-import { ref, computed, /* TESTING KENDRICK watchEffect, onMounted*/ } from 'vue';
+import { ref, computed, watchEffect, onMounted } from 'vue';
 import { useAuthStore } from '@/store/authStore';
-// TESTING KENDRICK import { storeToRefs } from 'pinia';
-// TESTING KENDRICK import { db, auth } from '@/utils/firebase';
-// TESTING KENDRICK import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { storeToRefs } from 'pinia';
+import { db, auth } from '@/utils/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 //TESTING KENDRICK import { updatePassword } from 'firebase/auth';
 
 export default {
   name: 'UserProfile',
 
   setup() {
-    // TESTING KENDRICK const authStore = useAuthStore();
-    // TESTING KENDRICK const { user } = storeToRefs(authStore); // ✅ Get reactive user data from Pinia
+     const authStore = useAuthStore();
+    const { user } = storeToRefs(authStore); // ✅ Get reactive user data from Pinia
     const profileImage = ref(null);
-    // TESTING KENDRICK - userData function with hard coded values
     const userData = ref({
       name: 'Test User',
       email: 'test@example.com',
@@ -256,20 +240,25 @@ export default {
     });
 
     const isEditing = ref({
-      name: false,
-      email: false,
-      password: false
+      name: true,
+      email: true,
+      password: true
     });
 
     const showPassword = ref(false);
-    // TESTING KENDRICK const originalData = ref(null);
-    // TESTING KENDRICK - originalData function with hard coded values
-    const originalData = ref({
-    name: 'Test User',
-    email: 'test@example.com'
-  });
+   const originalData = ref(null);
+   
+   
 
-    /* TESTING KENDRICK - commented out loaduserOrofile
+  const toggleEdit = (field) => {
+      isEditing.value[field] = !isEditing.value[field];
+       if (!isEditing.value[field]) {
+        originalData.value[field] = userData.value[field];
+       }
+
+        };
+
+   
 
     // ✅ Load user profile from Firestore
     const loadUserProfile = async () => {
@@ -313,15 +302,15 @@ export default {
   }
 });
 
-*/
 
     const hasChanges = computed(() => {
-      return userData.value.name !== originalData.value?.name;
+      return userData.value.name !== originalData.value?.name || 
+      userData.value.email !== originalData.value.email;
     });
 
     // ✅ Save changes (Name, Profile Image)
     const saveChanges = async () => {
-/* TESTING KENDRICK - comented out saveChanges Firebase dependencies 
+
 
       if (!user.value) return;
 
@@ -336,16 +325,14 @@ export default {
         alert('Error updating profile');
       }
     };
-    */
-    alert('Profile would be updated (dev mode)');
-    originalData.value = { ...userData.value };
-  };
+    
+    
 
 
     // ✅ Handle Profile Image Upload
     const handleImageUpload = async (event) => {
 
-      /* TESTING KENDRICK - handleImageUpload commented out temp
+      
       const file = event.target.files[0];
       if (!file) return;
 
@@ -366,24 +353,15 @@ export default {
 
       reader.readAsDataURL(file);
     };
-    */
+    
 
-     const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      profileImage.value = e.target.result;
-      alert('Profile picture would be updated (dev mode)');
-    };
-
-    reader.readAsDataURL(file);
-  };
+    
 
     // ✅ Save Password Change
     const savePasswordChange = async () => {
+     
       if (userData.value.newPassword !== userData.value.confirmPassword) {
-        /* TESTING KENDRICK - commented out savePasswordChange
+        
         alert('New passwords do not match');
         return;
       }
@@ -401,14 +379,8 @@ export default {
         alert('Error changing password');
       }
     };
-    */
-    if (userData.value.newPassword !== userData.value.confirmPassword) {
-      alert('New passwords do not match');
-      return;
-    }
-    alert('Password would be updated (dev mode)');
-    cancelPasswordChange();
-  };
+    
+    
 
     const cancelPasswordChange = () => {
       userData.value.currentPassword = '';
@@ -419,27 +391,26 @@ export default {
     };
 
 
-    const toggleEdit = (field) => {
-      isEditing.value[field] = !isEditing.value[field];
-        };
+    
 
     return {
-      // TESTING KENDRICK user,
+      user,
       userData,
       profileImage,
       isEditing,
       showPassword,
-      hasChanges: computed(() => true), // TESTING KENDRICK
+      hasChanges, 
       saveChanges,
       handleImageUpload,
       savePasswordChange,
       cancelPasswordChange,
       toggleEdit
 
-    };
+      };
+    }
   }
-  }
-}
+
+
 </script>
 
 
@@ -473,6 +444,7 @@ export default {
 
  /* #341c02; */
 
+ 
 
 .custom-nav {
   background-color: #341c02; 
