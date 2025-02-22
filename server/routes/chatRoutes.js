@@ -1,43 +1,43 @@
 import express from 'express';
 import multer from 'multer';
 import { analyzeImage } from '../services/visionService.js';
-import OpenAI from 'openai';
+import { fetchPlantFromPerenual, analyzePlantHealth } from '../services/perenualService.js';
+import { generateGeminiResponse } from '../services/geminiService.js';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
-const client = new OpenAI({ apiKey: process.env.VITE_APP_OPENAI_API_KEY });
 
 // ✅ Unified Chat Route (Handles Text & Images)
 router.post('/chat', upload.single('image'), async (req, res) => {
     try {
         let userMessage = req.body.message || "";
-        let imageLabels = [];
+        let plantLabels = [];
 
         // 🔹 If an image is uploaded, analyze it with Google Vision
         if (req.file) {
-            imageLabels = await analyzeImage(req.file.buffer);
-            if (imageLabels.length > 0) {
-                userMessage += ` My plant looks like: ${imageLabels.map(label => label.description).join(", ")}.`;
+            plantLabels = await analyzeImage(req.file.buffer);
+            if (plantLabels.length > 0) {
+                userMessage += ` My plant looks like: ${plantLabels.map(label => label.description).join(", ")}.`;
             }
         }
 
-        // 🔹 If there’s no text message & no image labels, return an error
-        if (!userMessage.trim()) {
-            return res.status(400).json({ error: "No valid input provided." });
+        // 🔹 Fetch plant details from Perenual API
+        const plantData = plantLabels.length ? await fetchPlantFromPerenual(plantLabels[0].description) : null;
+
+        // 🔹 Analyze plant health
+        const plantHealth = plantLabels.length ? analyzePlantHealth(plantLabels) : { isHealthy: true, details: "No image provided." };
+
+        // 🔹 Construct AI message
+        let fullMessage = userMessage;
+        if (plantData) {
+            fullMessage += ` This plant is likely a ${plantData.common_name} (${plantData.scientific_name}).`;
         }
+        fullMessage += ` Health Status: ${plantHealth.details}`;
 
-        // 🔹 Call OpenAI to generate a response
-        const response = await client.chat.completions.create({
-            model: "gpt-3.5-turbo",
-            messages: [
-                { role: "system", content: "You are Verdure AI, an expert plant care assistant." },
-                { role: "user", content: userMessage }
-            ],
-            max_tokens: 500,
-            temperature: 0.7,
-        });
+        // 🔹 Get AI response from Gemini
+        const aiResponse = await generateGeminiResponse(fullMessage);
 
-        res.json({ message: response.choices[0].message.content });
+        res.json({ message: aiResponse });
 
     } catch (error) {
         console.error("❌ Chat API Error:", error);

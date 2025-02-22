@@ -4,31 +4,47 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const PERENUAL_API_KEY = process.env.VITE_APP_PERENUAL_API_KEY;
-const PERENUAL_BASE_URL = "https://perenual.com/api/species/details";
+const PERENUAL_BASE_URL = "https://perenual.com/api";
 
 /**
  * Fetch plant details from Perenual API
- * @param {string} plantId - The ID of the plant to fetch
+ * @param {string} plantName - The name of the plant to fetch
  * @returns {Promise<Object|null>} - Returns the plant data or null if not found
  */
-export const fetchPlantFromPerenual = async (plantId) => {
+export const fetchPlantFromPerenual = async (plantName) => {
     try {
-        const url = `${PERENUAL_BASE_URL}/${plantId}?key=${PERENUAL_API_KEY}`;
-        const response = await axios.get(url);
+        const response = await axios.get(`${PERENUAL_BASE_URL}/species-list`, {
+            params: { key: PERENUAL_API_KEY, q: plantName }
+        });
 
-        if (response.status === 200) {
-            const plantData = response.data;
-            // Rename 'id' to 'plant_id' to match the expected format
-            plantData.plant_id = String(plantData.id || plantId);
-            delete plantData.id;
-
-            return plantData;
+        if (response.status === 200 && response.data.data.length > 0) {
+            return response.data.data[0]; // Return first result
         } else {
-            console.error(`Perenual API Error: ${response.status} - ${response.statusText}`);
+            console.error(`Perenual API: No data found for ${plantName}`);
             return null;
         }
     } catch (error) {
         console.error(`Failed to fetch plant from Perenual API: ${error.message}`);
         return null;
     }
+};
+
+/**
+ * Analyze plant health based on Google Vision results
+ * @param {Array} labels - Labels returned from Google Vision API
+ * @returns {Object} - Plant health analysis
+ */
+export const analyzePlantHealth = (labels) => {
+    const diseasePatterns = ['spot', 'lesion', 'damage', 'wilt', 'yellowing'];
+
+    const detectedIssues = labels.filter(label => 
+        diseasePatterns.some(pattern => label.description.toLowerCase().includes(pattern))
+    );
+
+    return {
+        isHealthy: detectedIssues.length === 0,
+        details: detectedIssues.length > 0 
+            ? `Detected potential issues: ${detectedIssues.map(l => l.description).join(", ")}` 
+            : 'No visible health issues detected'
+    };
 };
