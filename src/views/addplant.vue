@@ -6,8 +6,8 @@
             <!-- Bootstrap Card -->
             <div class="card text-center">
               <!-- Card Header -->
-              <div class="card-header">
-                Add a New Plant
+              <div id="addPlantHeaderBar" class="card-header">
+               <p id="addPlantHeaderText">Add a New Plant</p>
               </div>
               
               <!-- Card Body with Form -->
@@ -236,6 +236,19 @@
   .form-control:focus, .form-select:focus {
     border-color: #072d13;
     box-shadow: 0 0 0 0.25rem rgba(7, 45, 19, 0.25);
+  }
+
+
+  #addPlantHeaderBar {
+    background-color:#072d13;
+    border: solid;
+    border-width: 2px;
+    border-radius: 10px;
+
+  }
+
+  #addPlantHeaderText {
+    color: white;
   }
   
   /* Responsive adjustments */

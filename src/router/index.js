@@ -15,7 +15,7 @@ const routes = [
   { path: '/register', name: 'Register', component: register, meta: { requiresGuest: true } },
   { path: '/chat', name: 'Chat', component: chat, /*meta: { requiresAuth: true }*/ }, 
   { path: '/userprofile', name: 'Profile', component: () => import('@/views/userprofile.vue'), /*meta: { requiresAuth: true }*/ },
-  { path: '/addplant', name: 'Add', component: add}
+  { path: '/add', name: 'AddPlant', component: () => import('@/views/addplant.vue'), /* meta: { requiresAuth: true } */ }
 ]
 
 const router = createRouter({
