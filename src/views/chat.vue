@@ -185,20 +185,26 @@ const sendMessage = async () => {
     formData.append('image', uploadedFiles.value[0].file); // Send first image only
   }
 
-  // ✅ Send request to backend `/api/chat`
+  // ✅ Send request to backend `/api/chat/chat`
   try {
     const response = await axios.post('/api/chat/chat', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
 
-    // ✅ Add AI response to chat
+    console.log("✅ AI Response from Backend:", response.data.message);
+
+    // ✅ Ensure AI response is added to chat store
     chatStore.sendMessage({
       id: Date.now() + 1,
       type: "text",
       content: response.data.message, // AI response
-      isUser: false,
+      isUser: false, // AI-generated message
       timestamp: new Date()
     });
+
+    // ✅ Auto-scroll to the latest message
+    await nextTick();
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
 
   } catch (error) {
     console.error("❌ Chat API Error:", error);
@@ -208,11 +214,9 @@ const sendMessage = async () => {
   userInput.value = '';
   uploadedFiles.value = [];
   adjustTextarea();
-
-  // ✅ Auto-scroll to the latest message
-  await nextTick();
-  messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
 };
+
+
 
 // 🔹 Handle user sign-out
 const handleSignOut = async () => {
@@ -226,12 +230,14 @@ const toggleDropdown = () => {
 };
 
 // 🔹 Auto-scroll when messages update
+// 🔹 Auto-scroll when messages update
 watch(() => chatStore.messages, async () => {
   await nextTick();
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
   }
 }, { deep: true });
+
 
 // 🔹 Load chat history on mount
 onMounted(async () => {

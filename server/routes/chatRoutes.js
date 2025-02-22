@@ -10,6 +10,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 // ✅ Unified Chat Route (Handles Text & Images)
 router.post('/chat', upload.single('image'), async (req, res) => {
     try {
+        console.log("🔍 Incoming Request:", req.body, req.file);
+
         let userMessage = req.body.message || "";
         let plantLabels = [];
 
