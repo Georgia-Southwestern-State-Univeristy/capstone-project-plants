@@ -165,22 +165,24 @@ const sendMessage = async () => {
 
   console.log("🔍 Chat Store Before Sending:", chatStore.messages);
 
-  // ✅ Ensure user message is stored correctly
+  // ✅ Add user message to chat
   const userMessage = {
     id: Date.now(),
-    type: "text",
-    content: userInput.value.trim(),
+    type: uploadedFiles.value.length ? "image" : "text",
+    content: uploadedFiles.value.length ? URL.createObjectURL(uploadedFiles.value[0].file) : userInput.value.trim(),
     isUser: true,
     timestamp: new Date(),
   };
 
   console.log("📢 [Chat.vue] Sending User Message:", userMessage);
   chatStore.sendMessage(userMessage);
-  console.log("✅ [Chat.vue] User message added to chatStore:", chatStore.messages);
 
-  // ✅ Prepare API request
   const formData = new FormData();
   formData.append("message", userInput.value.trim());
+
+  if (uploadedFiles.value.length) {
+    formData.append("image", uploadedFiles.value[0].file);
+  }
 
   try {
     const response = await axios.post("/api/chat/chat", formData, {
@@ -189,20 +191,19 @@ const sendMessage = async () => {
 
     console.log("✅ AI Response from Backend:", response.data.message);
 
-    // ✅ Ensure AI response is stored correctly
+    // ✅ Ensure AI response is added correctly
     const aiMessage = {
       id: Date.now() + 1,
-      type: "text",
-      content: response.data.message,
+      type: response.data.image ? "image" : "text",
+      content: response.data.image ? response.data.image : response.data.message,
       isUser: false,
       timestamp: new Date(),
     };
 
     console.log("📢 [Chat.vue] Sending AI Message:", aiMessage);
     chatStore.sendMessage(aiMessage);
-    console.log("✅ [Chat.vue] AI message added to chatStore:", chatStore.messages);
 
-    // ✅ Auto-scroll
+    uploadedFiles.value = [];
     await nextTick();
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
 
@@ -212,6 +213,8 @@ const sendMessage = async () => {
 
   userInput.value = "";
 };
+
+
 
 
 // 🔹 Handle user sign-out

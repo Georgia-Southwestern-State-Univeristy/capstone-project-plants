@@ -4,7 +4,6 @@ import path from 'path';
 
 dotenv.config(); // Load environment variables
 
-// ✅ Ensure Google Credentials Path is Set Correctly
 if (!process.env.VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY) {
     throw new Error("❌ Missing VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY in .env file!");
 }
@@ -15,34 +14,25 @@ const client = new vision.ImageAnnotatorClient(); // Uses GOOGLE_APPLICATION_CRE
 // ✅ Analyze Image Function
 export const analyzeImage = async (imageBuffer) => {
     try {
-        const [result] = await client.annotateImage({
-            image: { content: imageBuffer.toString('base64') },
-            features: [{ type: 'LABEL_DETECTION' }, { type: 'OBJECT_LOCALIZATION' }]
+        console.log("🔍 [Vision Service] Processing Image...");
+        const [result] = await client.labelDetection({ // ✅ Use labelDetection()
+            image: { content: imageBuffer.toString('base64') }
         });
 
-        return result.labelAnnotations.map(label => ({
+        if (!result || !result.labelAnnotations) {
+            console.log("⚠️ [Vision Service] No Labels Found.");
+            return [];
+        }
+
+        const labels = result.labelAnnotations.map(label => ({
             description: label.description,
             confidence: label.score
         }));
+
+        console.log("✅ [Vision Service] Labels Detected:", labels);
+        return labels;
     } catch (error) {
-        console.error('Google Vision API Error:', error);
+        console.error('❌ Google Vision API Error:', error);
         throw new Error('Failed to analyze image.');
     }
 };
-
-
-//  Upload Image to Firebase Storage 
-// ================WIll DECIDE LATER==============================================
-
-// export const uploadToStorage = async (imageBuffer, filename) => {
-//     try {
-//         const bucket = getStorage().bucket();
-//         const file = bucket.file(`vision-uploads/${uuidv4()}-${filename}`);
-//         await file.save(imageBuffer, { contentType: 'image/jpeg' });
-
-//         return `https://storage.googleapis.com/${bucket.name}/${file.name}`;
-//     } catch (error) {
-//         console.error('Error uploading to Firebase Storage:', error);
-//         throw new Error('Failed to upload image.');
-//     }
-// };

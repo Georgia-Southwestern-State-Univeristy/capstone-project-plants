@@ -1,13 +1,3 @@
-import express from 'express';
-import multer from 'multer';
-import { analyzeImage } from '../services/visionService.js';
-import { fetchPlantFromPerenual, analyzePlantHealth } from '../services/perenualService.js';
-import { generateGeminiResponse } from '../services/geminiService.js';
-
-const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
-
-// ✅ Unified Chat Route (Handles Text & Images)
 router.post('/chat', upload.single('image'), async (req, res) => {
     try {
         console.log("🔍 Incoming Request:", req.body, req.file);
@@ -15,12 +5,19 @@ router.post('/chat', upload.single('image'), async (req, res) => {
         let userMessage = req.body.message || "";
         let plantLabels = [];
 
-        // 🔹 If an image is uploaded, analyze it with Google Vision
+        // 🔹 Log Image Upload
         if (req.file) {
+            console.log("📸 Image Received: ", req.file.mimetype, req.file.size, "bytes");
             plantLabels = await analyzeImage(req.file.buffer);
+
             if (plantLabels.length > 0) {
+                console.log("✅ Plant Labels Detected:", plantLabels);
                 userMessage += ` My plant looks like: ${plantLabels.map(label => label.description).join(", ")}.`;
+            } else {
+                console.log("⚠️ No Labels Detected by Vision API.");
             }
+        } else {
+            console.log("⚠️ No Image Uploaded.");
         }
 
         // 🔹 Fetch plant details from Perenual API
@@ -38,6 +35,7 @@ router.post('/chat', upload.single('image'), async (req, res) => {
 
         // 🔹 Get AI response from Gemini
         const aiResponse = await generateGeminiResponse(fullMessage);
+        console.log("✅ AI Response:", aiResponse);
 
         res.json({ message: aiResponse });
 
@@ -46,5 +44,3 @@ router.post('/chat', upload.single('image'), async (req, res) => {
         res.status(500).json({ error: "Failed to process chat.", details: error.message });
     }
 });
-
-export default router;
