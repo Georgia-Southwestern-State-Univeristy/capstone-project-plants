@@ -1,82 +1,74 @@
 <template>
   <main>
     <div id="chatBackground" class="chat-container px-4 py-5">
-      <!-- Account Icon Dropdown -->
+      <!-- 🔹 Account Icon Dropdown -->
       <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
         <div class="dropdown">
-          <button 
-            class="account-circle"
-            type="button" 
-            @click="toggleDropdown"
-          >
+          <button class="account-circle" type="button" @click="toggleDropdown">
             <i class="bi bi-person-fill"></i>
           </button>
           <ul class="account-dropdown" :class="{ 'show': isDropdownOpen }">
-            <li><router-link to="/userprofile" class="dropdown-item">Account</router-link></li>
-            <li><a href="#" class="dropdown-item" @click.prevent="handleSignOut">Sign Out</a></li>
+            <li>
+              <router-link to="/userprofile" class="dropdown-item">Account</router-link>
+            </li>
+            <li>
+              <a href="#" class="dropdown-item" @click.prevent="handleSignOut">Sign Out</a>
+            </li>
           </ul>
         </div>
       </div>
 
-      <!-- Messages display area -->
-      <!-- Messages display area -->
-<div class="messages-area mb-4" ref="messagesContainer">
-  <div v-for="msg in chatStore.messages" 
-       :key="msg.id" 
-       class="card mb-3"
-       :class="[
-         msg.isUser ? 'me-auto user-message' : 'ms-auto ai-message',
-         'message-card'
-       ]"
-       style="max-width: 70%;">
-    <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
-      {{ msg.isUser ? 'You' : 'Verdure AI' }}
-    </div>
-    <div class="card-body">
-      <!-- Text message -->
-      <div v-if="msg.type === 'text'" class="message-content">
-        <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'">
-          {{ msg.content }}
-        </p>
+      <!-- 🔹 Messages Display Area -->
+      <div class="messages-area mb-4" ref="messagesContainer">
+        <div 
+          v-for="msg in chatStore.messages" 
+          :key="msg.id" 
+          class="card mb-3"
+          :class="[
+            msg.isUser ? 'me-auto user-message' : 'ms-auto ai-message',
+            'message-card'
+          ]"
+          style="max-width: 70%;"
+        >
+          <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
+            {{ msg.isUser ? 'You' : 'Verdure AI' }}
+          </div>
+          <div class="card-body">
+            <!-- 🔹 Text Message -->
+            <div v-if="msg.type === 'text'" class="message-content">
+              <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'">
+                {{ msg.content }}
+              </p>
+            </div>
+
+            <!-- 🔹 Image Message -->
+            <div v-else-if="msg.type === 'image'" class="image-message">
+              <img 
+                :src="msg.content" 
+                class="img-fluid rounded" 
+                alt="Uploaded plant image"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Image message -->
-      <div v-else-if="msg.type === 'image'" class="image-message">
-        <img :src="msg.content" 
-             class="img-fluid rounded" 
-             alt="Uploaded plant image">
-      </div>
-    </div>
-  </div>
-</div>
-
-
- 
-
-      <!-- Input area fixed at bottom -->
+      <!-- 🔹 Input Area (Fixed at Bottom) -->
       <div class="chat-input-container">
-        <!-- File preview if exists -->
-        <TransitionGroup 
-          name="file-preview"
-          tag="div"
-        class="file-previews-container"
->
-          <div 
-    v-for="file in uploadedFiles" 
-    :key="file.id"
-    class="file-preview"
-  >
-    <div class="file-preview-content">
-      <span class="file-name">{{ file.name }}</span>
-      <button class="remove-file" @click="() => removeUpload(file.id)">
-        <i class="bi bi-x"></i>
-      </button>
-    </div>
-  </div>
-</TransitionGroup>
+        <!-- 🔹 File Preview (If Exists) -->
+        <TransitionGroup name="file-preview" tag="div" class="file-previews-container">
+          <div v-for="file in uploadedFiles" :key="file.id" class="file-preview">
+            <div class="file-preview-content">
+              <span class="file-name">{{ file.name }}</span>
+              <button class="remove-file" @click="() => removeUpload(file.id)">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          </div>
+        </TransitionGroup>
 
         <div class="input-group">
-          <!-- Hidden file inputs -->
+          <!-- 🔹 Hidden File Input -->
           <input 
             type="file" 
             ref="fileInput" 
@@ -85,14 +77,12 @@
             @change="handleFileUpload"
           />
 
- 
-        
-          <!-- Image upload button -->
+          <!-- 🔹 Image Upload Button -->
           <button class="attach-button" @click="triggerFileUpload">
             <i class="bi bi-paperclip"></i>
           </button>
 
-          <!-- Text input -->
+          <!-- 🔹 Text Input -->
           <textarea
             class="form-control chat-textarea" 
             placeholder="Ask about your plants or upload an image..." 
@@ -102,7 +92,7 @@
             ref="textInput"
           ></textarea>
 
-          <!-- Send button -->
+          <!-- 🔹 Send Button -->
           <button class="send-button" @click="sendMessage">
             <i class="bi bi-send-fill"></i>
           </button>
@@ -111,6 +101,7 @@
     </div>
   </main>
 </template>
+
 
 <script setup>
 import { ref, onMounted, watch, nextTick } from 'vue';
@@ -135,6 +126,11 @@ const uploadedFiles = ref([]);
 const isDropdownOpen = ref(false);
 
 // 🔹 Adjust textarea height dynamically
+console.log("🔍 Chat Store Initialized:", chatStore);
+if (!chatStore) {
+  console.error("❌ chatStore is undefined! Check if Pinia is initialized.");
+}
+
 const adjustTextarea = () => {
   const textarea = textInput.value;
   textarea.style.height = 'auto';
@@ -167,42 +163,46 @@ const triggerFileUpload = () => {
 const sendMessage = async () => {
   if (!uploadedFiles.value.length && !userInput.value.trim()) return;
 
-  // ✅ Add user message to chat before sending request
+  console.log("🔍 Chat Store Before Sending:", chatStore.messages);
+
+  // ✅ Ensure user message is stored correctly
   const userMessage = {
     id: Date.now(),
-    type: uploadedFiles.value.length ? 'image' : 'text',
-    content: userInput.value || "📷 Image Uploaded",
+    type: "text",
+    content: userInput.value.trim(),
     isUser: true,
-    timestamp: new Date()
+    timestamp: new Date(),
   };
+
+  console.log("📢 [Chat.vue] Sending User Message:", userMessage);
   chatStore.sendMessage(userMessage);
+  console.log("✅ [Chat.vue] User message added to chatStore:", chatStore.messages);
 
-  // ✅ Prepare data for API request
+  // ✅ Prepare API request
   const formData = new FormData();
-  formData.append('message', userInput.value);
+  formData.append("message", userInput.value.trim());
 
-  if (uploadedFiles.value.length) {
-    formData.append('image', uploadedFiles.value[0].file); // Send first image only
-  }
-
-  // ✅ Send request to backend `/api/chat/chat`
   try {
-    const response = await axios.post('/api/chat/chat', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+    const response = await axios.post("/api/chat/chat", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
 
     console.log("✅ AI Response from Backend:", response.data.message);
 
-    // ✅ Ensure AI response is added to chat store
-    chatStore.sendMessage({
+    // ✅ Ensure AI response is stored correctly
+    const aiMessage = {
       id: Date.now() + 1,
       type: "text",
-      content: response.data.message, // AI response
-      isUser: false, // AI-generated message
-      timestamp: new Date()
-    });
+      content: response.data.message,
+      isUser: false,
+      timestamp: new Date(),
+    };
 
-    // ✅ Auto-scroll to the latest message
+    console.log("📢 [Chat.vue] Sending AI Message:", aiMessage);
+    chatStore.sendMessage(aiMessage);
+    console.log("✅ [Chat.vue] AI message added to chatStore:", chatStore.messages);
+
+    // ✅ Auto-scroll
     await nextTick();
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
 
@@ -210,12 +210,8 @@ const sendMessage = async () => {
     console.error("❌ Chat API Error:", error);
   }
 
-  // ✅ Reset input fields
-  userInput.value = '';
-  uploadedFiles.value = [];
-  adjustTextarea();
+  userInput.value = "";
 };
-
 
 
 // 🔹 Handle user sign-out
@@ -233,6 +229,7 @@ const toggleDropdown = () => {
 // 🔹 Auto-scroll when messages update
 watch(() => chatStore.messages, async () => {
   await nextTick();
+  console.log("Updating chat messages...", chatStore.messages);
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
   }

@@ -7,9 +7,19 @@
 </template>
 
 <script>
+import { useChatStore } from '@/store/chatStore';
+
 export default {
-  name: 'App'
-}
+  setup() {
+    const chatStore = useChatStore();
+
+    console.log("🌐 Global Chat Store Initialized:", chatStore);
+    console.log("🌐 Current Messages in Store:", chatStore.messages);
+
+    return { chatStore };
+  }
+};
+
 </script>
 
 <style>
