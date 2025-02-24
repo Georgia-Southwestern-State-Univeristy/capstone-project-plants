@@ -1,6 +1,7 @@
 # 🚀 Node.js Dependencies
 node_modules/
 package-lock.json
+secrets/
 
 # ⚙️ Logs & Debugging
 npm-debug.log*
