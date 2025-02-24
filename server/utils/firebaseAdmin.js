@@ -9,7 +9,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const serviceAccount = JSON.parse(process.env.VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY);
+const serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 // ✅ Initialize Firebase Admin SDK (Server Only)
 const app = initializeApp({
   credential: cert(serviceAccount),

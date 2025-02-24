@@ -1,22 +1,24 @@
-import vision from '@google-cloud/vision';
-import dotenv from 'dotenv';
-import path from 'path';
+import vision from "@google-cloud/vision";
+import dotenv from "dotenv";
+import path from "path";
 
 dotenv.config(); // Load environment variables
 
-if (!process.env.VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY) {
-    throw new Error("❌ Missing VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY in .env file!");
+// ✅ Ensure GOOGLE_APPLICATION_CREDENTIALS is set correctly
+if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    throw new Error("❌ Missing GOOGLE_APPLICATION_CREDENTIALS in .env file!");
 }
 
-process.env.VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY = path.resolve(process.env.VITE_APP_FIREBASE_SERVICE_ACCOUNT_KEY);
-const client = new vision.ImageAnnotatorClient(); // Uses GOOGLE_APPLICATION_CREDENTIALS
+process.env.GOOGLE_APPLICATION_CREDENTIALS = path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS);
 
-// ✅ Analyze Image Function
+const client = new vision.ImageAnnotatorClient(); // ✅ Google Vision API Client
+
 export const analyzeImage = async (imageBuffer) => {
     try {
         console.log("🔍 [Vision Service] Processing Image...");
-        const [result] = await client.labelDetection({ // ✅ Use labelDetection()
-            image: { content: imageBuffer.toString('base64') }
+
+        const [result] = await client.labelDetection({
+            image: { content: imageBuffer.toString("base64") }
         });
 
         if (!result || !result.labelAnnotations) {
@@ -32,7 +34,7 @@ export const analyzeImage = async (imageBuffer) => {
         console.log("✅ [Vision Service] Labels Detected:", labels);
         return labels;
     } catch (error) {
-        console.error('❌ Google Vision API Error:', error);
-        throw new Error('Failed to analyze image.');
+        console.error("❌ Google Vision API Error:", error);
+        throw new Error("Failed to analyze image.");
     }
 };

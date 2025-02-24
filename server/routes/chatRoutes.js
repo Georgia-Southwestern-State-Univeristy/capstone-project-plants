@@ -1,3 +1,12 @@
+import express from 'express';
+import multer from 'multer';
+import { analyzeImage } from '../services/visionService.js';
+import { fetchPlantFromPerenual, analyzePlantHealth } from '../services/perenualService.js';
+import { generateGeminiResponse } from '../services/geminiService.js';
+
+const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage() });
+
 router.post('/chat', upload.single('image'), async (req, res) => {
     try {
         console.log("🔍 Incoming Request:", req.body, req.file);
@@ -44,3 +53,5 @@ router.post('/chat', upload.single('image'), async (req, res) => {
         res.status(500).json({ error: "Failed to process chat.", details: error.message });
     }
 });
+
+export default router;
