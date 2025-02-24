@@ -7,51 +7,51 @@ import { generateGeminiResponse } from '../services/geminiService.js';
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-router.post('/chat', upload.single('image'), async (req, res) => {
+router.post("/chat", upload.single("image"), async (req, res) => {
     try {
         console.log("🔍 Incoming Request:", req.body, req.file);
 
         let userMessage = req.body.message || "";
         let plantLabels = [];
+        let plantName = "Unknown Plant";
 
-        // 🔹 Log Image Upload
+        // ✅ If an image is uploaded, analyze it with Google Vision
         if (req.file) {
-            console.log("📸 Image Received: ", req.file.mimetype, req.file.size, "bytes");
+            console.log("📸 [Chat Route] Processing uploaded image...");
             plantLabels = await analyzeImage(req.file.buffer);
 
             if (plantLabels.length > 0) {
-                console.log("✅ Plant Labels Detected:", plantLabels);
-                userMessage += ` My plant looks like: ${plantLabels.map(label => label.description).join(", ")}.`;
-            } else {
-                console.log("⚠️ No Labels Detected by Vision API.");
+                plantName = plantLabels[0].description; // ✅ Use most confident plant label
+                userMessage += ` My plant looks like: ${plantName}.`;
             }
-        } else {
-            console.log("⚠️ No Image Uploaded.");
         }
 
-        // 🔹 Fetch plant details from Perenual API
-        const plantData = plantLabels.length ? await fetchPlantFromPerenual(plantLabels[0].description) : null;
+        console.log("✅ [Chat Route] Plant Identified:", plantName);
 
-        // 🔹 Analyze plant health
-        const plantHealth = plantLabels.length ? analyzePlantHealth(plantLabels) : { isHealthy: true, details: "No image provided." };
+        // ✅ Fetch plant details from Perenual API
+        const plantData = await fetchPlantFromPerenual(plantName);
 
-        // 🔹 Construct AI message
-        let fullMessage = userMessage;
+        // ✅ Improve AI Response by Structuring a Better Prompt
+        let fullMessage = `I uploaded an image of a plant that looks like a ${plantName}.`;
         if (plantData) {
-            fullMessage += ` This plant is likely a ${plantData.common_name} (${plantData.scientific_name}).`;
+            fullMessage += ` This plant is likely a ${plantData.common_name} (${plantData.scientific_name}). It requires ${plantData.sunlight} sunlight and ${plantData.watering} watering.`;
+        } else {
+            fullMessage += " I am unsure about the exact plant name.";
         }
-        fullMessage += ` Health Status: ${plantHealth.details}`;
 
-        // 🔹 Get AI response from Gemini
+        console.log("✅ [Chat Route] Sending AI Prompt:", fullMessage);
+
+        // ✅ Get AI response from Gemini
         const aiResponse = await generateGeminiResponse(fullMessage);
-        console.log("✅ AI Response:", aiResponse);
 
+        console.log("✅ [Chat Route] AI Response:", aiResponse);
         res.json({ message: aiResponse });
 
     } catch (error) {
-        console.error("❌ Chat API Error:", error);
+        console.error("❌ [Chat Route] Error:", error);
         res.status(500).json({ error: "Failed to process chat.", details: error.message });
     }
 });
+
 
 export default router;

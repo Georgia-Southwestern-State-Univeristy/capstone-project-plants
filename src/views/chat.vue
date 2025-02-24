@@ -36,10 +36,9 @@
           <div class="card-body">
             <!-- 🔹 Text Message -->
             <div v-if="msg.type === 'text'" class="message-content">
-              <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'">
-                {{ msg.content }}
-              </p>
+              <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'" v-html="msg.content"></p>
             </div>
+
 
             <!-- 🔹 Image Message -->
             <div v-else-if="msg.type === 'image'" class="image-message">
