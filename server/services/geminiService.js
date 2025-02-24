@@ -19,21 +19,22 @@ export const generateGeminiResponse = async (plantInfo) => {
             ]
         });
 
-        console.log("✅ [Gemini Service] Raw API Response:", response.data);
+        console.log("✅ [Gemini Service] Raw API Response:", JSON.stringify(response.data, null, 2));
 
-        let aiResponse = response.data.candidates?.[0]?.content || "I am unsure about this plant.";
+        // ✅ Extract AI response safely from `parts` array
+        let aiResponse = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        // ✅ Ensure aiResponse is a string
         if (!aiResponse || typeof aiResponse !== "string") {
-            aiResponse = JSON.stringify(aiResponse);
+            console.error("❌ [Gemini Service] AI Response is not a valid text string.");
+            aiResponse = "I couldn't generate a response.";
         }
 
-        // ✅ Format Response for Readability
+        // ✅ Format AI Response for Readability
         aiResponse = aiResponse
-            .replace(/\n{2,}/g, "<br><br>")  // ✅ Convert multiple newlines to proper spacing
-            .replace(/\n/g, "<br>")  // ✅ Convert single newlines into <br> for Vue rendering
-            .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>") // ✅ Convert Markdown-style **bold** into HTML <b> tags
-            .replace(/\*/g, "•");  // ✅ Convert bullet points into readable symbols
+            .replace(/\n{2,}/g, "<br><br>")  // ✅ Convert multiple newlines to <br><br> for spacing
+            .replace(/\n/g, "<br>")  // ✅ Convert single newlines to <br> for Vue rendering
+            .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>") // ✅ Convert **bold** Markdown to HTML <b> tags
+            .replace(/\*/g, "•");  // ✅ Convert bullet points to readable symbols
 
         console.log("✅ [Gemini Service] Cleaned AI Response:", aiResponse);
 
@@ -43,6 +44,8 @@ export const generateGeminiResponse = async (plantInfo) => {
         throw new Error("Failed to generate AI response.");
     }
 };
+
+
 
 
 

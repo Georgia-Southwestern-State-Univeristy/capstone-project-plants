@@ -215,8 +215,6 @@ const sendMessage = async () => {
 
 
 
-
-
 // 🔹 Handle user sign-out
 const handleSignOut = async () => {
   await authStore.logout();
