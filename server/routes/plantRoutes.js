@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.get('/plants/perenual/:plantId', async (req, res) => {
     const { plantId } = req.params;
-
+    console.log('Fetching plant from Perenual API:', plantId);
     try {
         const plant = await fetchPlantFromPerenual(plantId);
 
