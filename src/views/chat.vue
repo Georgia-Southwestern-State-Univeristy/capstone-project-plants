@@ -33,22 +33,22 @@
           <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
             {{ msg.isUser ? 'You' : 'Verdure AI' }}
           </div>
-          <div class="card-body">
-            <!-- 🔹 Text Message -->
-            <div v-if="msg.type === 'text'" class="message-content">
-              <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'" v-html="msg.content"></p>
-            </div>
+          <!-- Message card in chat.vue template -->
+<div class="card-body">
+  <!-- Text Message -->
+  <div v-if="msg.type === 'text' || msg.type === 'both'" class="message-content">
+    <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'" v-html="msg.content"></p>
+  </div>
 
-
-            <!-- 🔹 Image Message -->
-            <div v-else-if="msg.type === 'image'" class="image-message">
-              <img 
-                :src="msg.content" 
-                class="img-fluid rounded" 
-                alt="Uploaded plant image"
-              />
-            </div>
-          </div>
+  <!-- Image Message -->
+  <div v-if="msg.type === 'image' || msg.type === 'both'" class="image-message">
+    <img 
+      :src="msg.type === 'both' ? msg.image : msg.content" 
+      class="img-fluid rounded" 
+      alt="Uploaded plant image"
+    />
+  </div>
+</div>
         </div>
       </div>
 
@@ -164,11 +164,12 @@ const sendMessage = async () => {
 
   console.log("🔍 Chat Store Before Sending:", chatStore.messages);
 
-  // ✅ Add user message to chat
+  // ✅ Add user message to chat with both image and text if both exist
   const userMessage = {
     id: Date.now(),
-    type: uploadedFiles.value.length ? "image" : "text",
-    content: uploadedFiles.value.length ? URL.createObjectURL(uploadedFiles.value[0].file) : userInput.value.trim(),
+    type: uploadedFiles.value.length ? (userInput.value.trim() ? "both" : "image") : "text",
+    content: userInput.value.trim(),
+    image: uploadedFiles.value.length ? URL.createObjectURL(uploadedFiles.value[0].file) : null,
     isUser: true,
     timestamp: new Date(),
   };
@@ -182,6 +183,8 @@ const sendMessage = async () => {
   if (uploadedFiles.value.length) {
     formData.append("image", uploadedFiles.value[0].file);
   }
+  
+
 
   try {
     const response = await axios.post("/api/chat/chat", formData, {
