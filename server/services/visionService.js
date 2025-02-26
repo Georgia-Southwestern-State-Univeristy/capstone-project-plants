@@ -23,18 +23,37 @@ export const analyzeImage = async (imageBuffer) => {
 
         if (!result || !result.labelAnnotations) {
             console.log("⚠️ [Vision Service] No Labels Found.");
-            return [];
+            return [{ description: "Unknown Plant", confidence: 0 }];
         }
 
-        const labels = result.labelAnnotations.map(label => ({
+        // ✅ Log ALL detected labels for debugging
+        const allLabels = result.labelAnnotations.map(label => ({
             description: label.description,
             confidence: label.score
         }));
+        console.log("✅ [Vision Service] All Labels Detected:", allLabels);
 
-        console.log("✅ [Vision Service] Labels Detected:", labels);
-        return labels;
+        // ✅ Filter for plant-specific labels and prioritize species names
+        const plantLabels = allLabels
+            .filter(label => 
+                label.description.toLowerCase().includes("plant") || 
+                label.description.toLowerCase().includes("flower") ||
+                label.description.toLowerCase().includes("tree") ||
+                label.description.toLowerCase().includes("daisy") || // Add specific plant keywords
+                label.description.toLowerCase().includes("rose") ||
+                label.description.toLowerCase().includes("sunflower")
+            )
+            .sort((a, b) => b.confidence - a.confidence); // ✅ Sort by confidence
+
+        // ✅ Pick the most confident specific label
+        const selectedPlant = plantLabels.length > 0 ? plantLabels[0].description : "Unknown Plant";
+        console.log("✅ [Vision Service] Most Confident Plant Label:", selectedPlant);
+
+        return [{ description: selectedPlant, confidence: 1 }];
     } catch (error) {
         console.error("❌ Google Vision API Error:", error);
         throw new Error("Failed to analyze image.");
     }
 };
+
+

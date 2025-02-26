@@ -1,5 +1,5 @@
-import axios from 'axios';
-import dotenv from 'dotenv';
+import axios from "axios";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -8,26 +8,34 @@ const PERENUAL_BASE_URL = "https://perenual.com/api";
 
 /**
  * Fetch plant details from Perenual API
- * @param {string} plantName - The name of the plant to fetch
- * @returns {Promise<Object|null>} - Returns the plant data or null if not found
  */
 export const fetchPlantFromPerenual = async (plantName) => {
     try {
+        console.log(`🔍 [Perenual Service] Fetching plant data for: ${plantName}`);
+
+        // ✅ If Vision returned "Flower", try querying with a more specific term
+        if (plantName.toLowerCase() === "flower" || plantName.toLowerCase() === "plant") {
+            console.log("⚠️ [Perenual Service] Generic term detected, refining search...");
+            plantName = "Daisy"; // ✅ Use a more specific default plant name
+        }
+
         const response = await axios.get(`${PERENUAL_BASE_URL}/species-list`, {
             params: { key: PERENUAL_API_KEY, q: plantName }
         });
 
         if (response.status === 200 && response.data.data.length > 0) {
-            return response.data.data[0]; // Return first result
+            console.log(`✅ [Perenual Service] Plant Data Found:`, response.data.data[0]);
+            return response.data.data[0]; // ✅ Return the first matching plant
         } else {
-            console.error(`Perenual API: No data found for ${plantName}`);
+            console.log(`⚠️ [Perenual Service] No results found for: ${plantName}`);
             return null;
         }
     } catch (error) {
-        console.error(`Failed to fetch plant from Perenual API: ${error.message}`);
+        console.error(`❌ [Perenual Service] Failed to fetch plant from Perenual API:`, error.message);
         return null;
     }
 };
+
 
 /**
  * Analyze plant health based on Google Vision results

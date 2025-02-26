@@ -21,7 +21,10 @@ router.post("/chat", upload.single("image"), async (req, res) => {
             plantLabels = await analyzeImage(req.file.buffer);
 
             if (plantLabels.length > 0) {
+                // ✅ Pick the plant with the highest confidence score
+                plantLabels.sort((a, b) => b.confidence - a.confidence);
                 plantName = plantLabels[0].description;
+                console.log("✅ [Chat Route] Most Confident Plant Identified:", plantName);
                 userMessage += ` My plant looks like: ${plantName}.`;
             }
         }
@@ -40,11 +43,9 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         console.log("✅ [Chat Route] Sending AI Prompt:", fullMessage);
 
         // ✅ Get AI response from Gemini
-        let aiResponse = await generateGeminiResponse(fullMessage);
+        const aiResponse = await generateGeminiResponse(fullMessage);
 
         console.log("✅ [Chat Route] AI Response:", aiResponse);
-
-        // ✅ Ensure response is sent as a clean string
         res.json({ message: aiResponse });
 
     } catch (error) {
@@ -52,6 +53,7 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         res.status(500).json({ error: "Failed to process chat.", details: error.message });
     }
 });
+
 
 
 
