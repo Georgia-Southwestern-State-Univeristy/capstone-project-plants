@@ -26,10 +26,13 @@
     :key="msg.id" 
     :class="['message-wrapper', msg.isUser ? 'user-wrapper' : 'ai-wrapper']"
   >
-    <div 
-      class="card mb-3 message-card"
-      :class="[msg.isUser ? 'user-message' : 'ai-message']"
-    >
+  <div 
+  class="card mb-3 message-card"
+  :class="[
+    msg.isUser ? 'user-message' : 'ai-message',
+    'animate-in' /* Add animation class here instead */
+  ]"
+>
       <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
         {{ msg.isUser ? 'You' : 'Verdure AI' }}
       </div>
@@ -50,14 +53,14 @@
   </div>
   
   <!-- Add Plant Button (only show for AI responses with plant info) -->
-  <div v-if="!msg.isUser" class="mt-3 text-end">
-    <button 
-      class="btn add-plant-btn" 
-      @click="addPlantToCollection(msg)"
-    >
-      Add plant to plant collection?
-    </button>
-  </div>
+  <div v-if="!msg.isUser && isPlantDescription(msg.content)" class="mt-3 text-end">
+  <button 
+    class="btn add-plant-btn" 
+    @click="addPlantToCollection(msg)"
+  >
+    Add plant to plant collection?
+  </button>
+</div>
 </div>
     </div>
   </div>
@@ -220,15 +223,31 @@ const sendMessage = async () => {
 
     console.log("✅ AI Response from Backend:", response.data.message);
 
+    // KENDRICK CHANGE - added delay for efficiency
+
+
+
     // Updated AI message to match user message structure
     const aiMessage = {
-      id: Date.now() + 1,
-      type: response.data.image ? (response.data.message ? "both" : "image") : "text",
-      content: response.data.message || "",
-      image: response.data.image || null,
-      isUser: false,
-      timestamp: new Date(),
-    };
+  id: Date.now() + 1,
+  type: response.data.image ? (response.data.message ? "both" : "image") : "text",
+  content: response.data.message || "",
+  image: response.data.image || null,
+  isUser: false,
+  timestamp: new Date(),
+};
+
+// Add a small delay before adding AI message to prevent flickering
+setTimeout(() => {
+  console.log("📢 [Chat.vue] Sending AI Message:", aiMessage);
+  chatStore.sendMessage(aiMessage);
+  
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    }
+  });
+}, 100); // Short delay to separate the animations
 
     console.log("📢 [Chat.vue] Sending AI Message:", aiMessage);
     chatStore.sendMessage(aiMessage);
@@ -263,12 +282,26 @@ const toggleDropdown = () => {
 
 // 🔹 Auto-scroll when messages update
 // 🔹 Auto-scroll when messages update
-watch(() => chatStore.messages, async () => {
-  await nextTick();
-  console.log("Updating chat messages...", chatStore.messages);
+// Add a new utility function for debouncing
+const debounce = (fn, delay) => {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn(...args), delay);
+  };
+};
+
+// Replace the existing watch function with this debounced version
+const scrollToBottom = debounce(() => {
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
   }
+}, 50);
+
+watch(() => chatStore.messages, async () => {
+  await nextTick();
+  console.log("Updating chat messages...", chatStore.messages);
+  scrollToBottom();
 }, { deep: true });
 
 
@@ -285,6 +318,28 @@ onMounted(async () => {
     }
   });
 });
+
+// KENDRICK CHANGE - I added this so that the add plant button only appears
+// when the AI is describing a plant
+const isPlantDescription = (content) => {
+  if (!content) return false;
+  
+  // Check for common patterns in plant descriptions
+  const plantIdentifiers = [
+    'Common Names:',
+    'Common Name:',
+    'Scientific Name:',
+    'Family:',
+    'Origin:',
+    'Key Identifying Features:'
+
+  ];
+  
+  return plantIdentifiers.some(phrase => 
+    content.includes(phrase) || content.toLowerCase().includes(phrase.toLowerCase())
+  );
+};
+
 
 // KENDRICK CHANGE - I added a button so that when a plant is identified by the
 // AI, you have an option to add a plant from the chat page.
@@ -328,6 +383,10 @@ const addPlantToCollection = async (message) => {
     alert("Failed to add plant to collection");
   }
 };
+
+
+
+
 
 
 
@@ -383,14 +442,13 @@ const addPlantToCollection = async (message) => {
   width: 100%;
   max-width: 450px;
   margin-bottom: 16px !important;
-  border: 2px solid #341c02; /* Add specific border color and width */
+  border: 2px solid #341c02;
   border-radius: 16px !important;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  animation: fadeInUp 0.5s ease;
-  background-color: #F5E6D3;
-  opacity: 1;
+  /* Remove animation from here - we'll apply it with a class instead */
+  will-change: transform, opacity; /* Performance optimization */
 }
 
 /* Animation keyframes */
@@ -405,14 +463,12 @@ const addPlantToCollection = async (message) => {
   }
 }
 
-/* Animation delays */
-.message-wrapper:nth-child(odd) .message-card {
-  animation-delay: 0.2s;
+/* Add this new class that will be applied dynamically */
+.animate-in {
+  animation: fadeInUp 0.3s ease-out forwards;
 }
 
-.message-wrapper:nth-child(even) .message-card {
-  animation-delay: 0.3s;
-}
+
 
 /* Card hover effect */
 .message-card:hover {
