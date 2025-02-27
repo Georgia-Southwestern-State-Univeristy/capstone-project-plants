@@ -48,6 +48,15 @@
       alt="Uploaded plant image"
     />
   </div>
+  <!-- Add Plant Button (only show for AI responses with plant info) -->
+<div v-if="!msg.isUser" class="mt-3 text-end">
+  <button 
+    class="btn add-plant-btn" 
+    @click="addPlantToCollection(msg)"
+  >
+    Add plant to plant collection?
+  </button>
+</div>
 </div>
         </div>
       </div>
@@ -107,6 +116,12 @@ import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
+
+
+// KENDRICK CHANGE - added more imports for vuetify cards
+import { db } from '@/utils/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+
 import axios from 'axios';
 
 // Store and router setup
@@ -158,21 +173,25 @@ const triggerFileUpload = () => {
   fileInput.value?.click();
 };
 
+// KENDRICK CHANGE - I edited the send message feature so the user can 
+// see both their text input and their picture upload.
+
 // 🔹 Send Message (Handles Text & Image Upload)
 const sendMessage = async () => {
   if (!uploadedFiles.value.length && !userInput.value.trim()) return;
 
   console.log("🔍 Chat Store Before Sending:", chatStore.messages);
 
+  // KENDRICK CHANGE - Changed userMessage to allow both text and image chat bubbles
+
   // ✅ Add user message to chat with both image and text if both exist
   const userMessage = {
-    id: Date.now(),
-    type: uploadedFiles.value.length ? (userInput.value.trim() ? "both" : "image") : "text",
-    content: userInput.value.trim(),
-    image: uploadedFiles.value.length ? URL.createObjectURL(uploadedFiles.value[0].file) : null,
-    isUser: true,
-    timestamp: new Date(),
-  };
+  id: Date.now(),
+  type: uploadedFiles.value.length ? "image" : "text",
+  content: uploadedFiles.value.length ? URL.createObjectURL(uploadedFiles.value[0].file) : userInput.value.trim(),
+  isUser: true,
+  timestamp: new Date(),
+};
 
   console.log("📢 [Chat.vue] Sending User Message:", userMessage);
   chatStore.sendMessage(userMessage);
@@ -253,12 +272,73 @@ onMounted(async () => {
     }
   });
 });
+
+// KENDRICK CHANGE - I added a button so that when a plant is identified by the
+// AI, you have an option to add a plant from the chat page.
+const addPlantToCollection = async (message) => {
+  if (!authStore.isAuthenticated) {
+    alert("Please log in to add plants to your collection");
+    router.push('/login');
+    return;
+  }
+
+  try {
+    // Extract plant name from the message (assuming AI response contains plant name)
+    const plantInfo = message.content;
+    
+    // Try to extract plant name with regex
+    let plantName = "Unknown Plant";
+    const nameMatch = plantInfo.match(/<b>Plant Name:<\/b> ([^<]+)/);
+    if (nameMatch && nameMatch[1]) {
+      plantName = nameMatch[1].trim();
+    }
+    
+    // Create a new plant document in Firestore
+    const userId = authStore.user.uid;
+    const plantsRef = collection(db, 'users', userId, 'plants');
+    
+    await addDoc(plantsRef, {
+      name: plantName,
+      type: plantName, // Use plant name as the type for now
+      wateringSchedule: { frequency: '7 days' },
+      lastWatered: new Date().toISOString(),
+      healthStatus: 'Healthy',
+      notes: plantInfo, // Store the AI info as notes
+      createdAt: new Date().toISOString(),
+      image: message.image || null // Store image if available
+    });
+
+    alert(`${plantName} added to your plant collection!`);
+  } catch (error) {
+    console.error("Error adding plant to collection:", error);
+    alert("Failed to add plant to collection");
+  }
+};
+
+
+
+
 </script>
 
 
 <style scoped>
 
+.add-plant-btn {
+  background-color: #F5E6D3;
+  color: #341c02;
+  border: 2px solid #341c02;
+  border-radius: 20px;
+  font-weight: bold;
+  padding: 6px 12px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
 
+.add-plant-btn:hover {
+  background-color: #341c02;
+  color: #F5E6D3;
+  transform: translateY(-2px);
+}
 
 
 .account-circle {
@@ -436,9 +516,37 @@ onMounted(async () => {
 
 
 .message-card {
-  width: 70%;
+  width: 25%; /* Reduce from 70% to 60% */
+  max-width: 500px; /* Add maximum width */
   margin-bottom: 15px;
   border: none;
+  border-radius: 16px !important; /* Rounded corners */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease; /* Smooth transition for all properties */
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.5s forwards;
+}
+
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom animation delays for messages */
+.message-card:nth-child(odd) {
+  animation-delay: 0.2s;
+}
+
+.message-card:nth-child(even) {
+  animation-delay: 0.3s;
 }
 
 .messages-area {
@@ -459,17 +567,30 @@ onMounted(async () => {
   background-color: rgba(52, 28, 2, 0.1);
   color: #341c02;
   font-weight: bold;
+  border-top-left-radius: 16px !important;
+  border-top-right-radius: 16px !important;
+  padding: 0.5rem 1rem;
 }
 
 .card-body {
   color: #341c02;
+  padding: 1rem;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+
+.message-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .user-message {
-  margin-left: 0 !important;
-  margin-right: auto !important;
+  margin-right: 0 !important;
+  margin-left: auto !important;
   background-color: #F5E6D3;
-  align-self: flex-start;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px !important;
 }
 
 .ai-message {
