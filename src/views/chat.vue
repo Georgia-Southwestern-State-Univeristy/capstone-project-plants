@@ -399,7 +399,7 @@ const addPlantToCollection = async (message) => {
 /* Main container styling */
 .chat-container {
   min-height: 100vh;
-  background-color: #341c02;
+  background-color: #F5E6D3;
   position: relative;
   overflow-x: hidden;
 }
@@ -437,7 +437,7 @@ const addPlantToCollection = async (message) => {
   width: 100%;
   max-width: 450px;
   margin-bottom: 16px !important;
-  border: 4px solid white;
+  border: 4px solid #341c02;
   border-radius: 16px !important;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -469,17 +469,19 @@ const addPlantToCollection = async (message) => {
 
 /* Card header styling - consolidated */
 .card-header {
-  background-color: #072d13;
+  background-color: white;
   padding: 0.75rem 1rem;
-  margin: 0;
+  margin: 0px;
   font-weight: bold;
-  color: white;
+  color: #072d13;
   border: solid;
-  border-color:#072d13;
-  border-top-left-radius: 8px !important;
-  border-top-right-radius: 8px !important;
-  border-bottom-left-radius: 8px !important;
-  border-bottom-right-radius: 8px !important;
+  border-bottom-color: #341c02;
+  border-top-color: white;
+  border-left-color: white;
+  border-right-color: white;
+  justify-content: center;
+  display: flex;
+  
 }
 
 /* Card body styling */
@@ -538,7 +540,7 @@ const addPlantToCollection = async (message) => {
   left: 0;
   right: 0;
   padding: 1rem;
-  background-color: #341c02;
+  background-color: #F5E6D3;
   z-index: 100; /* Add z-index to ensure it stays on top */
 }
 
@@ -568,7 +570,6 @@ const addPlantToCollection = async (message) => {
   height: 44px;
   border: none;
   border-radius: 8px;
-  background-color: #341c02;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -576,11 +577,11 @@ const addPlantToCollection = async (message) => {
 }
 
 .send-button i {
-  color: #F5E6D3;
+  color: #341c02;
 }
 
 .attach-button i {
-  color: #F5E6D3;
+  color: #341c02;
 }
 
 .send-button {
@@ -597,7 +598,7 @@ const addPlantToCollection = async (message) => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #F5E6D3;
+  background-color: #341c02;
   border: none;
   display: flex;
   align-items: center;
@@ -606,12 +607,12 @@ const addPlantToCollection = async (message) => {
 }
 
 .account-circle i {
-  color: #341c02;
+  color:  #F5E6D3;
   font-size: 1.2rem;
 }
 
 .account-dropdown {
-  background-color: #F5E6D3;
+  background-color: #341c02;
   border: none;
   border-radius: 16px;
   padding: 0.75rem 0;
@@ -626,12 +627,16 @@ const addPlantToCollection = async (message) => {
 }
 
 .dropdown-item {
-  color: #341c02;
+  color: #F5E6D3;
   padding: 0.75rem 1.5rem;
   text-decoration: none;
   display: block;
   font-weight: 700;
   transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  color: #F5E6D3;
 }
 
 .account-dropdown.show {
@@ -650,8 +655,8 @@ const addPlantToCollection = async (message) => {
 }
 
 .file-preview {
-  background-color: #F5E6D3;
-  border: 2px solid #341c02;
+  background-color: #341c02;
+  border: 2px solid  #F5E6D3;
   border-radius: 8px; /* Increase from 4px for consistency */
   padding: 4px 8px;
   margin-bottom: 0.5rem;
@@ -668,7 +673,7 @@ const addPlantToCollection = async (message) => {
 }
 
 .file-name {
-  color: #341c02;
+  color: #F5E6D3;
   font-weight: bold;
   margin: 0;
 }
@@ -676,7 +681,7 @@ const addPlantToCollection = async (message) => {
 .remove-file {
   background: none;
   border: none;
-  color: #341c02;
+  color: #F5E6D3;
   padding: 0;
   display: flex;
   align-items: center;
