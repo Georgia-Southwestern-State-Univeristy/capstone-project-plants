@@ -237,37 +237,31 @@ const sendMessage = async () => {
   timestamp: new Date(),
 };
 
-// Add a small delay before adding AI message to prevent flickering
-setTimeout(() => {
-  console.log("📢 [Chat.vue] Sending AI Message:", aiMessage);
-  chatStore.sendMessage(aiMessage);
-  
-  nextTick(() => {
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-    }
-  });
-}, 100); // Short delay to separate the animations
+
 
     console.log("📢 [Chat.vue] Sending AI Message:", aiMessage);
     chatStore.sendMessage(aiMessage);
 
     uploadedFiles.value = [];
-    await nextTick();
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    userInput.value = "";
 
-  } catch (error) {
-    console.error("❌ Chat API Error:", error);
-  }
-
-  userInput.value = "";
-  
-  // Reset file input to allow the same file to be selected again
+     // Reset file input to allow the same file to be selected again
   if (fileInput.value) {
     fileInput.value.value = ""; // This clears the file input
   }
 };
 
+await nextTick();
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  }
+} catch (error) {
+  console.error("❌ Chat API Error:", error);
+}
+
+  
+  
+ 
 
 // 🔹 Handle user sign-out
 const handleSignOut = async () => {
