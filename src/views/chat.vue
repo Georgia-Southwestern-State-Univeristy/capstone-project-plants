@@ -564,19 +564,18 @@ const addPlantToCollection = async (message) => {
 }
 
 .card-header {
-  background-color: rgba(52, 28, 2, 0.1);
+  background-color: #F5E6D3;
   color: #341c02;
   font-weight: bold;
-  border-top-left-radius: 16px !important;
-  border-top-right-radius: 16px !important;
+  border-radius: 10px;
   padding: 0.5rem 1rem;
+  border-width: 5px;
 }
 
 .card-body {
   color: #341c02;
   padding: 1rem;
-  border-bottom-left-radius: 16px;
-  border-bottom-right-radius: 16px;
+  border-radius: 10px;
 }
 
 
