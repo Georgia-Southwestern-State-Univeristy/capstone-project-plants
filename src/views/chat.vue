@@ -398,16 +398,9 @@ const addPlantToCollection = async (message) => {
   padding-bottom: 100px;
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-}
 
-#app {
-  width: 100vw;
-  overflow-x: hidden;
-}
+
+
 
 /* Message display area */
 .messages-area {
@@ -492,11 +485,6 @@ body {
   
 }
 
-main {
-  width: 100%;
-  overflow-x: hidden;
-  display: block;
-}
 
 
 
@@ -596,6 +584,7 @@ main {
   align-items: center;
   justify-content: center;
   cursor: pointer; /* Add this to show it's clickable */
+  background-color: #F5E6D3;
 }
 
 .send-button i {

@@ -195,54 +195,15 @@
         </button>
       </div>
       
-      <!-- Plants List Container (will expand with new plants) -->
       <!-- Plants List Container -->
-<div class="plants-container row">
-  <!-- Plant Cards -->
-  <div v-if="plants.length === 0" class="text-center text-muted py-4">
-    <p>No plants added yet. Add your first plant to get started!</p>
-  </div>
-  
-  <div v-for="plant in plants" :key="plant.id" class="col-md-6 col-lg-4 mb-4">
-    <div class="plant-card">
-      <div class="plant-image">
-        <img 
-          :src="plant.image || '/path/to/default-plant.jpg'" 
-          alt="Plant image" 
-          class="img-fluid"
-        />
-      </div>
-      <div class="plant-title">
-        {{ plant.name }}
-      </div>
-      <div class="plant-subtitle">
-        {{ plant.type }}
-      </div>
-      <div class="plant-actions">
-        <button class="btn btn-sm action-btn">
-          Water
-        </button>
-        <span class="spacer"></span>
-        <button class="btn btn-sm toggle-btn" @click="togglePlantDetails(plant.id)">
-          <i :class="expandedPlants.includes(plant.id) ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
-        </button>
-      </div>
-      <div class="plant-details" :class="{ 'expanded': expandedPlants.includes(plant.id) }">
-        <hr>
-        <div class="details-content">
-          <p><strong>Last Watered:</strong> {{ formatDate(plant.lastWatered) }}</p>
-          <p><strong>Watering Schedule:</strong> Every {{ plant.wateringSchedule.frequency }}</p>
-          <p><strong>Health Status:</strong> {{ plant.healthStatus }}</p>
-          <p v-if="plant.notes"><strong>Notes:</strong> <span v-html="plant.notes"></span></p>
+      <div class="plants-container">
+        <div class="text-center text-muted py-4">
+          <p>No plants added yet. Add your first plant to get started!</p>
         </div>
       </div>
     </div>
   </div>
 </div>
-    </div>
-  </div>
-</div>
-
 
 
 
@@ -293,56 +254,8 @@ export default {
       confirmPassword: ''
    });
    
-// KENDRICK CHANGE - I added these script code snippets for the cards in the plant collection
 
-   // Add these to your setup() function
-const plants = ref([]);
-const expandedPlants = ref([]);
 
-// Function to toggle plant details visibility
-const togglePlantDetails = (plantId) => {
-  if (expandedPlants.value.includes(plantId)) {
-    expandedPlants.value = expandedPlants.value.filter(id => id !== plantId);
-  } else {
-    expandedPlants.value.push(plantId);
-  }
-};
-
-// Format date for display
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
-  const date = new Date(dateString);
-  return date.toLocaleDateString();
-};
-
-// Load user plants from Firestore
-const loadUserPlants = async () => {
-  if (!user.value?.uid) return;
-
-  try {
-    const plantsRef = collection(db, 'users', user.value.uid, 'plants');
-    const querySnapshot = await getDocs(plantsRef);
-    
-    const plantsList = [];
-    querySnapshot.forEach((doc) => {
-      plantsList.push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
-    
-    plants.value = plantsList;
-  } catch (error) {
-    console.error('Error loading plants:', error);
-  }
-};
-
-// Watch for user changes and load plants
-watchEffect(() => {
-  if (user.value?.uid) {
-    loadUserPlants();
-  }
-});
 
    
 // KENDRICK = Edited toggleEdit with if statement
@@ -505,10 +418,6 @@ watchEffect(() => {
 
       // KENDRICK CHANGE - added function
 
-      plants, 
-      expandedPlants,
-      togglePlantDetails,
-      formatDate
 
       };
     }
@@ -521,9 +430,11 @@ watchEffect(() => {
 <style scoped>
 
 /* Plant Card Styling */
-.plants-container {
-  margin-top: 20px;
-}
+/* Plants container styling */
+
+
+
+
 
 .plant-card {
   background-color: #F5E6D3;
@@ -543,6 +454,8 @@ watchEffect(() => {
   height: 200px;
   overflow: hidden;
 }
+
+
 
 .plant-image img {
   width: 100%;
