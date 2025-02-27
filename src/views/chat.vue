@@ -33,31 +33,32 @@
       <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
         {{ msg.isUser ? 'You' : 'Verdure AI' }}
       </div>
-      <div class="card-body">
-        <!-- Text Message -->
-        <div v-if="msg.type === 'text' || msg.type === 'both'" class="message-content">
-          <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'" v-html="msg.content"></p>
-        </div>
+      <!-- Replace the entire card-body div with this: -->
+<div class="card-body">
+  <!-- Text Message - always show if there's content -->
+  <div v-if="msg.content && msg.content.trim()" class="message-content">
+    <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'" v-html="msg.content"></p>
+  </div>
 
-        <!-- Image Message -->
-        <div v-if="msg.type === 'image' || msg.type === 'both'" class="image-message">
-          <img 
-            :src="msg.type === 'both' ? msg.image : msg.content" 
-            class="img-fluid rounded" 
-            alt="Uploaded plant image"
-          />
-        </div>
-        
-        <!-- Add Plant Button (only show for AI responses with plant info) -->
-        <div v-if="!msg.isUser" class="mt-3 text-end">
-          <button 
-            class="btn add-plant-btn" 
-            @click="addPlantToCollection(msg)"
-          >
-            Add plant to plant collection?
-          </button>
-        </div>
-      </div>
+  <!-- Image Message - show if there's an image -->
+  <div v-if="msg.image || (msg.type === 'image' && msg.content)" class="image-message">
+    <img 
+      :src="msg.image || msg.content" 
+      class="img-fluid rounded" 
+      alt="Uploaded plant image"
+    />
+  </div>
+  
+  <!-- Add Plant Button (only show for AI responses with plant info) -->
+  <div v-if="!msg.isUser" class="mt-3 text-end">
+    <button 
+      class="btn add-plant-btn" 
+      @click="addPlantToCollection(msg)"
+    >
+      Add plant to plant collection?
+    </button>
+  </div>
+</div>
     </div>
   </div>
 </div>
@@ -152,10 +153,17 @@ const adjustTextarea = () => {
   textarea.style.height = textarea.scrollHeight + 'px';
 };
 
-// 🔹 Handle file uploads (images only)
+// KENDRICK CHANGE - I modified the handleFileUpload to deal with one image at
+// a time. 
+
+// Replace the existing handleFileUpload function with this:
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
   if (file && file.type.startsWith('image/')) {
+    // Clear existing uploads first (to ensure only one at a time)
+    uploadedFiles.value = [];
+    
+    // Add the new file
     uploadedFiles.value.push({
       id: Date.now(),
       name: file.name,
@@ -175,24 +183,25 @@ const triggerFileUpload = () => {
 };
 
 // KENDRICK CHANGE - I edited the send message feature so the user can 
-// see both their text input and their picture upload.
+// see both their text input and their picture upload within the same card.
 
 // 🔹 Send Message (Handles Text & Image Upload)
+// Replace the sendMessage function with this:
 const sendMessage = async () => {
   if (!uploadedFiles.value.length && !userInput.value.trim()) return;
 
   console.log("🔍 Chat Store Before Sending:", chatStore.messages);
 
-  // KENDRICK CHANGE - Changed userMessage to allow both text and image chat bubbles
-
-  // ✅ Add user message to chat with both image and text if both exist
+  // Updated user message to support both text and image
   const userMessage = {
-  id: Date.now(),
-  type: uploadedFiles.value.length ? "image" : "text",
-  content: uploadedFiles.value.length ? URL.createObjectURL(uploadedFiles.value[0].file) : userInput.value.trim(),
-  isUser: true,
-  timestamp: new Date(),
-};
+    id: Date.now(),
+    type: uploadedFiles.value.length && userInput.value.trim() ? "both" : 
+         (uploadedFiles.value.length ? "image" : "text"),
+    content: userInput.value.trim(),
+    image: uploadedFiles.value.length ? URL.createObjectURL(uploadedFiles.value[0].file) : null,
+    isUser: true,
+    timestamp: new Date(),
+  };
 
   console.log("📢 [Chat.vue] Sending User Message:", userMessage);
   chatStore.sendMessage(userMessage);
@@ -203,8 +212,6 @@ const sendMessage = async () => {
   if (uploadedFiles.value.length) {
     formData.append("image", uploadedFiles.value[0].file);
   }
-  
-
 
   try {
     const response = await axios.post("/api/chat/chat", formData, {
@@ -213,11 +220,12 @@ const sendMessage = async () => {
 
     console.log("✅ AI Response from Backend:", response.data.message);
 
-    // ✅ Ensure AI response is added correctly
+    // Updated AI message to match user message structure
     const aiMessage = {
       id: Date.now() + 1,
-      type: response.data.image ? "image" : "text",
-      content: response.data.image ? response.data.image : response.data.message,
+      type: response.data.image ? (response.data.message ? "both" : "image") : "text",
+      content: response.data.message || "",
+      image: response.data.image || null,
       isUser: false,
       timestamp: new Date(),
     };
@@ -234,8 +242,12 @@ const sendMessage = async () => {
   }
 
   userInput.value = "";
+  
+  // Reset file input to allow the same file to be selected again
+  if (fileInput.value) {
+    fileInput.value.value = ""; // This clears the file input
+  }
 };
-
 
 
 // 🔹 Handle user sign-out
@@ -276,6 +288,7 @@ onMounted(async () => {
 
 // KENDRICK CHANGE - I added a button so that when a plant is identified by the
 // AI, you have an option to add a plant from the chat page.
+// Update the addPlantToCollection function to handle the new message structure
 const addPlantToCollection = async (message) => {
   if (!authStore.isAuthenticated) {
     alert("Please log in to add plants to your collection");
@@ -284,7 +297,7 @@ const addPlantToCollection = async (message) => {
   }
 
   try {
-    // Extract plant name from the message (assuming AI response contains plant name)
+    // Extract plant name from the message
     const plantInfo = message.content;
     
     // Try to extract plant name with regex
@@ -300,13 +313,13 @@ const addPlantToCollection = async (message) => {
     
     await addDoc(plantsRef, {
       name: plantName,
-      type: plantName, // Use plant name as the type for now
+      type: plantName, 
       wateringSchedule: { frequency: '7 days' },
       lastWatered: new Date().toISOString(),
       healthStatus: 'Healthy',
-      notes: plantInfo, // Store the AI info as notes
+      notes: plantInfo,
       createdAt: new Date().toISOString(),
-      image: message.image || null // Store image if available
+      image: message.image || null // Use the image property
     });
 
     alert(`${plantName} added to your plant collection!`);
@@ -318,28 +331,137 @@ const addPlantToCollection = async (message) => {
 
 
 
-
 </script>
 
 
 <style scoped>
 
+.message-content {
+  margin-bottom: 12px; /* Space between text and image */
+}
+
+
+
+/* Main container styling */
+.chat-container {
+  min-height: 100vh;
+  background-color: #341c02;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Message display area */
+.messages-area {
+  height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding: 25px;
+  margin-bottom: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Message positioning wrappers */
 .message-wrapper {
   width: 100%;
   display: flex;
-  margin-bottom: 8px;
+  padding-bottom: 5px;
 }
 
 .user-wrapper {
-  justify-content: flex-start;
-  padding-right: 20%;
+  justify-content: center;
+  padding-right: 25%;
 }
 
 .ai-wrapper {
-  justify-content: flex-end;
-  padding-left: 20%;
+  justify-content: center;
+  padding-left: 25%;
 }
 
+/* Card styling - consolidated to avoid conflicts */
+.message-card {
+  width: 100%;
+  max-width: 450px;
+  margin-bottom: 16px !important;
+  border: 2px solid #341c02; /* Add specific border color and width */
+  border-radius: 16px !important;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: fadeInUp 0.5s ease;
+  background-color: #F5E6D3;
+  opacity: 1;
+}
+
+/* Animation keyframes */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animation delays */
+.message-wrapper:nth-child(odd) .message-card {
+  animation-delay: 0.2s;
+}
+
+.message-wrapper:nth-child(even) .message-card {
+  animation-delay: 0.3s;
+}
+
+/* Card hover effect */
+.message-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Card header styling - consolidated */
+.card-header {
+  background-color: #F5E6D3;
+  border-top-left-radius: 16px !important;
+  border-top-right-radius: 16px !important;
+  border-bottom: 1px solid #341c02; /* Add a subtle border */
+  padding: 0.75rem 1rem;
+  margin: 0;
+  font-weight: bold;
+  color: #341c02;
+}
+
+/* Card body styling */
+.card-body {
+  padding: 1rem;
+  border-bottom-left-radius: 16px !important;
+  border-bottom-right-radius: 16px !important;
+  border-top: none;
+  display: flex;
+  flex-direction: column;
+}
+
+/* User and AI text styling */
+.user-text, .ai-text {
+  color: #341c02;
+}
+
+/* Image styling */
+.image-message {
+  max-width: 100%;
+  align-self: center; /* Center the image in the card */
+  margin-bottom: 8px;
+}
+
+
+.image-message img {
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow for images */
+}
+
+/* Add plant button styling */
 .add-plant-btn {
   background-color: #F5E6D3;
   color: #341c02;
@@ -357,7 +479,68 @@ const addPlantToCollection = async (message) => {
   transform: translateY(-2px);
 }
 
+/* Input area styling */
+.chat-input-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  background-color: #341c02;
+  z-index: 100; /* Add z-index to ensure it stays on top */
+}
 
+.input-group {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.chat-textarea {
+  resize: none;
+  min-height: 44px;
+  max-height: 200px;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background-color: white;
+  color: #341c02;
+  border: none; /* Add this to remove default borders */
+  outline: none; /* Add this to remove focus outline */
+}
+
+.attach-button,
+.send-button {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 8px;
+  background-color: #341c02;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer; /* Add this to show it's clickable */
+}
+
+.send-button i {
+  color: #F5E6D3;
+}
+
+.attach-button i {
+  color: #F5E6D3;
+}
+
+.send-button {
+  transform: scale(1);
+  transition: transform 0.2s;
+}
+
+.send-button:active {
+  transform: scale(0.9);
+}
+
+/* Account circle styling */
 .account-circle {
   width: 40px;
   height: 40px;
@@ -387,6 +570,7 @@ const addPlantToCollection = async (message) => {
   position: absolute;
   right: 0;
   min-width: 160px;
+  z-index: 1010; /* Higher than other elements */
 }
 
 .dropdown-item {
@@ -402,73 +586,7 @@ const addPlantToCollection = async (message) => {
   display: block;
 }
 
-.chat-container {
-  min-height: 100vh;
-  background-color: #341c02;
-  position: relative;
-  overflow-x: hidden;
-}
-
-
-
-.chat-input-container {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 1rem;
-  background-color: #341c02;
-}
-
-.input-group {
-  max-width: 800px;
-  margin: 0 auto;
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-}
-
-.chat-textarea {
-  resize: none;
-  min-height: 44px;
-  max-height: 200px;
-  border-radius: 8px;
-  padding: 0.75rem;
-  background-color: white;
-  color: #341c02;
-}
-
-
-.attach-button,
-.send-button {
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 8px;
-  background-color: #341c02;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-
-.send-button i {
-  color: #F5E6D3;
-}
-
-.attach-button i {
-  color:#F5E6D3;
-}
-
-.send-button {
-  transform: scale(1);
-  transition: transform 0.2s;
-}
-
-.send-button:active {
-  transform: scale(0.9);
-}
-
+/* File preview styling */
 .file-previews-container {
   position: absolute;
   bottom: 100%;
@@ -476,43 +594,25 @@ const addPlantToCollection = async (message) => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  z-index: 101; /* Above input area */
 }
 
 .file-preview {
   background-color: #F5E6D3;
   border: 2px solid #341c02;
-  border-radius: 4px;
+  border-radius: 8px; /* Increase from 4px for consistency */
   padding: 4px 8px;
   margin-bottom: 0.5rem;
   transition: all 0.3s ease-out;
-
-}
-
-.file-preview-enter-active,
-.file-preview-leave-active {
-  transition: all 0.3s ease-out;
-}
-
-.file-preview-enter-from {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.file-preview-leave-to {
-  opacity: 0;
-  transform: translateY(20px); /* Changed from -20px to 20px for sliding down */
-}
-
-.file-preview-move {
-  transition: transform 0.3s ease-out;
+  display: flex;
 }
 
 .file-preview-content {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* This will push the X to the right */
+  justify-content: space-between;
   gap: 0.5rem;
-  width: 100%; /* Ensure it takes full width */
+  width: 100%;
 }
 
 .file-name {
@@ -531,137 +631,47 @@ const addPlantToCollection = async (message) => {
   cursor: pointer;
 }
 
+/* File preview animations */
+.file-preview-enter-active,
+.file-preview-leave-active {
+  transition: all 0.3s ease-out;
+}
 
-.message-card {
-  width: 25%; /* Reduce from 70% to 60% */
-  max-width: 500px; /* Add maximum width */
-  margin-bottom: 8px;
-  border: none;
-  border-radius: 16px !important; /* Rounded corners */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease; /* Smooth transition for all properties */
+.file-preview-enter-from {
   opacity: 0;
   transform: translateY(20px);
-  animation: fadeInUp 0.5s forwards;
 }
 
-
-@keyframes fadeInUp {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.file-preview-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
 }
 
-/* Custom animation delays for messages */
-.message-wrapper:nth-child(odd) .message-card {
-  animation-delay: 0.2s;
+.file-preview-move {
+  transition: transform 0.3s ease-out;
 }
 
-.message-wrapper:nth-child(even) .message-card {
-  animation-delay: 0.3s;
-}
-
-.messages-area {
-  height: calc(100vh - 200px);
-  overflow-y: auto;
-  padding: 20px;
-  margin-bottom: 100px; /* Space for input area */
-  display: flex;
-  flex-direction: column;
-}
-
-.card {
-  background-color: #F5E6D3;
-  border: none;
-}
-
-.card-header {
-  background-color: #F5E6D3;
-  color: #341c02;
-  font-weight: bold;
-  border-radius: 10px;
-  padding: 0.5rem 1rem;
-  border-width: 5px;
-}
-
-.card-body {
-  color: #341c02;
-  padding: 1rem;
-  border-radius: 16px;
-}
-
-
-.message-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.user-message {
-  margin-right: 0 !important;
-  margin-left: auto !important;
-  background-color: #F5E6D3;
-  align-self: flex-end;
-  border-bottom-right-radius: 4px !important;
-}
-
-.ai-message {
-  margin-right: 0 !important;
-  margin-left: auto !important;
-  background-color: #F5E6D3;
-  align-self: flex-end;
-  border-bottom-right-radius: 4px !important;
-}
-
-
-
-.user-header {
-  background-color: #341c02;
-  color: #F5E6D3;
-  font-weight: bold;
-  border-radius: 16px;
-}
-
-.ai-header {
-  background-color: #341c02;
-  color: #F5E6D3;
-  font-weight: bold;
-  border-radius: 16px;
-}
-
-.user-text {
-  color: #341c02;
-}
-
-.ai-text {
-  color: #341c02;
-}
-
-
-
-.image-message img {
-  max-width: 100%;
-  border-radius: 4px;
-  margin-top: 0.5rem;
-}
-
-
-
+/* Media queries */
 @media (max-width: 768px) {
   .messages-area {
     height: calc(100vh - 150px);
+    padding: 15px; /* Reduce padding on smaller screens */
   }
   
-  .card {
+  .message-card {
     max-width: 85%;
   }
   
   .chat-textarea {
-    font-size: 16px;
+    font-size: 16px; /* Better for touch devices */
+  }
+  
+  .user-wrapper {
+    padding-right: 15%; /* Less padding on mobile */
+  }
+  
+  .ai-wrapper {
+    padding-left: 15%; /* Less padding on mobile */
   }
 }
 </style>

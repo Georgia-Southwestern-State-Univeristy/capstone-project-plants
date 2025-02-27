@@ -4,6 +4,7 @@ import { ref } from 'vue';
 export const useChatStore = defineStore('chat', () => {
   const messages = ref([]); // ✅ Ensure messages is a reactive array
 
+
   const sendMessage = (message) => {
     if (!message || typeof message !== "object") {
       console.error("❌ Cannot add undefined or invalid message to chatStore.", message);
