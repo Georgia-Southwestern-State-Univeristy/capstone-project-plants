@@ -248,8 +248,8 @@ const sendMessage = async () => {
      // Reset file input to allow the same file to be selected again
   if (fileInput.value) {
     fileInput.value.value = ""; // This clears the file input
-  }
-};
+  };
+
 
 await nextTick();
   if (messagesContainer.value) {
@@ -258,6 +258,7 @@ await nextTick();
 } catch (error) {
   console.error("❌ Chat API Error:", error);
 }
+};
 
   
   
@@ -436,7 +437,7 @@ const addPlantToCollection = async (message) => {
   width: 100%;
   max-width: 450px;
   margin-bottom: 16px !important;
-  border: 2px solid #341c02;
+  border: 4px solid white;
   border-radius: 16px !important;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -464,22 +465,21 @@ const addPlantToCollection = async (message) => {
 
 
 
-/* Card hover effect */
-.message-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
+
 
 /* Card header styling - consolidated */
 .card-header {
-  background-color: #F5E6D3;
-  border-top-left-radius: 16px !important;
-  border-top-right-radius: 16px !important;
-  border-bottom: 1px solid #341c02; /* Add a subtle border */
+  background-color: #072d13;
   padding: 0.75rem 1rem;
   margin: 0;
   font-weight: bold;
-  color: #341c02;
+  color: white;
+  border: solid;
+  border-color:#072d13;
+  border-top-left-radius: 8px !important;
+  border-top-right-radius: 8px !important;
+  border-bottom-left-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
 }
 
 /* Card body styling */
@@ -494,7 +494,7 @@ const addPlantToCollection = async (message) => {
 
 /* User and AI text styling */
 .user-text, .ai-text {
-  color: #341c02;
+  color: #072d13;
 }
 
 /* Image styling */
@@ -513,9 +513,10 @@ const addPlantToCollection = async (message) => {
 
 /* Add plant button styling */
 .add-plant-btn {
-  background-color: #F5E6D3;
-  color: #341c02;
-  border: 2px solid #341c02;
+  
+  background-color: #072d13;
+  color: white;
+  
   border-radius: 20px;
   font-weight: bold;
   padding: 6px 12px;
@@ -524,9 +525,10 @@ const addPlantToCollection = async (message) => {
 }
 
 .add-plant-btn:hover {
-  background-color: #341c02;
-  color: #F5E6D3;
+  background-color: white;
+  color: #072d13;
   transform: translateY(-2px);
+  border: 2px solid #072d13;
 }
 
 /* Input area styling */
