@@ -1,5 +1,5 @@
 <template>
-  <main>
+  <main class="w-100 h-100">
     <div id="chatBackground" class="chat-container px-4 py-5">
       <!-- 🔹 Account Icon Dropdown -->
       <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
@@ -492,9 +492,17 @@ body {
   
 }
 
+main {
+  width: 100%;
+  overflow-x: hidden;
+  display: block;
+}
+
+
+
 /* Card body styling */
 .card-body {
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   border-bottom-left-radius: 16px !important;
   border-bottom-right-radius: 16px !important;
   border-top: none;
@@ -517,8 +525,11 @@ body {
 
 .image-message img {
   max-width: 100%;
+  max-height: 300px; /* Limit height to prevent huge images */
+  object-fit: contain;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow for images */
+  margin: 0 auto;
+  display: block;
 }
 
 /* Add plant button styling */
