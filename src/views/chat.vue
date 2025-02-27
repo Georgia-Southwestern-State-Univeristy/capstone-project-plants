@@ -19,47 +19,48 @@
       </div>
 
       <!-- 🔹 Messages Display Area -->
-      <div class="messages-area mb-4" ref="messagesContainer">
-        <div 
-          v-for="msg in chatStore.messages" 
-          :key="msg.id" 
-          class="card mb-3"
-          :class="[
-            msg.isUser ? 'me-auto user-message' : 'ms-auto ai-message',
-            'message-card'
-          ]"
-          style="max-width: 70%;"
-        >
-          <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
-            {{ msg.isUser ? 'You' : 'Verdure AI' }}
-          </div>
-          <!-- Message card in chat.vue template -->
-<div class="card-body">
-  <!-- Text Message -->
-  <div v-if="msg.type === 'text' || msg.type === 'both'" class="message-content">
-    <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'" v-html="msg.content"></p>
-  </div>
-
-  <!-- Image Message -->
-  <div v-if="msg.type === 'image' || msg.type === 'both'" class="image-message">
-    <img 
-      :src="msg.type === 'both' ? msg.image : msg.content" 
-      class="img-fluid rounded" 
-      alt="Uploaded plant image"
-    />
-  </div>
-  <!-- Add Plant Button (only show for AI responses with plant info) -->
-<div v-if="!msg.isUser" class="mt-3 text-end">
-  <button 
-    class="btn add-plant-btn" 
-    @click="addPlantToCollection(msg)"
+ <!-- 🔹 Messages Display Area -->
+<div class="messages-area mb-4" ref="messagesContainer">
+  <div 
+    v-for="msg in chatStore.messages" 
+    :key="msg.id" 
+    :class="['message-wrapper', msg.isUser ? 'user-wrapper' : 'ai-wrapper']"
   >
-    Add plant to plant collection?
-  </button>
-</div>
-</div>
+    <div 
+      class="card mb-3 message-card"
+      :class="[msg.isUser ? 'user-message' : 'ai-message']"
+    >
+      <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
+        {{ msg.isUser ? 'You' : 'Verdure AI' }}
+      </div>
+      <div class="card-body">
+        <!-- Text Message -->
+        <div v-if="msg.type === 'text' || msg.type === 'both'" class="message-content">
+          <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'" v-html="msg.content"></p>
+        </div>
+
+        <!-- Image Message -->
+        <div v-if="msg.type === 'image' || msg.type === 'both'" class="image-message">
+          <img 
+            :src="msg.type === 'both' ? msg.image : msg.content" 
+            class="img-fluid rounded" 
+            alt="Uploaded plant image"
+          />
+        </div>
+        
+        <!-- Add Plant Button (only show for AI responses with plant info) -->
+        <div v-if="!msg.isUser" class="mt-3 text-end">
+          <button 
+            class="btn add-plant-btn" 
+            @click="addPlantToCollection(msg)"
+          >
+            Add plant to plant collection?
+          </button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
       <!-- 🔹 Input Area (Fixed at Bottom) -->
       <div class="chat-input-container">
@@ -323,6 +324,22 @@ const addPlantToCollection = async (message) => {
 
 <style scoped>
 
+.message-wrapper {
+  width: 100%;
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.user-wrapper {
+  justify-content: flex-start;
+  padding-right: 20%;
+}
+
+.ai-wrapper {
+  justify-content: flex-end;
+  padding-left: 20%;
+}
+
 .add-plant-btn {
   background-color: #F5E6D3;
   color: #341c02;
@@ -518,7 +535,7 @@ const addPlantToCollection = async (message) => {
 .message-card {
   width: 25%; /* Reduce from 70% to 60% */
   max-width: 500px; /* Add maximum width */
-  margin-bottom: 15px;
+  margin-bottom: 8px;
   border: none;
   border-radius: 16px !important; /* Rounded corners */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -541,11 +558,11 @@ const addPlantToCollection = async (message) => {
 }
 
 /* Custom animation delays for messages */
-.message-card:nth-child(odd) {
+.message-wrapper:nth-child(odd) .message-card {
   animation-delay: 0.2s;
 }
 
-.message-card:nth-child(even) {
+.message-wrapper:nth-child(even) .message-card {
   animation-delay: 0.3s;
 }
 
@@ -575,7 +592,7 @@ const addPlantToCollection = async (message) => {
 .card-body {
   color: #341c02;
   padding: 1rem;
-  border-radius: 10px;
+  border-radius: 16px;
 }
 
 
@@ -597,18 +614,23 @@ const addPlantToCollection = async (message) => {
   margin-left: auto !important;
   background-color: #F5E6D3;
   align-self: flex-end;
+  border-bottom-right-radius: 4px !important;
 }
+
+
 
 .user-header {
   background-color: #341c02;
   color: #F5E6D3;
   font-weight: bold;
+  border-radius: 16px;
 }
 
 .ai-header {
   background-color: #341c02;
   color: #F5E6D3;
   font-weight: bold;
+  border-radius: 16px;
 }
 
 .user-text {
