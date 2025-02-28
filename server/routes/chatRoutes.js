@@ -1,8 +1,10 @@
-import express from 'express';
-import multer from 'multer';
-import { analyzeImage } from '../services/visionService.js';
-import { fetchPlantFromPerenual, analyzePlantHealth } from '../services/perenualService.js';
-import { generateGeminiResponse } from '../services/geminiService.js';
+import express from "express";
+import multer from "multer";
+import { generateGeminiResponse } from "../services/geminiService.js";
+import { analyzeImage } from "../services/visionService.js";
+import { fetchPlantFromPerenual } from "../services/perenualService.js";
+import { db } from "../config/firebaseAdmin.js"; // ✅ Import Firestore instance
+import { verifyFirebaseToken } from "../config/firebaseAdmin.js"; // ✅ Verify user authentication
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -11,7 +13,16 @@ router.post("/chat", upload.single("image"), async (req, res) => {
     try {
         console.log("🔍 Incoming Request:", req.body, req.file);
 
-        let userMessage = req.body.message || "";
+        const { message, idToken } = req.body;
+        if (!idToken) {
+            return res.status(401).json({ error: "Unauthorized: No ID token provided." });
+        }
+
+        // ✅ Verify the user's Firebase authentication
+        const user = await verifyFirebaseToken(idToken);
+        const userId = user.uid;
+
+        let userMessage = message || "";
         let plantLabels = [];
         let plantName = "Unknown Plant";
 
@@ -21,7 +32,7 @@ router.post("/chat", upload.single("image"), async (req, res) => {
             plantLabels = await analyzeImage(req.file.buffer);
 
             if (plantLabels.length > 0) {
-                plantName = plantLabels[0].description; // ✅ Now selecting the most specific plant label
+                plantName = plantLabels[0].description;
                 console.log("✅ [Chat Route] Most Specific Plant Identified:", plantName);
                 userMessage += ` My plant looks like: ${plantName}.`;
             }
@@ -31,6 +42,18 @@ router.post("/chat", upload.single("image"), async (req, res) => {
 
         // ✅ Fetch plant details from Perenual API
         const plantData = await fetchPlantFromPerenual(plantName);
+
+        if (plantData) {
+            // ✅ Store the identified plant in Firestore under the user's collection
+            const userPlantRef = db.collection("users").doc(userId).collection("plants").doc();
+            await userPlantRef.set({
+                plantName: plantData.common_name,
+                scientificName: plantData.scientific_name[0] || "",
+                addedAt: new Date().toISOString(),
+            });
+
+            console.log(`✅ [Firestore] Stored plant for user ${userId}: ${plantData.common_name}`);
+        }
 
         // ✅ Improve AI Prompt
         let fullMessage = `I uploaded an image of a plant that looks like a ${plantName}.`;
@@ -51,9 +74,3 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         res.status(500).json({ error: "Failed to process chat.", details: error.message });
     }
 });
-
-
-
-
-
-export default router;

@@ -107,6 +107,7 @@ import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
+import { getAuth } from 'firebase/auth';
 import axios from 'axios';
 
 // Store and router setup
@@ -164,6 +165,16 @@ const sendMessage = async () => {
 
   console.log("🔍 Chat Store Before Sending:", chatStore.messages);
 
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    console.error("❌ No authenticated user found.");
+    return;
+  }
+
+  const idToken = await user.getIdToken(); // ✅ Get Firebase ID Token for authentication
+
   // ✅ Add user message to chat
   const userMessage = {
     id: Date.now(),
@@ -178,6 +189,7 @@ const sendMessage = async () => {
 
   const formData = new FormData();
   formData.append("message", userInput.value.trim());
+  formData.append("idToken", idToken); // ✅ Send Firebase ID Token for user authentication
 
   if (uploadedFiles.value.length) {
     formData.append("image", uploadedFiles.value[0].file);
@@ -188,7 +200,7 @@ const sendMessage = async () => {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
-    console.log("✅ AI Response from Backend:", response.data.message);
+    console.log("✅ AI Response from Backend:", response.data);
 
     // ✅ Ensure AI response is added correctly
     const aiMessage = {
@@ -202,15 +214,17 @@ const sendMessage = async () => {
     console.log("📢 [Chat.vue] Sending AI Message:", aiMessage);
     chatStore.sendMessage(aiMessage);
 
+    // ✅ Clear uploaded files after sending
     uploadedFiles.value = [];
+    userInput.value = "";
+
+    // ✅ Auto-scroll to the latest message
     await nextTick();
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
 
   } catch (error) {
     console.error("❌ Chat API Error:", error);
   }
-
-  userInput.value = "";
 };
 
 
