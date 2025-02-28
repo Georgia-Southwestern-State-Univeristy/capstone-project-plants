@@ -1,4 +1,5 @@
 import { auth, db } from '../utils/firebaseAdmin.js'; // Import Firestore instance
+import axios from 'axios';
 
 // ✅ Register User & Store in Firestore
 export const registerWithEmail = async (email, password, name) => {
@@ -31,12 +32,25 @@ export const registerWithEmail = async (email, password, name) => {
 
 
 // ✅ Login User (Backend verification)
-export const loginWithEmail = async (email) => {
+export const loginWithEmail = async (email, password) => {
     try {
-        const user = await auth.getUserByEmail(email);
-        return { uid: user.uid, email: user.email, name: user.displayName };
+        const response = await axios.post(
+            `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.FIREBASE_API_KEY}`,
+            {
+                email,
+                password,
+                returnSecureToken: true,
+            }
+        );
+
+        return {
+            uid: response.data.localId,
+            email: response.data.email,
+            idToken: response.data.idToken,
+            refreshToken: response.data.refreshToken,
+        };
     } catch (error) {
-        throw new Error(error.message);
+        throw new Error(error.response.data.error.message);
     }
 };
 

@@ -24,16 +24,16 @@ router.post('/register', async (req, res) => {
 // ✅ Login User
 router.post('/login', async (req, res) => {
     try {
-        const { email } = req.body;
-        if (!email) return res.status(400).json({ error: 'Missing email' });
+        const { email, password } = req.body;
+        if (!email || !password) return res.status(400).json({ error: 'Missing email or password' });
 
-        const user = await loginWithEmail(email);
+        const user = await loginWithEmail(email, password);
         res.json({ success: true, user });
-        console.log('SUccess User:', user);
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
 });
+
 
 // ✅ Reset Password
 router.post('/reset-password', async (req, res) => {

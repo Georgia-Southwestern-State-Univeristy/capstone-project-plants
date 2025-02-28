@@ -3,8 +3,8 @@ import multer from "multer";
 import { generateGeminiResponse } from "../services/geminiService.js";
 import { analyzeImage } from "../services/visionService.js";
 import { fetchPlantFromPerenual } from "../services/perenualService.js";
-import { db } from "../config/firebaseAdmin.js"; // ✅ Import Firestore instance
-import { verifyFirebaseToken } from "../config/firebaseAdmin.js"; // ✅ Verify user authentication
+import { db } from "../utils/firebaseAdmin.js"; // ✅ Import Firestore instance
+import { verifyFirebaseToken } from "../utils/firebaseAdmin.js"; // ✅ Verify user authentication
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -74,3 +74,5 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         res.status(500).json({ error: "Failed to process chat.", details: error.message });
     }
 });
+
+export default router;

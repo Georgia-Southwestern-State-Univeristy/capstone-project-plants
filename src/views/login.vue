@@ -127,7 +127,7 @@ export default {
     });
 
     // ✅ API-based Login (Pinia action)
-    const handleLogin = async () => {
+  const handleLogin = async () => {
   try {
     isLoading.value = true;
     error.value = '';

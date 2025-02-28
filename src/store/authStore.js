@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { registerUser, loginUser, googleLogin, resetPassword } from '@/api';
 import { auth, db } from '@/utils/firebase';
-import { signOut } from 'firebase/auth';
+import { signOut, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import axios from 'axios';
 import { useNotificationStore } from './notificationStore'; // ✅ Use notification store
@@ -17,6 +17,7 @@ export const useAuthStore = defineStore('auth', {
   }),
 
   actions: {
+    
     async register(email, password, name) {
       const notificationStore = useNotificationStore();
       this.loading = true;
@@ -40,17 +41,23 @@ export const useAuthStore = defineStore('auth', {
 
     
     async login(email, password) {
+      this.loading = true;
+      this.error = null;
+
       try {
-        const response = await axios.post(`${API_URL}/auth/login`, { email, password });
-  
-        if (response.data.success) {
-          this.user = response.data.user; // ✅ Set user state
-          return response.data;
-        } else {
-          throw new Error(response.data.error || 'Login failed');
-        }
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        this.user = {
+          uid: userCredential.user.uid,
+          email: userCredential.user.email,
+          name: userCredential.user.displayName || "User"
+        };
+
+        return this.user;
       } catch (error) {
-        throw error;
+        this.error = error.message;
+        throw new Error("Invalid email or password");
+      } finally {
+        this.loading = false;
       }
     },
     
