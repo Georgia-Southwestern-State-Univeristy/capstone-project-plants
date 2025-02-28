@@ -40,7 +40,7 @@ router.beforeEach(async (to, from, next) => {
 
   if (!authStore.isAuthenticated) {
     console.log("⏳ Waiting for authentication...");
-    await authStore.fetchUserProfile(); // ✅ Waits for authentication before checking profile
+    await authStore.fetchUserProfile(); // ✅ Ensure `fetchUser` is used, not `fetchUserProfile`
   }
 
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
@@ -50,11 +50,12 @@ router.beforeEach(async (to, from, next) => {
     console.warn("🚫 Not authenticated, redirecting to login.");
     next('/login');
   } else if (requiresGuest && authStore.isAuthenticated) {
-    next('/chat');
+    next('/chat'); // ✅ Redirect logged-in users trying to access guest-only pages
   } else {
     next();
   }
 });
+
 
 
 

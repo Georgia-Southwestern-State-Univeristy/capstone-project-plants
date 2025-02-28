@@ -294,18 +294,18 @@ watch(() => chatStore.messages, async () => {
 
 
 // 🔹 Load chat history on mount
-onMounted(async () => {
-  if (authStore.isAuthenticated) {
-    await chatStore.loadChatHistory(authStore.user.uid);
-  }
+// onMounted(async () => {
+//   if (authStore.isAuthenticated) {
+//     await chatStore.loadChatHistory(authStore.user.uid);
+//   }
 
-  document.addEventListener('click', (event) => {
-    const dropdown = document.querySelector('.dropdown');
-    if (!dropdown.contains(event.target)) {
-      isDropdownOpen.value = false;
-    }
-  });
-});
+//   document.addEventListener('click', (event) => {
+//     const dropdown = document.querySelector('.dropdown');
+//     if (!dropdown.contains(event.target)) {
+//       isDropdownOpen.value = false;
+//     }
+//   });
+// });
 
 // KENDRICK CHANGE - I added this so that the add plant button only appears
 // when the AI is describing a plant
