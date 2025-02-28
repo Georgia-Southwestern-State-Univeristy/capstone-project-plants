@@ -54,7 +54,8 @@
   
   <!-- Add Plant Button (only show for AI responses with plant info) -->
   <!-- Add Plant Button (only show for AI responses with plant info) -->
-<div v-if="!msg.isUser && (isPlantDescription(msg.content) || msg.image)" class="mt-3 text-end">
+<!-- Add Plant Button (only show for AI responses to image uploads) -->
+<div v-if="!msg.isUser && msg.isResponseToImage && (isPlantDescription(msg.content) || msg.image)" class="mt-3 text-end">
   <button 
     class="btn add-plant-btn" 
     @click="addPlantToCollection(msg)"
@@ -199,12 +200,13 @@ const sendMessage = async () => {
   if (!uploadedFiles.value.length && !userInput.value.trim()) return;
 
   // Determine message type based on content
+  const hasImage = uploadedFiles.value.length > 0;
   const userMessage = {
     id: Date.now(),
-    type: uploadedFiles.value.length && userInput.value.trim() ? "both" : 
-         (uploadedFiles.value.length ? "image" : "text"),
+    type: hasImage && userInput.value.trim() ? "both" : 
+         (hasImage ? "image" : "text"),
     content: userInput.value.trim(),
-    image: uploadedFiles.value.length ? URL.createObjectURL(uploadedFiles.value[0].file) : null,
+    image: hasImage ? URL.createObjectURL(uploadedFiles.value[0].file) : null,
     isUser: true,
     timestamp: new Date(),
   };
@@ -214,7 +216,7 @@ const sendMessage = async () => {
   const formData = new FormData();
   formData.append("message", userInput.value.trim());
 
-  if (uploadedFiles.value.length) {
+  if (hasImage) {
     formData.append("image", uploadedFiles.value[0].file);
   }
 
@@ -230,6 +232,7 @@ const sendMessage = async () => {
       image: response.data.image || null,
       isUser: false,
       timestamp: new Date(),
+      isResponseToImage: hasImage, // Add this flag to track if this response is for an image
     };
 
     chatStore.sendMessage(aiMessage);
