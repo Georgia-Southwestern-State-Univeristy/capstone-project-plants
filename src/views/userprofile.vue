@@ -195,10 +195,8 @@
         </button>
       </div>
       
-      <!-- Plants List Container (will expand with new plants) -->
+      <!-- Plants List Container -->
       <div class="plants-container">
-        <!-- Plants will be dynamically added here -->
-        <!-- This is just a placeholder - your backend would populate this -->
         <div class="text-center text-muted py-4">
           <p>No plants added yet. Add your first plant to get started!</p>
         </div>
@@ -206,7 +204,6 @@
     </div>
   </div>
 </div>
-
 
 
 
@@ -257,6 +254,9 @@ export default {
       confirmPassword: ''
    });
    
+
+
+
    
 // KENDRICK = Edited toggleEdit with if statement
   const toggleEdit = (field) => {
@@ -414,7 +414,10 @@ export default {
       handleImageUpload,
       savePasswordChange,
       cancelPasswordChange,
-      toggleEdit // KENDRICK - added toggleEdit to return section
+      toggleEdit,// KENDRICK - added toggleEdit to return section
+
+      // KENDRICK CHANGE - added function
+
 
       };
     }
@@ -425,6 +428,114 @@ export default {
 
 
 <style scoped>
+
+/* Plant Card Styling */
+/* Plants container styling */
+
+
+
+
+
+.plant-card {
+  background-color: #F5E6D3;
+  border: 2px solid #341c02;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.plant-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.plant-image {
+  height: 200px;
+  overflow: hidden;
+}
+
+
+
+.plant-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.plant-image img:hover {
+  transform: scale(1.05);
+}
+
+.plant-title {
+  padding: 12px 16px 0 16px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #341c02;
+}
+
+.plant-subtitle {
+  padding: 0 16px 12px 16px;
+  font-size: 14px;
+  color: #5a3a1a;
+}
+
+.plant-actions {
+  padding: 0 16px 12px 16px;
+  display: flex;
+  align-items: center;
+}
+
+.action-btn {
+  background-color: #341c02;
+  color: #F5E6D3;
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background-color: #5a3a1a;
+  transform: translateY(-2px);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: #341c02;
+  cursor: pointer;
+}
+
+.toggle-btn:hover {
+  color: #5a3a1a;
+}
+
+.plant-details {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.plant-details.expanded {
+  max-height: 500px;
+}
+
+.plant-details hr {
+  margin: 0;
+  border-color: #341c02;
+}
+
+.details-content {
+  padding: 16px;
+}
+
+
 .btn-primary:hover {
   background-color: #0a3b1e !important;
 }

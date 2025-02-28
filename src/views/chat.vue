@@ -1,5 +1,5 @@
 <template>
-  <main>
+  <main class="w-100 h-100">
     <div id="chatBackground" class="chat-container px-4 py-5">
       <!-- 🔹 Account Icon Dropdown -->
       <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
@@ -19,38 +19,54 @@
       </div>
 
       <!-- 🔹 Messages Display Area -->
-      <div class="messages-area mb-4" ref="messagesContainer">
-        <div 
-          v-for="msg in chatStore.messages" 
-          :key="msg.id" 
-          class="card mb-3"
-          :class="[
-            msg.isUser ? 'me-auto user-message' : 'ms-auto ai-message',
-            'message-card'
-          ]"
-          style="max-width: 70%;"
-        >
-          <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
-            {{ msg.isUser ? 'You' : 'Verdure AI' }}
-          </div>
-          <div class="card-body">
-            <!-- 🔹 Text Message -->
-            <div v-if="msg.type === 'text'" class="message-content">
-              <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'" v-html="msg.content"></p>
-            </div>
-
-
-            <!-- 🔹 Image Message -->
-            <div v-else-if="msg.type === 'image'" class="image-message">
-              <img 
-                :src="msg.content" 
-                class="img-fluid rounded" 
-                alt="Uploaded plant image"
-              />
-            </div>
-          </div>
-        </div>
+ <!-- 🔹 Messages Display Area -->
+<div class="messages-area mb-4" ref="messagesContainer">
+  <div 
+    v-for="msg in chatStore.messages" 
+    :key="msg.id" 
+    :class="['message-wrapper', msg.isUser ? 'user-wrapper' : 'ai-wrapper']"
+  >
+  <div 
+  class="card mb-3 message-card"
+  :class="[
+    msg.isUser ? 'user-message' : 'ai-message',
+    'animate-in' /* Add animation class here instead */
+  ]"
+>
+      <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
+        {{ msg.isUser ? 'You' : 'Verdure AI' }}
       </div>
+      <!-- Replace the entire card-body div with this: -->
+<div class="card-body">
+  <!-- Text Message - always show if there's content -->
+  <div v-if="msg.content && msg.content.trim()" class="message-content">
+    <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'" v-html="msg.content"></p>
+  </div>
+
+  <!-- Image Message - show if there's an image -->
+  <div v-if="msg.image || (msg.type === 'image' && msg.content)" class="image-message">
+    <img 
+      :src="msg.image || msg.content" 
+      class="img-fluid rounded" 
+      alt="Uploaded plant image"
+    />
+  </div>
+  
+  <!-- Add Plant Button (only show for AI responses with plant info) -->
+  <!-- Add Plant Button (only show for AI responses with plant info) -->
+<!-- Add Plant Button (only show for AI responses to image uploads) -->
+<div v-if="!msg.isUser && msg.isResponseToImage && (isPlantDescription(msg.content) || msg.image)" class="mt-3 text-end">
+  <button 
+    class="btn add-plant-btn" 
+    @click="addPlantToCollection(msg)"
+  >
+    Add plant to collection
+  </button>
+</div>
+</div>
+    </div>
+  </div>
+</div>
 
       <!-- 🔹 Input Area (Fixed at Bottom) -->
       <div class="chat-input-container">
@@ -107,6 +123,12 @@ import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
+
+
+// KENDRICK CHANGE - added more imports for vuetify cards
+import { db } from '@/utils/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+
 import axios from 'axios';
 
 // Store and router setup
@@ -136,15 +158,26 @@ const adjustTextarea = () => {
   textarea.style.height = textarea.scrollHeight + 'px';
 };
 
-// 🔹 Handle file uploads (images only)
+// KENDRICK CHANGE - I modified the handleFileUpload to deal with one image at
+// a time. 
+
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
   if (file && file.type.startsWith('image/')) {
+    // Clear existing uploads first (to ensure only one at a time)
+    uploadedFiles.value = [];
+    
+    // Add the new file
     uploadedFiles.value.push({
       id: Date.now(),
       name: file.name,
       file: file
     });
+  }
+  
+  // Reset file input to allow the same file to be selected again
+  if (fileInput.value) {
+    fileInput.value.value = ""; // This clears the file input
   }
 };
 
@@ -158,28 +191,32 @@ const triggerFileUpload = () => {
   fileInput.value?.click();
 };
 
+// KENDRICK CHANGE - I edited the send message feature so the user can 
+// see both their text input and their picture upload within the same card.
+
 // 🔹 Send Message (Handles Text & Image Upload)
+// Replace the sendMessage function with this:
 const sendMessage = async () => {
   if (!uploadedFiles.value.length && !userInput.value.trim()) return;
 
-  console.log("🔍 Chat Store Before Sending:", chatStore.messages);
-
-  // ✅ Add user message to chat
+  // Determine message type based on content
+  const hasImage = uploadedFiles.value.length > 0;
   const userMessage = {
     id: Date.now(),
-    type: uploadedFiles.value.length ? "image" : "text",
-    content: uploadedFiles.value.length ? URL.createObjectURL(uploadedFiles.value[0].file) : userInput.value.trim(),
+    type: hasImage && userInput.value.trim() ? "both" : 
+         (hasImage ? "image" : "text"),
+    content: userInput.value.trim(),
+    image: hasImage ? URL.createObjectURL(uploadedFiles.value[0].file) : null,
     isUser: true,
     timestamp: new Date(),
   };
 
-  console.log("📢 [Chat.vue] Sending User Message:", userMessage);
   chatStore.sendMessage(userMessage);
 
   const formData = new FormData();
   formData.append("message", userInput.value.trim());
 
-  if (uploadedFiles.value.length) {
+  if (hasImage) {
     formData.append("image", uploadedFiles.value[0].file);
   }
 
@@ -188,32 +225,37 @@ const sendMessage = async () => {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
-    console.log("✅ AI Response from Backend:", response.data.message);
-
-    // ✅ Ensure AI response is added correctly
     const aiMessage = {
       id: Date.now() + 1,
-      type: response.data.image ? "image" : "text",
-      content: response.data.image ? response.data.image : response.data.message,
+      type: response.data.image ? (response.data.message ? "both" : "image") : "text",
+      content: response.data.message || "",
+      image: response.data.image || null,
       isUser: false,
       timestamp: new Date(),
+      isResponseToImage: hasImage, // Add this flag to track if this response is for an image
     };
 
-    console.log("📢 [Chat.vue] Sending AI Message:", aiMessage);
     chatStore.sendMessage(aiMessage);
 
+    // Reset inputs
     uploadedFiles.value = [];
-    await nextTick();
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    userInput.value = "";
+    
+    // Reset file input to allow the same file to be selected again
+    if (fileInput.value) {
+      fileInput.value.value = ""; // This clears the file input
+    }
 
+    await nextTick();
+    scrollToBottom();
   } catch (error) {
     console.error("❌ Chat API Error:", error);
   }
-
-  userInput.value = "";
 };
 
-
+  
+  
+ 
 
 // 🔹 Handle user sign-out
 const handleSignOut = async () => {
@@ -228,12 +270,26 @@ const toggleDropdown = () => {
 
 // 🔹 Auto-scroll when messages update
 // 🔹 Auto-scroll when messages update
-watch(() => chatStore.messages, async () => {
-  await nextTick();
-  console.log("Updating chat messages...", chatStore.messages);
+// Add a new utility function for debouncing
+const debounce = (fn, delay) => {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn(...args), delay);
+  };
+};
+
+// Replace the existing watch function with this debounced version
+const scrollToBottom = debounce(() => {
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
   }
+}, 50);
+
+watch(() => chatStore.messages, async () => {
+  await nextTick();
+  console.log("Updating chat messages...", chatStore.messages);
+  scrollToBottom();
 }, { deep: true });
 
 
@@ -250,78 +306,258 @@ onMounted(async () => {
     }
   });
 });
+
+// KENDRICK CHANGE - I added this so that the add plant button only appears
+// when the AI is describing a plant
+const isPlantDescription = (content) => {
+  if (!content) return false;
+  
+  // Check for common patterns in plant descriptions
+  const plantIdentifiers = [
+    'Common Names:',
+    'Common Name:',
+    'Scientific Name:',
+    'Family:',
+    'Origin:',
+    'Key Identifying Features:'
+
+  ];
+  
+  return plantIdentifiers.some(phrase => 
+    content.includes(phrase) || content.toLowerCase().includes(phrase.toLowerCase())
+  );
+};
+
+
+// KENDRICK CHANGE - I added a button so that when a plant is identified by the
+// AI, you have an option to add a plant from the chat page.
+// Update the addPlantToCollection function to handle the new message structure
+const addPlantToCollection = async (message) => {
+  if (!authStore.isAuthenticated) {
+    alert("Please log in to add plants to your collection");
+    router.push('/login');
+    return;
+  }
+
+  try {
+    // Extract plant name from the message
+    const plantInfo = message.content;
+    
+    // Try to extract plant name with regex
+    let plantName = "Unknown Plant";
+    const nameMatch = plantInfo.match(/<b>Plant Name:<\/b> ([^<]+)/);
+    if (nameMatch && nameMatch[1]) {
+      plantName = nameMatch[1].trim();
+    }
+    
+    // Create a new plant document in Firestore
+    const userId = authStore.user.uid;
+    const plantsRef = collection(db, 'users', userId, 'plants');
+    
+    await addDoc(plantsRef, {
+      name: plantName,
+      type: plantName, 
+      wateringSchedule: { frequency: '7 days' },
+      lastWatered: new Date().toISOString(),
+      healthStatus: 'Healthy',
+      notes: plantInfo,
+      createdAt: new Date().toISOString(),
+      image: message.image || null // Use the image property
+    });
+
+    alert(`${plantName} added to your plant collection!`);
+  } catch (error) {
+    console.error("Error adding plant to collection:", error);
+    alert("Failed to add plant to collection");
+  }
+};
+
+
+
+
+
+
+
 </script>
 
 
 <style scoped>
 
-
-
-
-.account-circle {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #F5E6D3;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+.message-content {
+  margin-bottom: 12px; /* Space between text and image */
 }
 
-.account-circle i {
-  color: #341c02;
-  font-size: 1.2rem;
-}
 
-.account-dropdown {
-  background-color: #F5E6D3;
-  border: none;
-  border-radius: 16px;
-  padding: 0.75rem 0;
-  margin-top: 0.5rem;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  list-style: none;
-  display: none;
-  position: absolute;
-  right: 0;
-  min-width: 160px;
-}
 
-.dropdown-item {
-  color: #341c02;
-  padding: 0.75rem 1.5rem;
-  text-decoration: none;
-  display: block;
-  font-weight: 700;
-  transition: background-color 0.2s;
-}
-
-.account-dropdown.show {
-  display: block;
-}
-
+/* Main container styling */
 .chat-container {
   min-height: 100vh;
-  background-color: #341c02;
+  background-color: #F5E6D3;
   position: relative;
   overflow-x: hidden;
+  width: 100%; /* Full width */
+  max-width: 100%; /* Remove max-width constraint */
+  margin: 0;
+  padding-bottom: 100px;
 }
 
 
 
+
+
+/* Message display area */
+.messages-area {
+  height: calc(100vh - 110px); /* Adjust for smaller input */
+  overflow-y: auto;
+  padding: 25px 5%; /* Horizontal percentage padding */
+  margin-bottom: 70px; /* Reduce bottom margin */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 1400px; /* Wider max-width */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Message positioning wrappers */
+.message-wrapper {
+  width: 100%;
+  display: flex;
+  padding-bottom: 5px;
+}
+
+.user-wrapper {
+  justify-content: center;
+  padding-right: 25%;
+}
+
+.ai-wrapper {
+  justify-content: center;
+  padding-left: 25%;
+}
+
+/* Card styling - consolidated to avoid conflicts */
+.message-card {
+  width: 100%;
+  max-width: 600px; /* Increase max width */
+  margin-bottom: 8px !important; /* Reduce bottom margin */
+  border: 3px solid #341c02; /* Slightly thinner border */
+  border-radius: 16px !important;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  will-change: transform, opacity;
+}
+
+/* Animation keyframes */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Add this new class that will be applied dynamically */
+.animate-in {
+  animation: fadeInUp 0.3s ease-out forwards;
+}
+
+
+
+
+
+/* Card header styling - consolidated */
+.card-header {
+  background-color: white;
+  padding: 0.75rem 1rem;
+  margin: 0px;
+  font-weight: bold;
+  color: #072d13;
+  border: solid;
+  border-bottom-color: #341c02;
+  border-top-color: white;
+  border-left-color: white;
+  border-right-color: white;
+  justify-content: center;
+  display: flex;
+  
+}
+
+
+
+
+/* Card body styling */
+.card-body {
+  padding: 0.75rem 1rem;
+  border-bottom-left-radius: 16px !important;
+  border-bottom-right-radius: 16px !important;
+  border-top: none;
+  display: flex;
+  flex-direction: column;
+}
+
+/* User and AI text styling */
+.user-text, .ai-text {
+  color: #072d13;
+}
+
+/* Image styling */
+.image-message {
+  max-width: 100%;
+  align-self: center; /* Center the image in the card */
+  margin-bottom: 8px;
+}
+
+
+.image-message img {
+  max-width: 100%;
+  max-height: 300px; /* Limit height to prevent huge images */
+  object-fit: contain;
+  border-radius: 8px;
+  margin: 0 auto;
+  display: block;
+}
+
+/* Add plant button styling */
+.add-plant-btn {
+  
+  background-color: #072d13;
+  color: white;
+  
+  border-radius: 20px;
+  font-weight: bold;
+  padding: 6px 12px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.add-plant-btn:hover {
+  background-color: white;
+  color: #072d13;
+  transform: translateY(-2px);
+  border: 2px solid #072d13;
+}
+
+/* Input area styling */
 .chat-input-container {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 1rem;
-  background-color: #341c02;
+  padding: 0.75rem 1rem; /* Reduce padding */
+  background-color: #F5E6D3;
+  z-index: 100;
+  border-top: 1px solid rgba(52, 28, 2, 0.2); /* Subtle border */
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05); /* Subtle shadow */
 }
 
 .input-group {
-  max-width: 800px;
+  max-width: 1200px; /* Wider input group */
   margin: 0 auto;
   display: flex;
   align-items: flex-end;
@@ -331,13 +567,15 @@ onMounted(async () => {
 .chat-textarea {
   resize: none;
   min-height: 44px;
-  max-height: 200px;
+  max-height: 120px; /* Limit max height */
   border-radius: 8px;
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem; /* Slightly reduce padding */
   background-color: white;
   color: #341c02;
+  border: none;
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
-
 
 .attach-button,
 .send-button {
@@ -345,19 +583,19 @@ onMounted(async () => {
   height: 44px;
   border: none;
   border-radius: 8px;
-  background-color: #341c02;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer; /* Add this to show it's clickable */
+  background-color: #F5E6D3;
 }
 
-
 .send-button i {
-  color: #F5E6D3;
+  color: #341c02;
 }
 
 .attach-button i {
-  color:#F5E6D3;
+  color: #341c02;
 }
 
 .send-button {
@@ -369,6 +607,57 @@ onMounted(async () => {
   transform: scale(0.9);
 }
 
+/* Account circle styling */
+.account-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #341c02;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.account-circle i {
+  color:  #F5E6D3;
+  font-size: 1.2rem;
+}
+
+.account-dropdown {
+  background-color: #341c02;
+  border: none;
+  border-radius: 16px;
+  padding: 0.75rem 0;
+  margin-top: 0.5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  list-style: none;
+  display: none;
+  position: absolute;
+  right: 0;
+  min-width: 160px;
+  z-index: 1010; /* Higher than other elements */
+}
+
+.dropdown-item {
+  color: #F5E6D3;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  display: block;
+  font-weight: 700;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  color: #F5E6D3;
+}
+
+.account-dropdown.show {
+  display: block;
+}
+
+/* File preview styling */
 .file-previews-container {
   position: absolute;
   bottom: 100%;
@@ -376,18 +665,44 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  z-index: 101; /* Above input area */
 }
 
 .file-preview {
-  background-color: #F5E6D3;
-  border: 2px solid #341c02;
-  border-radius: 4px;
+  background-color: #341c02;
+  border: 2px solid  #F5E6D3;
+  border-radius: 8px; /* Increase from 4px for consistency */
   padding: 4px 8px;
   margin-bottom: 0.5rem;
   transition: all 0.3s ease-out;
-
+  display: flex;
 }
 
+.file-preview-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.file-name {
+  color: #F5E6D3;
+  font-weight: bold;
+  margin: 0;
+}
+
+.remove-file {
+  background: none;
+  border: none;
+  color: #F5E6D3;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* File preview animations */
 .file-preview-enter-active,
 .file-preview-leave-active {
   transition: all 0.3s ease-out;
@@ -400,123 +715,59 @@ onMounted(async () => {
 
 .file-preview-leave-to {
   opacity: 0;
-  transform: translateY(20px); /* Changed from -20px to 20px for sliding down */
+  transform: translateY(20px);
 }
 
 .file-preview-move {
   transition: transform 0.3s ease-out;
 }
 
-.file-preview-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between; /* This will push the X to the right */
-  gap: 0.5rem;
-  width: 100%; /* Ensure it takes full width */
-}
 
-.file-name {
-  color: #341c02;
-  font-weight: bold;
-  margin: 0;
-}
-
-.remove-file {
-  background: none;
-  border: none;
-  color: #341c02;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-
-.message-card {
-  width: 70%;
-  margin-bottom: 15px;
-  border: none;
-}
-
-.messages-area {
-  height: calc(100vh - 200px);
-  overflow-y: auto;
-  padding: 20px;
-  margin-bottom: 100px; /* Space for input area */
-  display: flex;
-  flex-direction: column;
-}
-
-.card {
-  background-color: #F5E6D3;
-  border: none;
-}
-
-.card-header {
-  background-color: rgba(52, 28, 2, 0.1);
-  color: #341c02;
-  font-weight: bold;
-}
-
-.card-body {
-  color: #341c02;
-}
-
-.user-message {
-  margin-left: 0 !important;
-  margin-right: auto !important;
-  background-color: #F5E6D3;
-  align-self: flex-start;
-}
-
-.ai-message {
-  margin-right: 0 !important;
-  margin-left: auto !important;
-  background-color: #F5E6D3;
-  align-self: flex-end;
-}
-
-.user-header {
-  background-color: #341c02;
-  color: #F5E6D3;
-  font-weight: bold;
-}
-
-.ai-header {
-  background-color: #341c02;
-  color: #F5E6D3;
-  font-weight: bold;
-}
-
-.user-text {
-  color: #341c02;
-}
-
-.ai-text {
-  color: #341c02;
-}
-
-
-
-.image-message img {
-  max-width: 100%;
-  border-radius: 4px;
-  margin-top: 0.5rem;
-}
-
-
-
-@media (max-width: 768px) {
+/* Media queries */
+/* Enhanced media queries to prevent cut-offs */
+@media (max-width: 576px) {
   .messages-area {
-    height: calc(100vh - 150px);
+    padding: 15px 10px; /* Smaller padding on mobile */
   }
   
-  .card {
+  .message-card {
     max-width: 85%;
+    font-size: 0.95rem; /* Slightly smaller font on mobile */
   }
   
-  .chat-textarea {
-    font-size: 16px;
+  .user-wrapper, .ai-wrapper {
+    padding-right: 0;
+    padding-left: 0;
+  }
+  
+  .chat-input-container {
+    padding: 0.5rem; /* Smaller padding on mobile */
+  }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+  .message-card {
+    max-width: 75%;
+  }
+  
+  .user-wrapper {
+    padding-right: 1%;
+  }
+  
+  .ai-wrapper {
+    padding-left: 1%;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+  .message-card {
+    max-width: 70%;
+  }
+}
+
+@media (min-width: 993px) {
+  .messages-area {
+    padding: 25px 10%; /* More horizontal space on larger screens */
   }
 }
 </style>
