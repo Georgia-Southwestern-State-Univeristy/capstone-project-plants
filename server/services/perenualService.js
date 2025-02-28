@@ -16,7 +16,7 @@ export const fetchPlantFromPerenual = async (plantName) => {
         // ✅ If Vision returned "Flower", try querying with a more specific term
         if (plantName.toLowerCase() === "flower" || plantName.toLowerCase() === "plant") {
             console.log("⚠️ [Perenual Service] Generic term detected, refining search...");
-            plantName = "Daisy"; // ✅ Use a more specific default plant name
+            plantName = "Rose"; // ✅ Use a more specific default plant name
         }
 
         const response = await axios.get(`${PERENUAL_BASE_URL}/species-list`, {

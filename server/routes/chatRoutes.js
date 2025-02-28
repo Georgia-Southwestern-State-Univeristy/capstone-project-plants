@@ -21,10 +21,8 @@ router.post("/chat", upload.single("image"), async (req, res) => {
             plantLabels = await analyzeImage(req.file.buffer);
 
             if (plantLabels.length > 0) {
-                // ✅ Pick the plant with the highest confidence score
-                plantLabels.sort((a, b) => b.confidence - a.confidence);
-                plantName = plantLabels[0].description;
-                console.log("✅ [Chat Route] Most Confident Plant Identified:", plantName);
+                plantName = plantLabels[0].description; // ✅ Now selecting the most specific plant label
+                console.log("✅ [Chat Route] Most Specific Plant Identified:", plantName);
                 userMessage += ` My plant looks like: ${plantName}.`;
             }
         }
@@ -53,6 +51,7 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         res.status(500).json({ error: "Failed to process chat.", details: error.message });
     }
 });
+
 
 
 
