@@ -29,6 +29,14 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
+// setPersistence(auth, browserLocalPersistence)
+//   .then(() => {
+//     console.log("✅ Firebase Auth Persistence set to Local Storage");
+//   })
+//   .catch((error) => {
+//     console.error("❌ Error setting persistence:", error);
+//   });
+
 /**
  * ✅ Login with Email
  */
@@ -93,6 +101,6 @@ export const logoutUser = async () => {
 };
 
 // ✅ Export Firebase instances
-export { auth, db, storage };
+export { auth, db, storage  };
 
 //export { auth, db, storage, googleProvider };

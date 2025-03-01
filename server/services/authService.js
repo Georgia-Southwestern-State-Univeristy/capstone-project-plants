@@ -30,6 +30,7 @@ export const registerWithEmail = async (email, password, name) => {
 };
 
 
+
 // ✅ Login User (Backend verification)
 export const loginWithEmail = async (email) => {
     try {
@@ -49,3 +50,12 @@ export const resetPassword = async (email) => {
         throw new Error(error.message);
     }
 };
+
+export const verifyFirebaseToken = async (idToken) => {
+    try {
+      const decodedToken = await auth.verifyIdToken(idToken);
+      return decodedToken; // ✅ If valid, return user data
+    } catch (error) {
+      throw new Error("Invalid or expired token");
+    }
+  };

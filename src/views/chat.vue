@@ -123,6 +123,7 @@ import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
+import { getAuth } from 'firebase/auth';
 
 
 // KENDRICK CHANGE - added more imports for vuetify cards
@@ -199,28 +200,41 @@ const triggerFileUpload = () => {
 const sendMessage = async () => {
   if (!uploadedFiles.value.length && !userInput.value.trim()) return;
 
-  // Determine message type based on content
-  const hasImage = uploadedFiles.value.length > 0;
-  const userMessage = {
-    id: Date.now(),
-    type: hasImage && userInput.value.trim() ? "both" : 
-         (hasImage ? "image" : "text"),
-    content: userInput.value.trim(),
-    image: hasImage ? URL.createObjectURL(uploadedFiles.value[0].file) : null,
-    isUser: true,
-    timestamp: new Date(),
-  };
-
-  chatStore.sendMessage(userMessage);
-
-  const formData = new FormData();
-  formData.append("message", userInput.value.trim());
-
-  if (hasImage) {
-    formData.append("image", uploadedFiles.value[0].file);
+  const auth = getAuth();
+  const user = auth.currentUser;
+  
+  if (!user) {
+    console.error("🚫 User not authenticated");
+    return;
   }
 
   try {
+    const idToken = await user.getIdToken(); // ✅ Fetch latest token
+
+    // Determine message type based on content
+    const hasImage = uploadedFiles.value.length > 0;
+    const userMessage = {
+      id: Date.now(),
+      type: hasImage && userInput.value.trim() ? "both" : 
+           (hasImage ? "image" : "text"),
+      content: userInput.value.trim(),
+      image: hasImage ? URL.createObjectURL(uploadedFiles.value[0].file) : null,
+      isUser: true,
+      timestamp: new Date(),
+    };
+
+    chatStore.sendMessage(userMessage);
+
+    const formData = new FormData();
+    formData.append("message", userInput.value.trim());
+
+    if (hasImage) {
+      formData.append("image", uploadedFiles.value[0].file);
+    }
+
+    // ✅ Attach Firebase ID Token
+    formData.append("idToken", idToken);
+
     const response = await axios.post("/api/chat/chat", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -240,7 +254,7 @@ const sendMessage = async () => {
     // Reset inputs
     uploadedFiles.value = [];
     userInput.value = "";
-    
+
     // Reset file input to allow the same file to be selected again
     if (fileInput.value) {
       fileInput.value.value = ""; // This clears the file input
@@ -252,6 +266,7 @@ const sendMessage = async () => {
     console.error("❌ Chat API Error:", error);
   }
 };
+
 
   
   
@@ -294,18 +309,18 @@ watch(() => chatStore.messages, async () => {
 
 
 // 🔹 Load chat history on mount
-onMounted(async () => {
-  if (authStore.isAuthenticated) {
-    await chatStore.loadChatHistory(authStore.user.uid);
-  }
+// onMounted(async () => {
+//   if (authStore.isAuthenticated) {
+//     await chatStore.loadChatHistory(authStore.user.uid);
+//   }
 
-  document.addEventListener('click', (event) => {
-    const dropdown = document.querySelector('.dropdown');
-    if (!dropdown.contains(event.target)) {
-      isDropdownOpen.value = false;
-    }
-  });
-});
+//   document.addEventListener('click', (event) => {
+//     const dropdown = document.querySelector('.dropdown');
+//     if (!dropdown.contains(event.target)) {
+//       isDropdownOpen.value = false;
+//     }
+//   });
+// });
 
 // KENDRICK CHANGE - I added this so that the add plant button only appears
 // when the AI is describing a plant

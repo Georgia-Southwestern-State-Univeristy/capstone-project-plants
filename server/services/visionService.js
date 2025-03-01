@@ -26,34 +26,30 @@ export const analyzeImage = async (imageBuffer) => {
             return [{ description: "Unknown Plant", confidence: 0 }];
         }
 
-        // ✅ Log ALL detected labels for debugging
+        // ✅ Log all detected labels
         const allLabels = result.labelAnnotations.map(label => ({
             description: label.description,
             confidence: label.score
         }));
         console.log("✅ [Vision Service] All Labels Detected:", allLabels);
 
-        // ✅ Filter for plant-specific labels and prioritize species names
-        const plantLabels = allLabels
-            .filter(label => 
-                label.description.toLowerCase().includes("plant") || 
-                label.description.toLowerCase().includes("flower") ||
-                label.description.toLowerCase().includes("tree") ||
-                label.description.toLowerCase().includes("daisy") || // Add specific plant keywords
-                label.description.toLowerCase().includes("rose") ||
-                label.description.toLowerCase().includes("sunflower")
-            )
-            .sort((a, b) => b.confidence - a.confidence); // ✅ Sort by confidence
+        // ✅ Prioritize Specific Plant Labels
+        const specificLabels = allLabels.filter(label => 
+            !["Flower", "Plant", "Petal", "Yellow", "Field", "Close-up", "Agriculture"].includes(label.description)
+        );
 
-        // ✅ Pick the most confident specific label
-        const selectedPlant = plantLabels.length > 0 ? plantLabels[0].description : "Unknown Plant";
-        console.log("✅ [Vision Service] Most Confident Plant Label:", selectedPlant);
+        // ✅ If specific labels exist, pick the most confident one
+        const selectedPlant = specificLabels.length > 0 
+            ? specificLabels.sort((a, b) => b.confidence - a.confidence)[0].description
+            : allLabels[0].description; // Fallback to most confident if no specific name found
 
+        console.log("✅ [Vision Service] Selected Plant Label:", selectedPlant);
         return [{ description: selectedPlant, confidence: 1 }];
     } catch (error) {
         console.error("❌ Google Vision API Error:", error);
         throw new Error("Failed to analyze image.");
     }
 };
+
 
 
