@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { registerUser, loginUser, googleLogin, resetPassword } from '@/api';
 import { auth, db } from '@/utils/firebase';
-import { signOut, signInWithEmailAndPassword  } from 'firebase/auth';
+import { signOut, signInWithEmailAndPassword, getAuth  } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import axios from 'axios';
 import { useNotificationStore } from './notificationStore'; // ✅ Use notification store
@@ -44,12 +44,18 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
 
       try {
+        const auth = getAuth();
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        
         this.user = {
           uid: userCredential.user.uid,
           email: userCredential.user.email,
-          name: userCredential.user.displayName || "User"
+          name: userCredential.user.displayName || "User",
         };
+
+        // ✅ Save ID Token in Local Storage
+        const idToken = await userCredential.user.getIdToken();
+        localStorage.setItem("idToken", idToken); // 🔥 Stores token for persistence
 
         return this.user;
       } catch (error) {
@@ -59,6 +65,43 @@ export const useAuthStore = defineStore('auth', {
         this.loading = false;
       }
     },
+
+    async logout() {
+      const auth = getAuth();
+      await auth.signOut();
+      this.user = null;
+      localStorage.removeItem("idToken"); // ✅ Clear token on logout
+    },
+
+    async checkAuth() {
+      const auth = getAuth();
+      const idToken = localStorage.getItem("idToken");
+
+      if (idToken) {
+        try {
+          const user = auth.currentUser;
+
+          if (!user) {
+            throw new Error("User not found, fetching details...");
+          }
+
+          // ✅ If the user exists, set it in the store
+          this.user = {
+            uid: user.uid,
+            email: user.email,
+            name: user.displayName || "User",
+          };
+        } catch (error) {
+          console.error("❌ Token verification failed:", error);
+          this.user = null;
+          localStorage.removeItem("idToken");
+        }
+      } else {
+        console.warn("🚫 No token found, user is logged out.");
+        this.user = null;
+      }
+    },
+ 
       
     
     async googleLogin() {

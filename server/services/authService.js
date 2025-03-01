@@ -53,9 +53,9 @@ export const resetPassword = async (email) => {
 
 export const verifyFirebaseToken = async (idToken) => {
     try {
-        const decodedToken = await auth.verifyIdToken(idToken);
-        return decodedToken;
+      const decodedToken = await auth.verifyIdToken(idToken);
+      return decodedToken; // ✅ If valid, return user data
     } catch (error) {
-        throw new Error("Invalid or expired token");
+      throw new Error("Invalid or expired token");
     }
-};
+  };

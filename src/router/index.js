@@ -9,6 +9,7 @@ import chat from '@/views/chat.vue'
 import add from '@/views/addplant.vue'
 import { useAuthStore } from '@/store/authStore';  
 
+
 const routes = [
   { path: '/', name: 'Landing', component: landing },
   { path: '/login', name: 'Login', component: login, meta: { requiresGuest: true } },
@@ -38,23 +39,25 @@ function getUser() {
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
 
-  if (!authStore.isAuthenticated) {
-    console.log("⏳ Waiting for authentication...");
-    await authStore.fetchUserProfile(); // ✅ Ensure `fetchUser` is used, not `fetchUserProfile`
+  // ✅ Ensure user is checked before proceeding
+  if (!authStore.user) {
+    console.log("⏳ Checking stored token...");
+    await authStore.checkAuth();
   }
 
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   const requiresGuest = to.matched.some(record => record.meta.requiresGuest);
 
-  if (requiresAuth && !authStore.isAuthenticated) {
+  if (requiresAuth && !authStore.user) {
     console.warn("🚫 Not authenticated, redirecting to login.");
-    next('/login');
-  } else if (requiresGuest && authStore.isAuthenticated) {
-    next('/chat'); // ✅ Redirect logged-in users trying to access guest-only pages
+    next("/login");
+  } else if (requiresGuest && authStore.user) {
+    next("/chat");
   } else {
     next();
   }
 });
+
 
 
 

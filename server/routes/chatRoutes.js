@@ -3,6 +3,8 @@ import multer from 'multer';
 import { analyzeImage } from '../services/visionService.js';
 import { fetchPlantFromPerenual, analyzePlantHealth } from '../services/perenualService.js';
 import { generateGeminiResponse } from '../services/geminiService.js';
+import { verifyFirebaseToken } from '../utils/firebaseAdmin.js'; // ✅ Ensure correct import
+
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -19,6 +21,8 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         // ✅ Verify the user's Firebase authentication
         const user = await verifyFirebaseToken(idToken);
         const userId = user.uid;
+
+        console.log("✅ User authenticated:", userId);
 
         let userMessage = message || "";
         let plantLabels = [];
@@ -50,16 +54,6 @@ router.post("/chat", upload.single("image"), async (req, res) => {
             };
         }
 
-        // ✅ Store the identified plant in Firestore under the user's collection
-        const userPlantRef = db.collection("users").doc(userId).collection("userPlants").doc();
-        await userPlantRef.set({
-            plantName: plantData.common_name,
-            scientificName: plantData.scientific_name[0] || "Unknown",
-            addedAt: new Date().toISOString(),
-        });
-
-        console.log(`✅ [Firestore] Stored plant for user ${userId}: ${plantData.common_name}`);
-
         // ✅ Improve AI Prompt
         let fullMessage = `I uploaded an image of a plant that looks like a ${plantName}.`;
         if (plantData) {
@@ -77,6 +71,35 @@ router.post("/chat", upload.single("image"), async (req, res) => {
     } catch (error) {
         console.error("❌ [Chat Route] Error:", error);
         res.status(500).json({ error: "Failed to process chat.", details: error.message });
+    }
+});
+
+router.post("/add-plant", async (req, res) => {
+    try {
+        const { plantName, scientificName, idToken } = req.body;
+
+        if (!idToken) {
+            return res.status(401).json({ error: "Unauthorized: No ID token provided." });
+        }
+
+        // ✅ Verify the user's Firebase authentication
+        const user = await verifyFirebaseToken(idToken);
+        const userId = user.uid;
+
+        // ✅ Save the plant manually when user clicks "Add to My Plants"
+        const userPlantRef = db.collection("users").doc(userId).collection("userPlants").doc();
+        await userPlantRef.set({
+            plantName,
+            scientificName: scientificName || "Unknown",
+            addedAt: new Date().toISOString(),
+        });
+
+        console.log(`✅ [Firestore] Stored plant for user ${userId}: ${plantName}`);
+
+        res.json({ success: true, message: "Plant added successfully!" });
+    } catch (error) {
+        console.error("❌ [Add Plant Route] Error:", error);
+        res.status(500).json({ error: "Failed to add plant.", details: error.message });
     }
 });
 
