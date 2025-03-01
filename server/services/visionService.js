@@ -26,30 +26,48 @@ export const analyzeImage = async (imageBuffer) => {
             return [{ description: "Unknown Plant", confidence: 0 }];
         }
 
-        // ✅ Log all detected labels
+        // ✅ Log all detected labels for debugging
         const allLabels = result.labelAnnotations.map(label => ({
             description: label.description,
             confidence: label.score
         }));
         console.log("✅ [Vision Service] All Labels Detected:", allLabels);
 
-        // ✅ Prioritize Specific Plant Labels
-        const specificLabels = allLabels.filter(label => 
-            !["Flower", "Plant", "Petal", "Yellow", "Field", "Close-up", "Agriculture"].includes(label.description)
-        );
+        // ✅ Ignore generic and color labels
+        const ignoredLabels = [
+            // ❌ General plant-related terms (too broad)
+            "Flower", "Plant", "Plants", "Petal", "Leaf", "Leaves", "Foliage", "Flora",
+            "Tree", "Shrub", "Grass", "Herb", "Stem", "Branch", "Botanical", "Garden",
+            "Wildflower", "Bloom", "Vegetation", "Seedling", "Bush",
+        
+            // ❌ Color terms (not helpful for plant identification)
+            "Green", "Yellow", "Red", "Blue", "White", "Pink", "Purple", "Orange", "Brown",
+            "Black", "Gray", "Violet", "Magenta", "Cyan",
+        
+            // ❌ Background/Nature terms (not specific to plant species)
+            "Field", "Meadow", "Lawn", "Ground", "Soil", "Dirt", "Forest", "Woodland", 
+            "Savanna", "Jungle", "Desert", "Swamp", "Pond", "River", "Water", "Landscape",
+        
+            // ❌ Non-botanical descriptive words
+            "Close-up", "Macro photography", "Natural environment", "Scenery", "Outdoor",
+            "Wild", "Park", "Background", "Sunny", "Cloudy", "Weather", "Daytime", "Nature"
+        ];
+        
+        const specificLabels = allLabels
+            .filter(label => !ignoredLabels.includes(label.description))
+            .sort((a, b) => b.confidence - a.confidence); // ✅ Sort by confidence
 
-        // ✅ If specific labels exist, pick the most confident one
-        const selectedPlant = specificLabels.length > 0 
-            ? specificLabels.sort((a, b) => b.confidence - a.confidence)[0].description
-            : allLabels[0].description; // Fallback to most confident if no specific name found
-
+        // ✅ Pick the most confident specific label
+        const selectedPlant = specificLabels.length > 0 ? specificLabels[0].description : "Unknown Plant";
         console.log("✅ [Vision Service] Selected Plant Label:", selectedPlant);
+
         return [{ description: selectedPlant, confidence: 1 }];
     } catch (error) {
         console.error("❌ Google Vision API Error:", error);
         throw new Error("Failed to analyze image.");
     }
 };
+
 
 
 
