@@ -347,7 +347,7 @@ const isPlantDescription = (content) => {
 // KENDRICK CHANGE - I added a button so that when a plant is identified by the
 // AI, you have an option to add a plant from the chat page.
 // Update the addPlantToCollection function to handle the new message structure
-const addPlantToCollection = async (message) => {
+const addPlantToCollection = async (message) => { 
   if (!authStore.isAuthenticated) {
     alert("Please log in to add plants to your collection");
     router.push('/login');
@@ -355,40 +355,52 @@ const addPlantToCollection = async (message) => {
   }
 
   try {
-    // Extract plant name from the message
     const plantInfo = message.content;
-    
-    // Try to extract plant name with regex
     let plantName = "Unknown Plant";
     const nameMatch = plantInfo.match(/<b>Plant Name:<\/b> ([^<]+)/);
     if (nameMatch && nameMatch[1]) {
       plantName = nameMatch[1].trim();
     }
+
+    // Get Firebase ID Token
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      alert("User is not logged in.");
+      return;
+    }
+    const idToken = await user.getIdToken();
+
+    // Create FormData to handle image upload
+    const formData = new FormData();
+    formData.append("plantName", plantName);
+    formData.append("scientificName", plantName); 
+    formData.append("idToken", idToken);
     
-    // Create a new plant document in Firestore
-    const userId = authStore.user.uid;
-    const plantsRef = collection(db, 'users', userId, 'plants');
-    
-    await addDoc(plantsRef, {
-      name: plantName,
-      type: plantName, 
-      wateringSchedule: { frequency: '7 days' },
-      lastWatered: new Date().toISOString(),
-      healthStatus: 'Healthy',
-      notes: plantInfo,
-      createdAt: new Date().toISOString(),
-      image: message.image || null // Use the image property
+    if (message.image) {
+      const response = await fetch(message.image);
+      const blob = await response.blob();
+      formData.append("image", blob, "plant.jpg");
+    }
+
+    // Send the request
+    const res = await fetch("/api/chat/add-plant", {
+      method: "POST",
+      body: formData,
     });
 
-    alert(`${plantName} added to your plant collection!`);
+    const data = await res.json();
+
+    if (data.success) {
+      alert(`${plantName} added to your plant collection!`);
+    } else {
+      alert("Failed to add plant to collection");
+    }
   } catch (error) {
     console.error("Error adding plant to collection:", error);
-    alert("Failed to add plant to collection");
+    alert("An error occurred while adding the plant");
   }
 };
-
-
-
 
 
 

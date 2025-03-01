@@ -38,7 +38,7 @@ export const analyzeImage = async (imageBuffer) => {
             // ❌ General plant-related terms (too broad)
             "Flower", "Plant", "Plants", "Petal", "Leaf", "Leaves", "Foliage", "Flora",
             "Tree", "Shrub", "Grass", "Herb", "Stem", "Branch", "Botanical", "Garden",
-            "Wildflower", "Bloom", "Vegetation", "Seedling", "Bush",
+            "Wildflower", "Bloom", "Vegetation", "Seedling", "Bush", "Flowering plant",
         
             // ❌ Color terms (not helpful for plant identification)
             "Green", "Yellow", "Red", "Blue", "White", "Pink", "Purple", "Orange", "Brown",

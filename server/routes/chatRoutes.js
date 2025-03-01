@@ -4,10 +4,13 @@ import { analyzeImage } from '../services/visionService.js';
 import { fetchPlantFromPerenual, analyzePlantHealth } from '../services/perenualService.js';
 import { generateGeminiResponse } from '../services/geminiService.js';
 import { verifyFirebaseToken } from '../utils/firebaseAdmin.js'; // ✅ Ensure correct import
-
+import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
+const db = getFirestore();
+const storage = getStorage();
 
 router.post("/chat", upload.single("image"), async (req, res) => {
     try {
@@ -73,36 +76,49 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         res.status(500).json({ error: "Failed to process chat.", details: error.message });
     }
 });
-
-router.post("/add-plant", async (req, res) => {
+router.post("/add-plant", upload.single("image"), async (req, res) => {
     try {
-        const { plantName, scientificName, idToken } = req.body;
+        const { plantName, scientificName, wateringSchedule, idToken } = req.body;
 
         if (!idToken) {
             return res.status(401).json({ error: "Unauthorized: No ID token provided." });
         }
 
-        // ✅ Verify the user's Firebase authentication
+        // Verify the user's Firebase authentication
         const user = await verifyFirebaseToken(idToken);
         const userId = user.uid;
 
-        // ✅ Save the plant manually when user clicks "Add to My Plants"
+        let imageUrl = null;
+        let finalPlantName = plantName && plantName.trim() !== "" ? plantName : "Unknown Plant";
+        let finalWateringSchedule = wateringSchedule && wateringSchedule.trim() !== "" ? wateringSchedule : "7 days";
+        
+        // If an image is uploaded, upload it to Firebase Storage
+        if (req.file) {
+            const bucket = storage.bucket();
+            const fileName = `users/${userId}/plants/${Date.now()}_${req.file.originalname}`;
+            const file = bucket.file(fileName);
+            await file.save(req.file.buffer, { contentType: req.file.mimetype });
+            await file.makePublic(); // Ensure the file is publicly accessible
+            imageUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+        }
+
+        // Save the plant data in Firestore
         const userPlantRef = db.collection("users").doc(userId).collection("userPlants").doc();
         await userPlantRef.set({
-            plantName,
+            plantName: finalPlantName,
             scientificName: scientificName || "Unknown",
+            wateringSchedule: finalWateringSchedule,
+            imageUrl,
             addedAt: new Date().toISOString(),
         });
 
-        console.log(`✅ [Firestore] Stored plant for user ${userId}: ${plantName}`);
+        console.log(`✅ [Firestore] Stored plant for user ${userId}: ${finalPlantName}`);
 
-        res.json({ success: true, message: "Plant added successfully!" });
+        res.json({ success: true, message: "Plant added successfully!", imageUrl });
     } catch (error) {
         console.error("❌ [Add Plant Route] Error:", error);
         res.status(500).json({ error: "Failed to add plant.", details: error.message });
     }
 });
-
-
 
 export default router;
