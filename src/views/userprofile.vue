@@ -187,23 +187,46 @@
     <div class="card-body">
       <!-- Plants Heading -->
       <h3 style="color: #072d13; font-weight: bold; margin-bottom: 20px;">Your Plants</h3>
-      
+
       <!-- Add Plant Button -->
       <div class="mb-3">
-        <button class="btn add-plant-btn">
-          <span><router-link to='/add' id="addButtonProfile">Add a new plant</router-link></span>
-        </button>
+        <router-link to="/add" class="btn add-plant-btn" id="addButtonProfile">
+          Add a New Plant
+        </router-link>
       </div>
-      
-      <!-- Plants List Container -->
-      <div class="plants-container">
-        <div class="text-center text-muted py-4">
-          <p>No plants added yet. Add your first plant to get started!</p>
+
+      <!-- Loading Indicator -->
+      <div v-if="loading" class="text-center text-muted py-4">
+        <p>Loading your plants...</p>
+      </div>
+
+      <!-- Plants List -->
+      <div v-else-if="userPlants.length" class="plants-container">
+        <div v-for="plant in userPlants" :key="plant.id" class="plant-card">
+          <!-- Plant Image -->
+          <img 
+            v-if="plant.imageUrl" 
+            :src="plant.imageUrl" 
+            class="plant-image img-fluid rounded" 
+            alt="Plant Image"
+          />
+          
+          <!-- Plant Info -->
+          <div class="plant-info">
+            <h4 class="plant-name">{{ plant.plantName }}</h4>
+            <p><strong>Watering:</strong> {{ plant.wateringSchedule }}</p>
+          </div>
         </div>
+      </div>
+
+      <!-- No Plants Message -->
+      <div v-else class="text-center text-muted py-4">
+        <p>No plants added yet. Add your first plant to get started!</p>
       </div>
     </div>
   </div>
 </div>
+
 
 
 
@@ -218,12 +241,46 @@ import { ref, computed, watchEffect, onMounted } from 'vue';
 import { useAuthStore } from '@/store/authStore';
 import { storeToRefs } from 'pinia';
 import { db, auth } from '@/utils/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { updatePassword } from 'firebase/auth';
+import { doc, getDoc, updateDoc, collection, getFirestore } from 'firebase/firestore';
+import { updatePassword, getAuth } from 'firebase/auth';
 
 export default {
   name: 'UserProfile',
 
+  // Fetching user plants logic
+  data() {
+    return {
+      userPlants: [],
+      loading: true, // Show loading state
+    };
+  },
+  async mounted() {
+    await this.fetchUserPlants();
+  },
+  methods: {
+    async fetchUserPlants() {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const db = getFirestore();
+        const plantsRef = collection(db, "users", user.uid, "userPlants");
+        const querySnapshot = await getDocs(plantsRef);
+
+        this.userPlants = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+      } catch (error) {
+        console.error("❌ Failed to fetch user plants:", error);
+      } finally {
+        this.loading = false;
+      }
+    },
+  },
+  
   setup() {
      const authStore = useAuthStore();
     const { user } = storeToRefs(authStore); // ✅ Get reactive user data from Pinia
