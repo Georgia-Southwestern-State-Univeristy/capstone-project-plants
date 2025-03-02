@@ -237,7 +237,7 @@ import { ref, computed, watchEffect, onMounted } from 'vue';
 import { useAuthStore } from '@/store/authStore';
 import { storeToRefs } from 'pinia';
 import { db, auth } from '@/utils/firebase';
-import { doc, getDocs, updateDoc, collection, getFirestore } from 'firebase/firestore';
+import { doc, getDocs, getDoc, updateDoc, collection, getFirestore } from 'firebase/firestore';
 import { updatePassword, getAuth } from 'firebase/auth';
 
 export default {
