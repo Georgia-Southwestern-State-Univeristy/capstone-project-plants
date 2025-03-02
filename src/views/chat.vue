@@ -20,46 +20,53 @@
 
       <!-- 🔹 Messages Display Area -->
  <!-- 🔹 Messages Display Area -->
- <div class="messages-area mb-4" ref="messagesContainer">
+<div class="messages-area mb-4" ref="messagesContainer">
   <div 
     v-for="msg in chatStore.messages" 
     :key="msg.id" 
     :class="['message-wrapper', msg.isUser ? 'user-wrapper' : 'ai-wrapper']"
   >
-    <div 
-      class="card mb-3 message-card animate-in"
-      :class="msg.isUser ? 'user-message' : 'ai-message'"
-    >
+  <div 
+  class="card mb-3 message-card"
+  :class="[
+    msg.isUser ? 'user-message' : 'ai-message',
+    'animate-in' /* Add animation class here instead */
+  ]"
+>
       <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
         {{ msg.isUser ? 'You' : 'Verdure AI' }}
       </div>
+      <!-- Replace the entire card-body div with this: -->
+<div class="card-body">
+  <!-- Text Message - always show if there's content -->
+  <div v-if="msg.content && msg.content.trim()" class="message-content">
+    <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'" v-html="msg.content"></p>
+  </div>
 
-      <div class="card-body">
-        <!-- Display Text Message -->
-        <div v-if="msg.content?.trim()" class="message-content">
-          <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'" v-html="msg.content"></p>
-        </div>
-
-        <!-- Display Image Message -->
-        <div v-if="msg.image || (msg.type === 'image' && msg.content)" class="image-message">
-          <img 
-            :src="msg.image || msg.content" 
-            class="img-fluid rounded" 
-            alt="Uploaded plant image"
-          />
-        </div>
-
-        <!-- Add Plant Button (Only for AI responses related to plants) -->
-        <div v-if="!msg.isUser && msg.isResponseToImage && (isPlantDescription(msg.content) || msg.image)" class="mt-3 text-end">
-          <button class="btn add-plant-btn" @click="addPlantToCollection(msg)">
-            Add plant to collection
-          </button>
-        </div>
-      </div>
+  <!-- Image Message - show if there's an image -->
+  <div v-if="msg.image || (msg.type === 'image' && msg.content)" class="image-message">
+    <img 
+      :src="msg.image || msg.content" 
+      class="img-fluid rounded" 
+      alt="Uploaded plant image"
+    />
+  </div>
+  
+  <!-- Add Plant Button (only show for AI responses with plant info) -->
+  <!-- Add Plant Button (only show for AI responses with plant info) -->
+<!-- Add Plant Button (only show for AI responses to image uploads) -->
+<div v-if="!msg.isUser && msg.isResponseToImage && (isPlantDescription(msg.content) || msg.image)" class="mt-3 text-end">
+  <button 
+    class="btn add-plant-btn" 
+    @click="addPlantToCollection(msg)"
+  >
+    Add plant to collection
+  </button>
+</div>
+</div>
     </div>
   </div>
 </div>
-
 
       <!-- 🔹 Input Area (Fixed at Bottom) -->
       <div class="chat-input-container">

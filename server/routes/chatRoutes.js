@@ -6,7 +6,6 @@ import { generateGeminiResponse } from '../services/geminiService.js';
 import { verifyFirebaseToken } from '../utils/firebaseAdmin.js'; // ✅ Ensure correct import
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import sharp from 'sharp';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -130,48 +129,45 @@ router.post("/add-plant", upload.single("image"), async (req, res) => {
             return res.status(401).json({ error: "Unauthorized: No ID token provided." });
         }
 
-        // Verify Firebase authentication
+        // Log incoming request to verify aiResponse
+        console.log("🔍 Received /add-plant request:", { aiResponse });
+
+        // Verify the user's Firebase authentication
         const user = await verifyFirebaseToken(idToken);
         const userId = user.uid;
 
         let imageUrl = null;
 
+        // Ensure AI Response is available
+        if (!aiResponse || aiResponse.trim() === "") {
+            console.error("❌ [Add Plant] AI Response is missing.");
+            return res.status(400).json({ error: "AI response is required." });
+        }
+
         // Extract plant details from AI-generated text
         const { plantName, scientificName, wateringSchedule } = extractPlantDetailsFromAI(aiResponse);
 
-        // ✅ If an image is uploaded, compress and upload it
+        // If an image is uploaded, store it in Firebase Storage
         if (req.file) {
             const bucket = storage.bucket();
-            const fileName = `users/${userId}/plants/${Date.now()}_compressed.jpg`;
+            const fileName = `users/${userId}/plants/${Date.now()}_${req.file.originalname}`;
             const file = bucket.file(fileName);
-
-            // ✅ Resize and compress the image using Sharp
-            const compressedBuffer = await sharp(req.file.buffer)
-                .resize(150, 150) // Resize to 150x150
-                .jpeg({ quality: 80 }) // Compress as JPEG with 80% quality
-                .toBuffer();
-
-            // ✅ Upload the compressed image to Firebase Storage
-            await file.save(compressedBuffer, {
-                contentType: "image/jpeg",
-            });
-            await file.makePublic(); // Ensure it's publicly accessible
-
-            // ✅ Get the public URL of the uploaded image
+            await file.save(req.file.buffer, { contentType: req.file.mimetype });
+            await file.makePublic(); // Ensure the file is publicly accessible
             imageUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
         }
 
-        // ✅ Save plant data with image URL in Firestore
+        // Save the plant data in Firestore
         const userPlantRef = db.collection("users").doc(userId).collection("userPlants").doc();
         await userPlantRef.set({
             plantName,
             scientificName,
             wateringSchedule,
-            imageUrl,  // ✅ Store image URL in Firestore
+            imageUrl,
             addedAt: new Date().toISOString(),
         });
 
-        console.log(`✅ [Firestore] Stored plant for user ${userId}: ${plantName} with Image`);
+        console.log(`✅ [Firestore] Stored plant for user ${userId}: ${plantName}`);
 
         res.json({ success: true, message: "Plant added successfully!", imageUrl, plantName, wateringSchedule });
     } catch (error) {
@@ -179,5 +175,34 @@ router.post("/add-plant", upload.single("image"), async (req, res) => {
         res.status(500).json({ error: "Failed to add plant.", details: error.message });
     }
 });
+
+router.get("/get-last-chat", async (req, res) => {
+    try {
+        const { userId } = req.query;
+        if (!userId) {
+            return res.status(400).json({ error: "User ID is required." });
+        }
+
+        // Fetch the last AI response
+        const chatSnapshot = await db.collection("users")
+            .doc(userId)
+            .collection("chats")
+            .orderBy("createdAt", "desc")
+            .limit(1)
+            .get();
+
+        if (chatSnapshot.empty) {
+            return res.json({ aiResponse: null });
+        }
+
+        const lastChat = chatSnapshot.docs[0].data();
+        res.json({ aiResponse: lastChat.aiResponse });
+
+    } catch (error) {
+        console.error("❌ Failed to fetch last AI response:", error);
+        res.status(500).json({ error: "Failed to fetch AI response." });
+    }
+});
+
 
 export default router;
