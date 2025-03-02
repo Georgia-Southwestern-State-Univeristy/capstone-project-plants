@@ -25,7 +25,7 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email } = req.body;
-        if (!email) return res.status(400).json({ error: 'Missing email' });
+        if (!email) return res.status(400).json({ error: 'Missing email' });v 
 
         const user = await loginWithEmail(email);
         res.json({ success: true, user });
