@@ -181,55 +181,51 @@
           </div>
         </div>
 
-<!-- Plants Section -->
-<div class="col-12 mt-4">
-  <div class="card" style="border-width: 2px; border-color: #341c02;">
-    <div class="card-body">
-      <!-- Plants Heading -->
-      <h3 style="color: #072d13; font-weight: bold; margin-bottom: 20px;">Your Plants</h3>
+  <!-- Plants Section -->
+        <div class="col-12 mt-4">
+          <div class="card" style="border-width: 2px; border-color: #341c02;">
+            <div class="card-body">
+              <!-- Plants Heading -->
+              <h3 style="color: #072d13; font-weight: bold; margin-bottom: 20px;">Your Plants</h3>
 
-      <!-- Add Plant Button -->
-      <div class="mb-3">
-        <router-link to="/add" class="btn add-plant-btn" id="addButtonProfile">
-          Add a New Plant
-        </router-link>
-      </div>
+              <!-- Add Plant Button -->
+              <div class="mb-3">
+                <router-link to="/add" class="btn add-plant-btn" id="addButtonProfile">
+                  Add a New Plant
+                </router-link>
+              </div>
 
-      <!-- Loading Indicator -->
-      <div v-if="loading" class="text-center text-muted py-4">
-        <p>Loading your plants...</p>
-      </div>
+              <!-- Loading Indicator -->
+              <div v-if="loading" class="text-center text-muted py-4">
+                <p>Loading your plants...</p>
+              </div>
 
-      <!-- Plants List -->
-      <div v-else-if="userPlants.length" class="plants-container">
-        <div v-for="plant in userPlants" :key="plant.id" class="plant-card">
-          <!-- Plant Image -->
-          <img 
-            v-if="plant.imageUrl" 
-            :src="plant.imageUrl" 
-            class="plant-image img-fluid rounded" 
-            alt="Plant Image"
-          />
-          
-          <!-- Plant Info -->
-          <div class="plant-info">
-            <h4 class="plant-name">{{ plant.plantName }}</h4>
-            <p><strong>Watering:</strong> {{ plant.wateringSchedule }}</p>
+              <!-- Plants List -->
+              <div v-else-if="userPlants.length" class="plants-container">
+                <div v-for="plant in userPlants" :key="plant.id" class="plant-card">
+                  <!-- Plant Image -->
+                  <img 
+                    v-if="plant.imageUrl" 
+                    :src="plant.imageUrl" 
+                    class="plant-image img-fluid rounded" 
+                    alt="Plant Image"
+                  />
+                  
+                  <!-- Plant Info -->
+                  <div class="plant-info">
+                    <h4 class="plant-name">{{ plant.plantName }}</h4>
+                    <p><strong>Watering:</strong> {{ plant.wateringSchedule }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- No Plants Message -->
+              <div v-else class="text-center text-muted py-4">
+                <p>No plants added yet. Add your first plant to get started!</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-
-      <!-- No Plants Message -->
-      <div v-else class="text-center text-muted py-4">
-        <p>No plants added yet. Add your first plant to get started!</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-
       </div>
     </div>
   </section>
@@ -241,7 +237,7 @@ import { ref, computed, watchEffect, onMounted } from 'vue';
 import { useAuthStore } from '@/store/authStore';
 import { storeToRefs } from 'pinia';
 import { db, auth } from '@/utils/firebase';
-import { doc, getDoc, updateDoc, collection, getFirestore } from 'firebase/firestore';
+import { doc, getDocs, updateDoc, collection, getFirestore } from 'firebase/firestore';
 import { updatePassword, getAuth } from 'firebase/auth';
 
 export default {
@@ -262,7 +258,10 @@ export default {
       try {
         const auth = getAuth();
         const user = auth.currentUser;
-        if (!user) return;
+        if (!user) {
+          console.error("❌ No authenticated user found.");
+          return;
+        }
 
         const db = getFirestore();
         const plantsRef = collection(db, "users", user.uid, "userPlants");
@@ -273,6 +272,7 @@ export default {
           ...doc.data(),
         }));
 
+        console.log("✅ Fetched user plants:", this.userPlants);
       } catch (error) {
         console.error("❌ Failed to fetch user plants:", error);
       } finally {
@@ -491,45 +491,61 @@ export default {
 
 
 
-
-
-.plant-card {
-  background-color: #F5E6D3;
-  border: 2px solid #341c02;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: all 0.3s ease;
+.plants-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
 }
 
-.plant-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+.plant-card {
+  width: 220px;
+  border: 2px solid #341c02;
+  border-radius: 15px;
+  padding: 15px;
+  text-align: center;
+  background: #fff;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.plant-image-container {
+  width: 100%;
+  height: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f4f4f4;
+  border-radius: 10px;
+  margin-bottom: 10px;
 }
 
 .plant-image {
-  height: 200px;
-  overflow: hidden;
-}
-
-
-
-.plant-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  border-radius: 10px;
 }
 
-.plant-image img:hover {
-  transform: scale(1.05);
+.placeholder-image {
+  font-size: 14px;
+  color: #777;
 }
 
-.plant-title {
-  padding: 12px 16px 0 16px;
-  font-size: 18px;
+.plant-info {
+  text-align: left;
+}
+
+.plant-name {
+  font-size: 1.2rem;
   font-weight: bold;
-  color: #341c02;
+  color: #072d13;
+}
+
+
+.plant-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #072d13;
 }
 
 .plant-subtitle {
