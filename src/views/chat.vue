@@ -407,16 +407,18 @@ const addPlantToCollection = async (message) => {
         const data = await res.json();
 
         if (data.success) {
-    const confirmedPlantName = data.plantName || "your plant"; // Ensure a valid name is displayed
-    alert(`${confirmedPlantName} added to your plant collection!`);
-} else {
-    alert("Failed to add plant to collection.");
-}
+          const confirmedPlantName = data.plantName || "your plant"; // Ensure a valid name is displayed
+          alert(`${confirmedPlantName} added to your plant collection!`);
+        } else {
+          alert("Failed to add plant to collection.");
+        }
+
     } catch (error) {
         console.error("Error adding plant to collection:", error);
         alert("An error occurred while adding the plant.");
     }
 };
+
 
 
 

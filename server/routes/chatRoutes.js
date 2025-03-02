@@ -53,7 +53,11 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         }
 
         // Improve AI prompt with plant data
-        let fullMessage = `I uploaded an image of a plant that looks like a ${plantName}.`;
+        let fullMessage = `I uploaded an image of a plant that looks like a ${plantName}. Provide details in this format:
+        Plant NamePlant Name: <common name>
+        Scientific Name: <scientific name>
+        Watering Schedule: <watering frequency>
+        `;
         if (plantData) {
             fullMessage += ` This plant is likely a ${plantData.common_name} (${plantData.scientific_name}). It requires ${plantData.sunlight || "unknown"} sunlight and ${plantData.watering || "unknown"} watering.`;
         }
@@ -82,13 +86,40 @@ router.post("/chat", upload.single("image"), async (req, res) => {
 });
 
 
+router.get("/get-last-chat", async (req, res) => {
+    try {
+        const { userId } = req.query;
+        if (!userId) {
+            return res.status(400).json({ error: "User ID is required." });
+        }
+
+        // Fetch the last AI response
+        const chatSnapshot = await db.collection("users")
+            .doc(userId)
+            .collection("chats")
+            .orderBy("createdAt", "desc")
+            .limit(1)
+            .get();
+
+        if (chatSnapshot.empty) {
+            return res.json({ aiResponse: null });
+        }
+
+        const lastChat = chatSnapshot.docs[0].data();
+        res.json({ aiResponse: lastChat.aiResponse });
+
+    } catch (error) {
+        console.error("❌ Failed to fetch last AI response:", error);
+        res.status(500).json({ error: "Failed to fetch AI response." });
+    }
+});
 
 
 /**
  * Extracts key plant details from AI-generated text.
  */
 const extractPlantDetailsFromAI = (aiResponse) => {
-    console.log("🔍 [Extract AI] Raw AI Response:", aiResponse);
+    console.log("🔍 [Extract AI] Raw AI Response:", aiResponse);  // 🔍 Debugging AI response extraction
 
     let plantName = "Unknown Plant";
     let scientificName = "Unknown";
@@ -120,6 +151,7 @@ const extractPlantDetailsFromAI = (aiResponse) => {
     console.log("✅ [Extract AI] Parsed Data:", { plantName, scientificName, wateringSchedule });
     return { plantName, scientificName, wateringSchedule };
 };
+
 
 
 router.post("/add-plant", upload.single("image"), async (req, res) => {
