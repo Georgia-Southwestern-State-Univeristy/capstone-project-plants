@@ -268,10 +268,6 @@ const sendMessage = async () => {
 };
 
 
-  
-  
- 
-
 // 🔹 Handle user sign-out
 const handleSignOut = async () => {
   await authStore.logout();
@@ -283,7 +279,6 @@ const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
 };
 
-// 🔹 Auto-scroll when messages update
 // 🔹 Auto-scroll when messages update
 // Add a new utility function for debouncing
 const debounce = (fn, delay) => {
@@ -347,60 +342,89 @@ const isPlantDescription = (content) => {
 // KENDRICK CHANGE - I added a button so that when a plant is identified by the
 // AI, you have an option to add a plant from the chat page.
 // Update the addPlantToCollection function to handle the new message structure
-const addPlantToCollection = async (message) => { 
-  if (!authStore.isAuthenticated) {
-    alert("Please log in to add plants to your collection");
-    router.push('/login');
-    return;
-  }
+const fetchLastAIResponse = async () => {
+    try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) return null;
 
-  try {
-    const plantInfo = message.content;
-    let plantName = "Unknown Plant";
-    const nameMatch = plantInfo.match(/<b>Plant Name:<\/b> ([^<]+)/);
-    if (nameMatch && nameMatch[1]) {
-      plantName = nameMatch[1].trim();
+        const idToken = await user.getIdToken();
+        const response = await fetch(`/api/chat/get-last-chat?userId=${user.uid}`, {
+            headers: { Authorization: `Bearer ${idToken}` }
+        });
+
+        const data = await response.json();
+        return data.aiResponse || null;
+    } catch (error) {
+        console.error("❌ Failed to fetch last AI response:", error);
+        return null;
     }
-
-    // Get Firebase ID Token
-    const auth = getAuth();
-    const user = auth.currentUser;
-    if (!user) {
-      alert("User is not logged in.");
-      return;
-    }
-    const idToken = await user.getIdToken();
-
-    // Create FormData to handle image upload
-    const formData = new FormData();
-    formData.append("plantName", plantName);
-    formData.append("scientificName", plantName); 
-    formData.append("idToken", idToken);
-    
-    if (message.image) {
-      const response = await fetch(message.image);
-      const blob = await response.blob();
-      formData.append("image", blob, "plant.jpg");
-    }
-
-    // Send the request
-    const res = await fetch("/api/chat/add-plant", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      alert(`${plantName} added to your plant collection!`);
-    } else {
-      alert("Failed to add plant to collection");
-    }
-  } catch (error) {
-    console.error("Error adding plant to collection:", error);
-    alert("An error occurred while adding the plant");
-  }
 };
+
+const addPlantToCollection = async (message) => {
+    if (!authStore.isAuthenticated) {
+        alert("Please log in to add plants to your collection");
+        router.push('/login');
+        return;
+    }
+
+    try {
+        // Fetch the latest AI response before adding the plant
+        const aiResponse = await fetchLastAIResponse();
+        if (!aiResponse) {
+            alert("No plant information found to add to collection.");
+            return;
+        }
+
+        const plantInfo = message.content;
+        let plantName = "Unknown Plant";
+        const nameMatch = plantInfo.match(/<b>Plant Name:<\/b> ([^<]+)/);
+        if (nameMatch && nameMatch[1]) {
+            plantName = nameMatch[1].trim();
+        }
+
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) {
+            alert("User is not logged in.");
+            return;
+        }
+        const idToken = await user.getIdToken();
+
+        // Create FormData for image upload
+        const formData = new FormData();
+        formData.append("plantName", plantName);
+        formData.append("aiResponse", aiResponse);
+        formData.append("idToken", idToken);
+
+        if (message.image) {
+            const response = await fetch(message.image);
+            const blob = await response.blob();
+            formData.append("image", blob, "plant.jpg");
+        }
+
+        console.log("🚀 Sending to /add-plant:", { plantName, aiResponse, idToken });
+
+        // Send request to backend
+        const res = await fetch("/api/chat/add-plant", {
+            method: "POST",
+            body: formData,
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+    const confirmedPlantName = data.plantName || "your plant"; // Ensure a valid name is displayed
+    alert(`${confirmedPlantName} added to your plant collection!`);
+} else {
+    alert("Failed to add plant to collection.");
+}
+    } catch (error) {
+        console.error("Error adding plant to collection:", error);
+        alert("An error occurred while adding the plant.");
+    }
+};
+
 
 
 
