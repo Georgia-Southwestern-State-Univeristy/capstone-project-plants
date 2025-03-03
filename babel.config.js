@@ -1,16 +1,4 @@
 export default {
-  presets: [
-    ['@vue/cli-plugin-babel/preset', {
-      useBuiltIns: 'usage',
-      corejs: 3,
-      modules: false
-    }]
-  ],
-  plugins: [
-    '@babel/plugin-transform-runtime'
-  ],
-  ignore: [
-    "server/**/*.js",
-    "server/**/*.ts"
-  ]
+  presets: [["@babel/preset-env", { targets: { node: "current" } }]],
+  plugins: ["@babel/plugin-transform-runtime"]
 };
