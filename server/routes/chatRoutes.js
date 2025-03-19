@@ -16,25 +16,39 @@ const storage = getStorage();
 router.post("/chat", upload.single("image"), async (req, res) => {
     try {
         console.log("🔍 Incoming Chat Request:", req.body, req.file);
-
         const { message, idToken } = req.body;
+
         if (!idToken) {
             return res.status(401).json({ error: "Unauthorized: No ID token provided." });
         }
 
-        // Verify Firebase authentication
         const user = await verifyFirebaseToken(idToken);
         const userId = user.uid;
 
         console.log("✅ User authenticated:", userId);
-
         let userMessage = message || "";
         let plantLabels = [];
         let plantName = "Unknown Plant";
+        let imageUrl = null;
 
-        // Process uploaded image
         if (req.file) {
             console.log("📸 Processing uploaded image...");
+            const bucket = storage.bucket();
+            const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`;
+            const file = bucket.file(fileName);
+
+            await file.save(req.file.buffer, { contentType: req.file.mimetype });
+            
+            // Generate a signed URL instead of making public
+            const [url] = await file.getSignedUrl({
+                action: 'read',
+                expires: '03-09-2030',
+            });
+
+            imageUrl = url;
+            console.log("✅ Image uploaded:", imageUrl);
+
+            // Analyze image for plant identification
             plantLabels = await analyzeImage(req.file.buffer);
             if (plantLabels.length > 0) {
                 plantName = plantLabels[0].description;
@@ -43,42 +57,38 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         }
 
         console.log("✅ Identified Plant Name:", plantName);
-
-        // Fetch plant details from Perenual API (fallback mechanism)
         let plantData = await fetchPlantFromPerenual(plantName);
         if (!plantData) {
             console.log("⚠️ No plant data found, using default.");
             plantData = { common_name: plantName, scientific_name: ["Unknown"] };
         }
 
-        // Improve AI prompt with plant data
         let fullMessage = `I uploaded an image of a plant that looks like a ${plantName}.`;
         if (plantData) {
             fullMessage += ` This plant is likely a ${plantData.common_name} (${plantData.scientific_name}). It requires ${plantData.sunlight || "unknown"} sunlight and ${plantData.watering || "unknown"} watering.`;
         }
 
         console.log("✅ Sending AI Prompt:", fullMessage);
-
-        // Get AI response
         const aiResponse = await generateGeminiResponse(fullMessage);
-        console.log("✅ AI Response:", aiResponse);
 
-        // ✅ Store chat message in Firestore
         const chatRef = db.collection("users").doc(userId).collection("chats").doc();
         await chatRef.set({
             userMessage,
             aiResponse,
             plantName,
+            imageUrl,
             createdAt: new Date().toISOString(),
         });
 
-        res.json({ message: aiResponse, chatId: chatRef.id });
+        res.json({ message: aiResponse, chatId: chatRef.id, imageUrl });
 
     } catch (error) {
         console.error("❌ Chat Route Error:", error);
         res.status(500).json({ error: "Failed to process chat.", details: error.message });
     }
 });
+
+
 
 
 
@@ -129,52 +139,47 @@ router.post("/add-plant", upload.single("image"), async (req, res) => {
             return res.status(401).json({ error: "Unauthorized: No ID token provided." });
         }
 
-        // Log incoming request to verify aiResponse
-        console.log("🔍 Received /add-plant request:", { aiResponse });
-
-        // Verify the user's Firebase authentication
         const user = await verifyFirebaseToken(idToken);
         const userId = user.uid;
 
         let imageUrl = null;
-
-        // Ensure AI Response is available
-        if (!aiResponse || aiResponse.trim() === "") {
-            console.error("❌ [Add Plant] AI Response is missing.");
-            return res.status(400).json({ error: "AI response is required." });
-        }
-
-        // Extract plant details from AI-generated text
         const { plantName, scientificName, wateringSchedule } = extractPlantDetailsFromAI(aiResponse);
 
-        // If an image is uploaded, store it in Firebase Storage
         if (req.file) {
+            console.log("📸 Storing plant image...");
             const bucket = storage.bucket();
-            const fileName = `users/${userId}/plants/${Date.now()}_${req.file.originalname}`;
+            const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`; // Consistent path
             const file = bucket.file(fileName);
+
             await file.save(req.file.buffer, { contentType: req.file.mimetype });
-            await file.makePublic(); // Ensure the file is publicly accessible
-            imageUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+
+            const [url] = await file.getSignedUrl({
+                action: 'read',
+                expires: '03-09-2030',
+            });
+
+            imageUrl = url;
         }
 
-        // Save the plant data in Firestore
         const userPlantRef = db.collection("users").doc(userId).collection("userPlants").doc();
         await userPlantRef.set({
             plantName,
             scientificName,
             wateringSchedule,
-            imageUrl,
+            imageUrl, 
             addedAt: new Date().toISOString(),
         });
 
         console.log(`✅ [Firestore] Stored plant for user ${userId}: ${plantName}`);
-
         res.json({ success: true, message: "Plant added successfully!", imageUrl, plantName, wateringSchedule });
+
     } catch (error) {
         console.error("❌ [Add Plant Route] Error:", error);
         res.status(500).json({ error: "Failed to add plant.", details: error.message });
     }
 });
+
+
 
 router.get("/get-last-chat", async (req, res) => {
     try {
