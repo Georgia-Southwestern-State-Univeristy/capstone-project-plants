@@ -97,38 +97,28 @@ router.post("/chat", upload.single("image"), async (req, res) => {
  * Extracts key plant details from AI-generated text.
  */
 const extractPlantDetailsFromAI = (aiResponse) => {
-    console.log("🔍 [Extract AI] Raw AI Response:", aiResponse);
+    try {
+        console.log("🔍 [Extract AI] Parsing AI Response:", aiResponse);
 
-    let plantName = "Unknown Plant";
-    let scientificName = "Unknown";
-    let wateringSchedule = "7 days";
-
-    if (aiResponse) {
-        const nameMatch = aiResponse.match(/Plant Identification: (.*?) \(/);
-        console.log("🔍 [Extract AI] Name Match:", nameMatch);
-
-        if (nameMatch && nameMatch[1]) {
-            plantName = nameMatch[1].trim();
-        }
-
-        const scientificMatch = aiResponse.match(/\((.*?)\)/);
-        console.log("🔍 [Extract AI] Scientific Name Match:", scientificMatch);
-
-        if (scientificMatch && scientificMatch[1]) {
-            scientificName = scientificMatch[1].trim();
-        }
-
-        const wateringMatch = aiResponse.match(/Watering: (.*?)(\.|\n)/);
-        console.log("🔍 [Extract AI] Watering Match:", wateringMatch);
-
-        if (wateringMatch && wateringMatch[1]) {
-            wateringSchedule = wateringMatch[1].trim();
-        }
+        return {
+            plantName: aiResponse.plantName || "Unknown Plant",
+            scientificName: aiResponse.scientificName || "Unknown",
+            sunlight: aiResponse.sunlight || "Unknown",
+            wateringSchedule: aiResponse.wateringSchedule || "Unknown",
+            commonIssues: aiResponse.commonIssues || "No issues found."
+        };
+    } catch (error) {
+        console.error("❌ [Extract AI] Error parsing AI response:", error);
+        return {
+            plantName: "Unknown Plant",
+            scientificName: "Unknown",
+            sunlight: "Unknown",
+            wateringSchedule: "Unknown",
+            commonIssues: "No issues found."
+        };
     }
-
-    console.log("✅ [Extract AI] Parsed Data:", { plantName, scientificName, wateringSchedule });
-    return { plantName, scientificName, wateringSchedule };
 };
+
 
 
 router.post("/add-plant", upload.single("image"), async (req, res) => {
@@ -143,12 +133,12 @@ router.post("/add-plant", upload.single("image"), async (req, res) => {
         const userId = user.uid;
 
         let imageUrl = null;
-        const { plantName, scientificName, wateringSchedule } = extractPlantDetailsFromAI(aiResponse);
+        const { plantName, scientificName, sunlight, wateringSchedule, commonIssues } = extractPlantDetailsFromAI(aiResponse);
 
         if (req.file) {
             console.log("📸 Storing plant image...");
             const bucket = storage.bucket();
-            const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`; // Consistent path
+            const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`;
             const file = bucket.file(fileName);
 
             await file.save(req.file.buffer, { contentType: req.file.mimetype });
@@ -165,19 +155,22 @@ router.post("/add-plant", upload.single("image"), async (req, res) => {
         await userPlantRef.set({
             plantName,
             scientificName,
+            sunlight,
             wateringSchedule,
-            imageUrl, 
+            commonIssues,
+            imageUrl,
             addedAt: new Date().toISOString(),
         });
 
         console.log(`✅ [Firestore] Stored plant for user ${userId}: ${plantName}`);
-        res.json({ success: true, message: "Plant added successfully!", imageUrl, plantName, wateringSchedule });
+        res.json({ success: true, message: "Plant added successfully!", plantName, imageUrl, sunlight, wateringSchedule, commonIssues });
 
     } catch (error) {
         console.error("❌ [Add Plant Route] Error:", error);
         res.status(500).json({ error: "Failed to add plant.", details: error.message });
     }
 });
+
 
 
 

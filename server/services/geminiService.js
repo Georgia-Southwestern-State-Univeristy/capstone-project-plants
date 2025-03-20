@@ -15,36 +15,51 @@ export const generateGeminiResponse = async (plantInfo) => {
         const response = await axios.post(GEMINI_API_URL, {
             contents: [
                 { 
-                    parts: [{ text: `You are an expert botanist. Provide detailed plant identification and care information in a structured format using bold headers. Here is the plant information: ${plantInfo}` }] 
+                    parts: [{ text: `
+                        You are an expert botanist. Based on the following plant information, return a structured JSON object with the following keys:
+                        - plantName: The common name of the plant.
+                        - scientificName: The scientific name.
+                        - sunlight: The ideal sunlight conditions.
+                        - wateringSchedule: Recommended watering frequency.
+                        - commonIssues: Common problems and how to prevent them.
+
+                        Return only valid JSON and no extra text.
+                        Here is the plant information: ${plantInfo}
+                    `}] 
                 }
             ]
         });
 
         console.log("✅ [Gemini Service] Raw API Response:", JSON.stringify(response.data, null, 2));
 
-        // ✅ Extract AI response safely from `parts` array
-        let aiResponse = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
+        // ✅ Extract AI response safely and parse JSON
+        let aiTextResponse = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        if (!aiResponse || typeof aiResponse !== "string") {
-            console.error("❌ [Gemini Service] AI Response is not a valid text string.");
-            aiResponse = "I couldn't generate a response.";
+        if (!aiTextResponse) {
+            console.error("❌ [Gemini Service] AI Response is not valid.");
+            return "I couldn't generate a response.";
         }
 
-        // ✅ Format AI Response for Readability
-        aiResponse = aiResponse
-            .replace(/\n{2,}/g, "<br><br>")  // ✅ Convert multiple newlines to <br><br> for spacing
-            .replace(/\n/g, "<br>")  // ✅ Convert single newlines to <br> for Vue rendering
-            .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>") // ✅ Convert **bold** Markdown to HTML <b> tags
-            .replace(/\*/g, "•");  // ✅ Convert bullet points to readable symbols
-
-        console.log("✅ [Gemini Service] Cleaned AI Response:", aiResponse);
-
-        return aiResponse;
+        try {
+            const aiJson = JSON.parse(aiTextResponse);
+            console.log("✅ [Gemini Service] Parsed AI Response:", aiJson);
+            return aiJson;
+        } catch (error) {
+            console.error("❌ [Gemini Service] Failed to parse AI response as JSON.");
+            return {
+                plantName: "Unknown",
+                scientificName: "Unknown",
+                sunlight: "Unknown",
+                wateringSchedule: "Unknown",
+                commonIssues: "No issues found."
+            };
+        }
     } catch (error) {
         console.error("❌ [Gemini Service] Error:", error.response?.data || error.message);
         throw new Error("Failed to generate AI response.");
     }
 };
+
 
 
 
