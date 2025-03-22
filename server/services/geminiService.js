@@ -16,14 +16,26 @@ export const generateGeminiResponse = async (plantInfo) => {
             contents: [
                 { 
                     parts: [{ text: `
-                        You are an expert botanist. Based on the following plant information, return a structured JSON object with the following keys:
-                        - plantName: The common name of the plant.
-                        - scientificName: The scientific name.
-                        - sunlight: The ideal sunlight conditions.
-                        - wateringSchedule: Recommended watering frequency.
-                        - commonIssues: Common problems and how to prevent them.
+                        Hey! You're a friendly, knowledgeable plant expert helping someone learn more about their plant. 
+                        Please provide a helpful and engaging response in **a casual tone**, while also being **informative**. 
 
-                        Return only valid JSON and no extra text.
+                        Include details about the plant's name, care needs, and any interesting facts. Try to **keep it light and conversational** 
+                        while still giving useful plant care tips.
+
+                        Format the response as a **JSON object** so it can be displayed easily. Here’s the structure:
+
+                        {
+                          "plantName": "Common plant name (e.g., Spider Plant)",
+                          "scientificName": "Scientific name (e.g., Chlorophytum comosum)",
+                          "sunlight": "Sunlight needs (e.g., Bright, indirect light)",
+                          "wateringSchedule": "How often to water (e.g., Every 7-10 days)",
+                          "soilType": "Best soil type (e.g., Well-draining potting mix)",
+                          "growthHabit": "How the plant grows (e.g., Trailing vine, upright shrub)",
+                          "commonUses": "How people use it (e.g., Indoor air purification, medicinal, culinary)",
+                          "commonIssues": "Common problems (e.g., Overwatering can cause root rot)",
+                          "funFact": "A fun fact about the plant (e.g., 'Spider Plants are great at removing toxins from the air!')"
+                        }
+
                         Here is the plant information: ${plantInfo}
                     `}] 
                 }
@@ -32,13 +44,15 @@ export const generateGeminiResponse = async (plantInfo) => {
 
         console.log("✅ [Gemini Service] Raw API Response:", JSON.stringify(response.data, null, 2));
 
-        // ✅ Extract AI response safely and parse JSON
         let aiTextResponse = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!aiTextResponse) {
             console.error("❌ [Gemini Service] AI Response is not valid.");
             return "I couldn't generate a response.";
         }
+
+        // ✅ REMOVE Markdown-style code blocks (```json ... ```)
+        aiTextResponse = aiTextResponse.replace(/```json\n?|\n?```/g, "").trim();
 
         try {
             const aiJson = JSON.parse(aiTextResponse);
@@ -51,7 +65,11 @@ export const generateGeminiResponse = async (plantInfo) => {
                 scientificName: "Unknown",
                 sunlight: "Unknown",
                 wateringSchedule: "Unknown",
-                commonIssues: "No issues found."
+                soilType: "Unknown",
+                growthHabit: "Unknown",
+                commonUses: "Unknown",
+                commonIssues: "No issues found.",
+                funFact: "No fun fact available."
             };
         }
     } catch (error) {

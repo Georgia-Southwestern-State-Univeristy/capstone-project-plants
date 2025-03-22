@@ -80,7 +80,12 @@ router.post("/chat", upload.single("image"), async (req, res) => {
             createdAt: new Date().toISOString(),
         });
 
-        res.json({ message: aiResponse, chatId: chatRef.id, imageUrl });
+        res.json({ 
+            message: aiResponse || "I couldn't find any information on this plant.", 
+            chatId: chatRef.id, 
+            imageUrl 
+          });
+          
 
     } catch (error) {
         console.error("❌ Chat Route Error:", error);
