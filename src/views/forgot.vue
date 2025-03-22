@@ -28,7 +28,7 @@
   
   <script>
   export default {
-    name: 'ForgotPassword',
+    name: 'forgot',
     data() {
       return {
         email: ''
