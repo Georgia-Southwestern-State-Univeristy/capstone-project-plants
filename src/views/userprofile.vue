@@ -10,9 +10,10 @@
   <ol class="breadcrumb mb-0">
     <li class="breadcrumb-item"><router-link to="/chat" id="return-link">Return to Chat</router-link></li>
     <li class="breadcrumb-item"><router-link to="/plantboard" id="return-link">Go to Plant Gallery</router-link></li>
+    <!--KENDRICK CHANGE - added sign out button to user profile-->
     <li class="breadcrumb-item"><router-link to="/login" id="return-link">Sign Out</router-link></li>
   </ol>
-  <!--KENDRICK CHANGE - added sign out button to user profile-->
+  
   <!-- Add this inside the <nav> element, right after the <ol class="breadcrumb mb-0"> element -->
 
 </nav>
