@@ -9,6 +9,7 @@
 <nav aria-label="breadcrumb" class="custom-nav rounded-3 p-3 mb-4 d-flex justify-content-center" id="profile-nav">
   <ol class="breadcrumb mb-0">
     <li class="breadcrumb-item"><router-link to="/chat" id="return-link">Return to Chat</router-link></li>
+    <li class="breadcrumb-item"><router-link to="/plantboard" id="return-link">Go to Plant gallery</router-link></li>
   </ol>
 </nav>
         </div>
@@ -181,51 +182,7 @@
           </div>
         </div>
 
-  <!-- Plants Section -->
-        <div class="col-12 mt-4">
-          <div class="card" style="border-width: 2px; border-color: #341c02;">
-            <div class="card-body">
-              <!-- Plants Heading -->
-              <h3 style="color: #072d13; font-weight: bold; margin-bottom: 20px;">Your Plants</h3>
-
-              <!-- Add Plant Button -->
-              <div class="mb-3">
-                <router-link to="/add" class="btn add-plant-btn" id="addButtonProfile">
-                  Add a New Plant
-                </router-link>
-              </div>
-
-              <!-- Loading Indicator -->
-              <div v-if="loading" class="text-center text-muted py-4">
-                <p>Loading your plants...</p>
-              </div>
-
-              <!-- Plants List -->
-              <div v-else-if="userPlants.length" class="plants-container">
-                <div v-for="plant in userPlants" :key="plant.id" class="plant-card">
-                  <!-- Plant Image -->
-                  <img 
-                    v-if="plant.imageUrl" 
-                    :src="plant.imageUrl" 
-                    class="plant-image img-fluid rounded" 
-                    alt="Plant Image"
-                  />
-                  
-                  <!-- Plant Info -->
-                  <div class="plant-info">
-                    <h4 class="plant-name">{{ plant.plantName }}</h4>
-                    <p><strong>Watering:</strong> {{ plant.wateringSchedule }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- No Plants Message -->
-              <div v-else class="text-center text-muted py-4">
-                <p>No plants added yet. Add your first plant to get started!</p>
-              </div>
-            </div>
-          </div>
-        </div>
+  
       </div>
     </div>
   </section>
@@ -646,7 +603,7 @@ export default {
 
 #profile-nav {
   background-color: #341c02; 
-  width: 15%;
+  width: 30%;
  
 }
 

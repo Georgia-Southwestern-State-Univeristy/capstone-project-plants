@@ -12,6 +12,9 @@
               <router-link to="/userprofile" class="dropdown-item">Account</router-link>
             </li>
             <li>
+              <router-link to="/plantboard" class="dropdown-item">Plant Gallery</router-link>
+            </li>
+            <li>
               <a href="#" class="dropdown-item" @click.prevent="handleSignOut">Sign Out</a>
             </li>
           </ul>
