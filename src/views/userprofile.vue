@@ -4,24 +4,16 @@
   <section>
     <div class="container py-5">
       <div class="row">
-        <div class="col">
-          <!-- For the navigation bar itself -->
-<nav aria-label="breadcrumb" class="custom-nav rounded-3 p-3 mb-4 d-flex justify-content-center" id="profile-nav">
-  <ol class="breadcrumb mb-0">
-    <li class="breadcrumb-item"><router-link to="/chat" id="return-link">Return to Chat</router-link></li>
-    <li class="breadcrumb-item"><router-link to="/plantboard" id="return-link">Go to Plant Gallery</router-link></li>
-    <!--KENDRICK CHANGE - added sign out button to user profile-->
-    <li class="breadcrumb-item"><router-link to="/login" id="return-link">Sign Out</router-link></li>
-  </ol>
-  
-  <!-- Add this inside the <nav> element, right after the <ol class="breadcrumb mb-0"> element -->
-
-</nav>
-
-
-
-        </div>
-      </div>
+  <div class="col position-relative">
+    <nav aria-label="breadcrumb" class="custom-nav rounded-3 p-3 mb-4 d-flex justify-content-center nav-left-position" id="profile-nav">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><router-link to="/chat" id="return-link">Return to Chat</router-link></li>
+        <li class="breadcrumb-item"><router-link to="/plantboard" id="return-link">Go to Plant Gallery</router-link></li>
+        <li class="breadcrumb-item"><router-link to="/login" id="return-link">Sign Out</router-link></li>
+      </ol>
+    </nav>
+  </div>
+</div>
 
       <div class="row" style="background-color: #F5E6D3;">
         <!-- Profile Image Column -->
@@ -613,14 +605,34 @@ export default {
 
  
 
+ 
+ .nav-left-position {
+  position: relative;
+  left: 0;
+  margin-left: 0;
+  transform: translateX(0);
+}
+
 .custom-nav {
   background-color: #341c02; 
 }
 
 #profile-nav {
   background-color: #341c02; 
-  width: 30%;
- 
+  width: 45%;
+  margin-left: 0 !important;
+}
+
+/* Override any default margins/transforms that might be centering the element */
+.col {
+  display: flex;
+  justify-content: flex-start;
+}
+
+@media (max-width: 768px) {
+  #profile-nav {
+    width: 100%;
+  }
 }
 
 #return-link {
