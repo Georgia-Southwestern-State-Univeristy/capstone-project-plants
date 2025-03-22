@@ -9,9 +9,16 @@
 <nav aria-label="breadcrumb" class="custom-nav rounded-3 p-3 mb-4 d-flex justify-content-center" id="profile-nav">
   <ol class="breadcrumb mb-0">
     <li class="breadcrumb-item"><router-link to="/chat" id="return-link">Return to Chat</router-link></li>
-    <li class="breadcrumb-item"><router-link to="/plantboard" id="return-link">Go to Plant gallery</router-link></li>
+    <li class="breadcrumb-item"><router-link to="/plantboard" id="return-link">Go to Plant Gallery</router-link></li>
+    <li class="breadcrumb-item"><router-link to="/login" id="return-link">Sign Out</router-link></li>
   </ol>
+  <!--KENDRICK CHANGE - added sign out button to user profile-->
+  <!-- Add this inside the <nav> element, right after the <ol class="breadcrumb mb-0"> element -->
+
 </nav>
+
+
+
         </div>
       </div>
 
@@ -350,8 +357,13 @@ export default {
       }
     };
     
-    
-
+    // KENDRICK CHANGE - added handleSignOut to add functionality to new
+    // sign out button on user profile
+      // 🔹 Handle user sign-out
+    const handleSignOut = async () => {
+    await authStore.logout();
+    router.push('/login');
+    };
 
     // ✅ Handle Profile Image Upload
     const handleImageUpload = async (event) => {
@@ -429,8 +441,9 @@ export default {
       savePasswordChange,
       cancelPasswordChange,
       toggleEdit,// KENDRICK - added toggleEdit to return section
-
-      // KENDRICK CHANGE - added function
+      handleSignOut, // KENDRICK CHANGE - added handleSignOut
+      authStore // KENDRICK CHANGE - added authStore
+     
 
 
       };
@@ -445,6 +458,8 @@ export default {
 
 /* Plant Card Styling */
 /* Plants container styling */
+
+/* Add this to your <style scoped> section */
 
 
 
