@@ -1,6 +1,6 @@
 <template>
     <div class="col-12 mt-4">
-      <div class="card" style="border-width: 2px; border-color: #341c02;">
+      <div id="plantBoard" class="card" style="border-width: 2px; border-color: #341c02;">
         <div class="card-body">
           <!-- Plants Heading -->
           <h3 style="color: #072d13; font-weight: bold; margin-bottom: 20px;">Your Plants</h3>
@@ -98,6 +98,11 @@
   
   <style scoped>
   /* Plants container styling */
+
+  div#plantBoard {
+    width: 50%;
+  }
+
   .plants-container {
     min-height: 100px;
     width: 100%;
