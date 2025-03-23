@@ -340,22 +340,35 @@ watch(() => chatStore.messages, async () => {
 const isPlantDescription = (content) => {
   if (!content) return false;
 
-  // ✅ Ensure `content` is always treated as a string
-  const contentStr = typeof content === "string" ? content : JSON.stringify(content);
+  // ✅ If AI response is a structured object, check for expected keys
+  if (typeof content === "object") {
+    return Boolean(
+      content.plantName ||
+      content.scientificName ||
+      content.sunlight ||
+      content.wateringSchedule
+    );
+  }
 
+  // ✅ Fallback for older string-style responses
+  const contentStr = String(content);
   const plantIdentifiers = [
     'Common Names:',
     'Common Name:',
     'Scientific Name:',
     'Family:',
     'Origin:',
-    'Key Identifying Features:'
+    'Key Identifying Features:',
+    'Sunlight:',
+    'Watering:',
+    'Soil Type:'
   ];
 
   return plantIdentifiers.some(phrase => 
     contentStr.includes(phrase) || contentStr.toLowerCase().includes(phrase.toLowerCase())
   );
 };
+
 
 
 // KENDRICK CHANGE - I added a button so that when a plant is identified by the
@@ -372,13 +385,20 @@ const fetchLastAIResponse = async () => {
             headers: { Authorization: `Bearer ${idToken}` }
         });
 
+        if (!response.ok) {
+            console.warn("⚠️ Server error:", response.statusText);
+            return null;
+        }
+
         const data = await response.json();
         return data.aiResponse || null;
+
     } catch (error) {
         console.error("❌ Failed to fetch last AI response:", error);
         return null;
     }
 };
+
 
 const addPlantToCollection = async (message) => {
     if (!authStore.isAuthenticated) {
@@ -396,11 +416,9 @@ const addPlantToCollection = async (message) => {
         }
 
         const plantInfo = message.content;
-        let plantName = "Unknown Plant";
-        const nameMatch = plantInfo.match(/<b>Plant Name:<\/b> ([^<]+)/);
-        if (nameMatch && nameMatch[1]) {
-            plantName = nameMatch[1].trim();
-        }
+        let plantName = typeof plantInfo === "object" && plantInfo.plantName
+        ? plantInfo.plantName
+        : "Unknown Plant";
 
         const auth = getAuth();
         const user = auth.currentUser;
@@ -413,7 +431,7 @@ const addPlantToCollection = async (message) => {
         // Create FormData for image upload
         const formData = new FormData();
         formData.append("plantName", plantName);
-        formData.append("aiResponse", aiResponse);
+        formData.append("aiResponse", JSON.stringify(plantInfo));
         formData.append("idToken", idToken);
 
         if (message.image) {

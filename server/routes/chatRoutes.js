@@ -16,7 +16,8 @@ const storage = getStorage();
 router.post("/chat", upload.single("image"), async (req, res) => {
     try {
         console.log("🔍 Incoming Chat Request:", req.body, req.file);
-        const { message, idToken } = req.body;
+
+        const { message, idToken } = req.body; // ✅ Add this
 
         if (!idToken) {
             return res.status(401).json({ error: "Unauthorized: No ID token provided." });
@@ -27,6 +28,7 @@ router.post("/chat", upload.single("image"), async (req, res) => {
 
         console.log("✅ User authenticated:", userId);
         let userMessage = message || "";
+
         let plantLabels = [];
         let plantName = "Unknown Plant";
         let imageUrl = null;
@@ -71,18 +73,18 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         console.log("✅ Sending AI Prompt:", fullMessage);
         const aiResponse = await generateGeminiResponse(fullMessage);
 
-        const chatRef = db.collection("users").doc(userId).collection("chats").doc();
-        await chatRef.set({
-            userMessage,
-            aiResponse,
-            plantName,
-            imageUrl,
-            createdAt: new Date().toISOString(),
-        });
+        // const chatRef = db.collection("users").doc(userId).collection("chats").doc();
+        // await chatRef.set({
+        //     userMessage,
+        //     aiResponse,
+        //     plantName,
+        //     imageUrl,
+        //     createdAt: new Date().toISOString(),
+        // });
 
         res.json({ 
             message: aiResponse || "I couldn't find any information on this plant.", 
-            chatId: chatRef.id, 
+            // chatId: chatRef.id, 
             imageUrl 
           });
           
@@ -93,14 +95,8 @@ router.post("/chat", upload.single("image"), async (req, res) => {
     }
 });
 
+//  * Extracts key plant details from AI-generated text.
 
-
-
-
-
-/**
- * Extracts key plant details from AI-generated text.
- */
 const extractPlantDetailsFromAI = (aiResponse) => {
     try {
         console.log("🔍 [Extract AI] Parsing AI Response:", aiResponse);
@@ -124,24 +120,68 @@ const extractPlantDetailsFromAI = (aiResponse) => {
     }
 };
 
+const summarizeField = (field, type) => {
+    if (!field || typeof field !== "string") return "Unknown";
+  
+    const lower = field.toLowerCase();
+  
+    if (type === "watering") {
+      if (lower.includes("every day")) return "Daily";
+      if (lower.includes("once a week") || lower.includes("weekly")) return "Weekly";
+      if (lower.includes("2-3 times") || lower.includes("few times")) return "2–3x/week";
+      if (lower.includes("regularly")) return "Regularly (don’t overwater)";
+      if (lower.includes("moderate")) return "Moderate";
+      if (lower.includes("infrequent")) return "Infrequent";
+    }
+  
+    if (type === "sunlight") {
+      if (lower.includes("full sun")) return "Full sun";
+      if (lower.includes("partial shade") || lower.includes("partial sun")) return "Partial sun";
+      if (lower.includes("bright, indirect")) return "Bright indirect";
+      if (lower.includes("low light")) return "Low light";
+    }
+  
+    return field.split(".")[0]; // fallback: first sentence
+  };
+  
 
 
 router.post("/add-plant", upload.single("image"), async (req, res) => {
     try {
-        const { aiResponse, idToken } = req.body;
+        let { aiResponse, idToken } = req.body;
+
+        // ✅ Parse stringified JSON from FormData
+        if (typeof aiResponse === "string") {
+            aiResponse = JSON.parse(aiResponse);
+        }
 
         if (!idToken) {
             return res.status(401).json({ error: "Unauthorized: No ID token provided." });
         }
 
+        // ✅ Authenticate user
         const user = await verifyFirebaseToken(idToken);
         const userId = user.uid;
 
         let imageUrl = null;
-        const { plantName, scientificName, sunlight, wateringSchedule, commonIssues } = extractPlantDetailsFromAI(aiResponse);
 
+        // ✅ Extract simplified plant data
+        const {
+            plantName,
+            scientificName,
+            sunlight,
+            wateringSchedule,
+            commonIssues
+        } = extractPlantDetailsFromAI(aiResponse);
+        
+        // ✅ Summarize for card layout
+        const summarySunlight = summarizeField(sunlight, "sunlight");
+        const summaryWatering = summarizeField(wateringSchedule, "watering");
+        
+
+        // ✅ Upload image if provided
         if (req.file) {
-            console.log("📸 Storing plant image...");
+            console.log("📸 Uploading plant image...");
             const bucket = storage.bucket();
             const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`;
             const file = bucket.file(fileName);
@@ -156,25 +196,51 @@ router.post("/add-plant", upload.single("image"), async (req, res) => {
             imageUrl = url;
         }
 
+        // ✅ Save plant card in `userPlants`
         const userPlantRef = db.collection("users").doc(userId).collection("userPlants").doc();
         await userPlantRef.set({
             plantName,
             scientificName,
-            sunlight,
-            wateringSchedule,
+            sunlight: summarySunlight,
+            wateringSchedule: summaryWatering,
             commonIssues,
             imageUrl,
             addedAt: new Date().toISOString(),
         });
 
-        console.log(`✅ [Firestore] Stored plant for user ${userId}: ${plantName}`);
-        res.json({ success: true, message: "Plant added successfully!", plantName, imageUrl, sunlight, wateringSchedule, commonIssues });
+        console.log(`✅ [Firestore] Saved plant card for ${userId}: ${plantName}`);
+
+        // ✅ Save full chat to `chats`
+        const chatRef = db.collection("users").doc(userId).collection("chats").doc();
+        await chatRef.set({
+            userMessage: `Identified plant: ${plantName}`,
+            aiResponse,
+            plantName,
+            imageUrl,
+            createdAt: new Date().toISOString(),
+        });
+
+        console.log(`💬 [Firestore] Saved chat log for ${userId}: ${chatRef.id}`);
+
+        res.json({
+            success: true,
+            message: "Plant added successfully!",
+            plantName,
+            imageUrl,
+            sunlight,
+            wateringSchedule,
+            commonIssues,
+        });
 
     } catch (error) {
         console.error("❌ [Add Plant Route] Error:", error);
-        res.status(500).json({ error: "Failed to add plant.", details: error.message });
+        res.status(500).json({
+            error: "Failed to add plant.",
+            details: error.message,
+        });
     }
 });
+
 
 
 
@@ -182,11 +248,13 @@ router.post("/add-plant", upload.single("image"), async (req, res) => {
 router.get("/get-last-chat", async (req, res) => {
     try {
         const { userId } = req.query;
+
         if (!userId) {
             return res.status(400).json({ error: "User ID is required." });
         }
 
-        // Fetch the last AI response
+        console.log(`🔍 Fetching last chat for userId: ${userId}`);
+
         const chatSnapshot = await db.collection("users")
             .doc(userId)
             .collection("chats")
@@ -195,15 +263,18 @@ router.get("/get-last-chat", async (req, res) => {
             .get();
 
         if (chatSnapshot.empty) {
+            console.log("⚠️ No chat found.");
             return res.json({ aiResponse: null });
         }
 
         const lastChat = chatSnapshot.docs[0].data();
+        console.log("✅ Last chat found:", lastChat);
+
         res.json({ aiResponse: lastChat.aiResponse });
 
     } catch (error) {
         console.error("❌ Failed to fetch last AI response:", error);
-        res.status(500).json({ error: "Failed to fetch AI response." });
+        res.status(500).json({ error: "Failed to fetch AI response.", details: error.message });
     }
 });
 
