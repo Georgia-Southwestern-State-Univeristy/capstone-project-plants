@@ -122,7 +122,21 @@
                       </button>
                     </div>
                   </form>
+
+                  <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
+  <p class="mb-3" style="color: #072d13;">
+    Already have an account? 
+    <router-link 
+      id="loginOffer" 
+      to="/login"
+      style="color: #4a9161">
+      Login here
+    </router-link>
+  </p>
+</div>
                 </div>
+
+              
 
                 <!-- Image section -->
                 <div class="col-md-10 col-lg-6 col-xl-7 d-flex align-items-center order-1 order-lg-2">
@@ -236,6 +250,11 @@ export default {
 
 
 <style scoped>
+
+a#loginOffer {
+    text-decoration: underline;
+    
+  }
 
 
 section.vh-100 {

@@ -13,6 +13,7 @@ const serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 // ✅ Initialize Firebase Admin SDK (Server Only)
 const app = initializeApp({
   credential: cert(serviceAccount),
+  storageBucket: process.env.VITE_APP_FIREBASE_STORAGE_BUCKET, 
 });
 
 const auth = getAuth(app); // Firebase Admin Auth (for backend authentication)

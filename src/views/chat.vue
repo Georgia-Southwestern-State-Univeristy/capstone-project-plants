@@ -33,15 +33,26 @@
     'animate-in' /* Add animation class here instead */
   ]"
 >
-      <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
-        {{ msg.isUser ? 'You' : 'Verdure AI' }}
-      </div>
+<div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
+  {{ msg.isUser ? 'You' : 'Verdure AI' }}
+</div>
       <!-- Replace the entire card-body div with this: -->
 <div class="card-body">
-  <!-- Text Message - always show if there's content -->
-  <div v-if="msg.content && msg.content.trim()" class="message-content">
-    <p class="mb-0" :class="msg.isUser ? 'user-text' : 'ai-text'" v-html="msg.content"></p>
+<!-- Formatted AI Response Display -->
+<div v-if="!msg.isUser && isValidPlantData(msg.content)" class="formatted-plant-response">
+  <h5 class="plant-title">{{ msg.content.plantName }}</h5>
+  <p class="scientific-name"><i>{{ msg.content.scientificName }}</i></p>
+
+  <div class="plant-info">
+    <p><strong>☀️ Sunlight:</strong> {{ msg.content.sunlight }}</p>
+    <p><strong>💧 Watering:</strong> {{ msg.content.wateringSchedule }}</p>
+    <p><strong>🌱 Soil Type:</strong> {{ msg.content.soilType }}</p>
+    <p><strong>📈 Growth Habit:</strong> {{ msg.content.growthHabit }}</p>
+    <p><strong>🌿 Common Uses:</strong> {{ msg.content.commonUses }}</p>
+    <p><strong>⚠️ Common Issues:</strong> {{ msg.content.commonIssues }}</p>
+    <p><strong>🎉 Fun Fact:</strong> {{ msg.content.funFact }}</p>
   </div>
+</div>
 
   <!-- Image Message - show if there's an image -->
   <div v-if="msg.image || (msg.type === 'image' && msg.content)" class="image-message">
@@ -153,6 +164,10 @@ if (!chatStore) {
   console.error("❌ chatStore is undefined! Check if Pinia is initialized.");
 }
 
+const isValidPlantData = (content) => {
+  return content && typeof content === "object" && content.plantName;
+};
+
 const adjustTextarea = () => {
   const textarea = textInput.value;
   textarea.style.height = 'auto';
@@ -239,15 +254,18 @@ const sendMessage = async () => {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
+    console.log("📩 Received AI Response:", response.data.message);
+
     const aiMessage = {
       id: Date.now() + 1,
       type: response.data.image ? (response.data.message ? "both" : "image") : "text",
-      content: response.data.message || "",
+      content: response.data.message ? response.data.message : "I couldn't retrieve plant details.",
       image: response.data.image || null,
       isUser: false,
       timestamp: new Date(),
-      isResponseToImage: hasImage, // Add this flag to track if this response is for an image
-    };
+      isResponseToImage: hasImage,
+};
+
 
     chatStore.sendMessage(aiMessage);
 
@@ -321,22 +339,36 @@ watch(() => chatStore.messages, async () => {
 // when the AI is describing a plant
 const isPlantDescription = (content) => {
   if (!content) return false;
-  
-  // Check for common patterns in plant descriptions
+
+  // ✅ If AI response is a structured object, check for expected keys
+  if (typeof content === "object") {
+    return Boolean(
+      content.plantName ||
+      content.scientificName ||
+      content.sunlight ||
+      content.wateringSchedule
+    );
+  }
+
+  // ✅ Fallback for older string-style responses
+  const contentStr = String(content);
   const plantIdentifiers = [
     'Common Names:',
     'Common Name:',
     'Scientific Name:',
     'Family:',
     'Origin:',
-    'Key Identifying Features:'
-
+    'Key Identifying Features:',
+    'Sunlight:',
+    'Watering:',
+    'Soil Type:'
   ];
-  
+
   return plantIdentifiers.some(phrase => 
-    content.includes(phrase) || content.toLowerCase().includes(phrase.toLowerCase())
+    contentStr.includes(phrase) || contentStr.toLowerCase().includes(phrase.toLowerCase())
   );
 };
+
 
 
 // KENDRICK CHANGE - I added a button so that when a plant is identified by the
@@ -353,13 +385,20 @@ const fetchLastAIResponse = async () => {
             headers: { Authorization: `Bearer ${idToken}` }
         });
 
+        if (!response.ok) {
+            console.warn("⚠️ Server error:", response.statusText);
+            return null;
+        }
+
         const data = await response.json();
         return data.aiResponse || null;
+
     } catch (error) {
         console.error("❌ Failed to fetch last AI response:", error);
         return null;
     }
 };
+
 
 const addPlantToCollection = async (message) => {
     if (!authStore.isAuthenticated) {
@@ -377,11 +416,9 @@ const addPlantToCollection = async (message) => {
         }
 
         const plantInfo = message.content;
-        let plantName = "Unknown Plant";
-        const nameMatch = plantInfo.match(/<b>Plant Name:<\/b> ([^<]+)/);
-        if (nameMatch && nameMatch[1]) {
-            plantName = nameMatch[1].trim();
-        }
+        let plantName = typeof plantInfo === "object" && plantInfo.plantName
+        ? plantInfo.plantName
+        : "Unknown Plant";
 
         const auth = getAuth();
         const user = auth.currentUser;
@@ -394,7 +431,7 @@ const addPlantToCollection = async (message) => {
         // Create FormData for image upload
         const formData = new FormData();
         formData.append("plantName", plantName);
-        formData.append("aiResponse", aiResponse);
+        formData.append("aiResponse", JSON.stringify(plantInfo));
         formData.append("idToken", idToken);
 
         if (message.image) {

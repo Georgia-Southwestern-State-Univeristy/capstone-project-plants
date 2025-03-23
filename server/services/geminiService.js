@@ -15,36 +15,69 @@ export const generateGeminiResponse = async (plantInfo) => {
         const response = await axios.post(GEMINI_API_URL, {
             contents: [
                 { 
-                    parts: [{ text: `You are an expert botanist. Provide detailed plant identification and care information in a structured format using bold headers. Here is the plant information: ${plantInfo}` }] 
+                    parts: [{ text: `
+                        Hey! You're a friendly, knowledgeable plant expert helping someone learn more about their plant. 
+                        Please provide a helpful and engaging response in **a casual tone**, while also being **informative**. 
+
+                        Include details about the plant's name, care needs, and any interesting facts. Try to **keep it light and conversational** 
+                        while still giving useful plant care tips.
+
+                        Format the response as a **JSON object** so it can be displayed easily. Here’s the structure:
+
+                        {
+                          "plantName": "Common plant name (e.g., Spider Plant)",
+                          "scientificName": "Scientific name (e.g., Chlorophytum comosum)",
+                          "sunlight": "Sunlight needs (e.g., Bright, indirect light)",
+                          "wateringSchedule": "How often to water (e.g., Every 7-10 days)",
+                          "soilType": "Best soil type (e.g., Well-draining potting mix)",
+                          "growthHabit": "How the plant grows (e.g., Trailing vine, upright shrub)",
+                          "commonUses": "How people use it (e.g., Indoor air purification, medicinal, culinary)",
+                          "commonIssues": "Common problems (e.g., Overwatering can cause root rot)",
+                          "funFact": "A fun fact about the plant (e.g., 'Spider Plants are great at removing toxins from the air!')"
+                        }
+
+                        Here is the plant information: ${plantInfo}
+                    `}] 
                 }
             ]
         });
 
         console.log("✅ [Gemini Service] Raw API Response:", JSON.stringify(response.data, null, 2));
 
-        // ✅ Extract AI response safely from `parts` array
-        let aiResponse = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
+        let aiTextResponse = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        if (!aiResponse || typeof aiResponse !== "string") {
-            console.error("❌ [Gemini Service] AI Response is not a valid text string.");
-            aiResponse = "I couldn't generate a response.";
+        if (!aiTextResponse) {
+            console.error("❌ [Gemini Service] AI Response is not valid.");
+            return "I couldn't generate a response.";
         }
 
-        // ✅ Format AI Response for Readability
-        aiResponse = aiResponse
-            .replace(/\n{2,}/g, "<br><br>")  // ✅ Convert multiple newlines to <br><br> for spacing
-            .replace(/\n/g, "<br>")  // ✅ Convert single newlines to <br> for Vue rendering
-            .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>") // ✅ Convert **bold** Markdown to HTML <b> tags
-            .replace(/\*/g, "•");  // ✅ Convert bullet points to readable symbols
+        // ✅ REMOVE Markdown-style code blocks (```json ... ```)
+        aiTextResponse = aiTextResponse.replace(/```json\n?|\n?```/g, "").trim();
 
-        console.log("✅ [Gemini Service] Cleaned AI Response:", aiResponse);
-
-        return aiResponse;
+        try {
+            const aiJson = JSON.parse(aiTextResponse);
+            console.log("✅ [Gemini Service] Parsed AI Response:", aiJson);
+            return aiJson;
+        } catch (error) {
+            console.error("❌ [Gemini Service] Failed to parse AI response as JSON.");
+            return {
+                plantName: "Unknown",
+                scientificName: "Unknown",
+                sunlight: "Unknown",
+                wateringSchedule: "Unknown",
+                soilType: "Unknown",
+                growthHabit: "Unknown",
+                commonUses: "Unknown",
+                commonIssues: "No issues found.",
+                funFact: "No fun fact available."
+            };
+        }
     } catch (error) {
         console.error("❌ [Gemini Service] Error:", error.response?.data || error.message);
         throw new Error("Failed to generate AI response.");
     }
 };
+
 
 
 
