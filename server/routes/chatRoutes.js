@@ -17,24 +17,40 @@ router.post("/chat", upload.single("image"), async (req, res) => {
     try {
         console.log("🔍 Incoming Chat Request:", req.body, req.file);
 
-        const { message, idToken } = req.body;
+        const { message, idToken } = req.body; // ✅ Add this
+
         if (!idToken) {
             return res.status(401).json({ error: "Unauthorized: No ID token provided." });
         }
 
-        // Verify Firebase authentication
         const user = await verifyFirebaseToken(idToken);
         const userId = user.uid;
 
         console.log("✅ User authenticated:", userId);
-
         let userMessage = message || "";
+
         let plantLabels = [];
         let plantName = "Unknown Plant";
+        let imageUrl = null;
 
-        // Process uploaded image
         if (req.file) {
             console.log("📸 Processing uploaded image...");
+            const bucket = storage.bucket();
+            const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`;
+            const file = bucket.file(fileName);
+
+            await file.save(req.file.buffer, { contentType: req.file.mimetype });
+            
+            // Generate a signed URL instead of making public
+            const [url] = await file.getSignedUrl({
+                action: 'read',
+                expires: '03-09-2030',
+            });
+
+            imageUrl = url;
+            console.log("✅ Image uploaded:", imageUrl);
+
+            // Analyze image for plant identification
             plantLabels = await analyzeImage(req.file.buffer);
             if (plantLabels.length > 0) {
                 plantName = plantLabels[0].description;
@@ -43,36 +59,35 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         }
 
         console.log("✅ Identified Plant Name:", plantName);
-
-        // Fetch plant details from Perenual API (fallback mechanism)
         let plantData = await fetchPlantFromPerenual(plantName);
         if (!plantData) {
             console.log("⚠️ No plant data found, using default.");
             plantData = { common_name: plantName, scientific_name: ["Unknown"] };
         }
 
-        // Improve AI prompt with plant data
         let fullMessage = `I uploaded an image of a plant that looks like a ${plantName}.`;
         if (plantData) {
             fullMessage += ` This plant is likely a ${plantData.common_name} (${plantData.scientific_name}). It requires ${plantData.sunlight || "unknown"} sunlight and ${plantData.watering || "unknown"} watering.`;
         }
 
         console.log("✅ Sending AI Prompt:", fullMessage);
-
-        // Get AI response
         const aiResponse = await generateGeminiResponse(fullMessage);
-        console.log("✅ AI Response:", aiResponse);
 
-        // ✅ Store chat message in Firestore
-        const chatRef = db.collection("users").doc(userId).collection("chats").doc();
-        await chatRef.set({
-            userMessage,
-            aiResponse,
-            plantName,
-            createdAt: new Date().toISOString(),
-        });
+        // const chatRef = db.collection("users").doc(userId).collection("chats").doc();
+        // await chatRef.set({
+        //     userMessage,
+        //     aiResponse,
+        //     plantName,
+        //     imageUrl,
+        //     createdAt: new Date().toISOString(),
+        // });
 
-        res.json({ message: aiResponse, chatId: chatRef.id });
+        res.json({ 
+            message: aiResponse || "I couldn't find any information on this plant.", 
+            // chatId: chatRef.id, 
+            imageUrl 
+          });
+          
 
     } catch (error) {
         console.error("❌ Chat Route Error:", error);
@@ -80,110 +95,166 @@ router.post("/chat", upload.single("image"), async (req, res) => {
     }
 });
 
+//  * Extracts key plant details from AI-generated text.
 
-
-
-/**
- * Extracts key plant details from AI-generated text.
- */
 const extractPlantDetailsFromAI = (aiResponse) => {
-    console.log("🔍 [Extract AI] Raw AI Response:", aiResponse);
+    try {
+        console.log("🔍 [Extract AI] Parsing AI Response:", aiResponse);
 
-    let plantName = "Unknown Plant";
-    let scientificName = "Unknown";
-    let wateringSchedule = "7 days";
-
-    if (aiResponse) {
-        const nameMatch = aiResponse.match(/Plant Identification: (.*?) \(/);
-        console.log("🔍 [Extract AI] Name Match:", nameMatch);
-
-        if (nameMatch && nameMatch[1]) {
-            plantName = nameMatch[1].trim();
-        }
-
-        const scientificMatch = aiResponse.match(/\((.*?)\)/);
-        console.log("🔍 [Extract AI] Scientific Name Match:", scientificMatch);
-
-        if (scientificMatch && scientificMatch[1]) {
-            scientificName = scientificMatch[1].trim();
-        }
-
-        const wateringMatch = aiResponse.match(/Watering: (.*?)(\.|\n)/);
-        console.log("🔍 [Extract AI] Watering Match:", wateringMatch);
-
-        if (wateringMatch && wateringMatch[1]) {
-            wateringSchedule = wateringMatch[1].trim();
-        }
+        return {
+            plantName: aiResponse.plantName || "Unknown Plant",
+            scientificName: aiResponse.scientificName || "Unknown",
+            sunlight: aiResponse.sunlight || "Unknown",
+            wateringSchedule: aiResponse.wateringSchedule || "Unknown",
+            commonIssues: aiResponse.commonIssues || "No issues found."
+        };
+    } catch (error) {
+        console.error("❌ [Extract AI] Error parsing AI response:", error);
+        return {
+            plantName: "Unknown Plant",
+            scientificName: "Unknown",
+            sunlight: "Unknown",
+            wateringSchedule: "Unknown",
+            commonIssues: "No issues found."
+        };
     }
-
-    console.log("✅ [Extract AI] Parsed Data:", { plantName, scientificName, wateringSchedule });
-    return { plantName, scientificName, wateringSchedule };
 };
+
+const summarizeField = (field, type) => {
+    if (!field || typeof field !== "string") return "Unknown";
+  
+    const lower = field.toLowerCase();
+  
+    if (type === "watering") {
+      if (lower.includes("every day")) return "Daily";
+      if (lower.includes("once a week") || lower.includes("weekly")) return "Weekly";
+      if (lower.includes("2-3 times") || lower.includes("few times")) return "2–3x/week";
+      if (lower.includes("regularly")) return "Regularly (don’t overwater)";
+      if (lower.includes("moderate")) return "Moderate";
+      if (lower.includes("infrequent")) return "Infrequent";
+    }
+  
+    if (type === "sunlight") {
+      if (lower.includes("full sun")) return "Full sun";
+      if (lower.includes("partial shade") || lower.includes("partial sun")) return "Partial sun";
+      if (lower.includes("bright, indirect")) return "Bright indirect";
+      if (lower.includes("low light")) return "Low light";
+    }
+  
+    return field.split(".")[0]; // fallback: first sentence
+  };
+  
 
 
 router.post("/add-plant", upload.single("image"), async (req, res) => {
     try {
-        const { aiResponse, idToken } = req.body;
+        let { aiResponse, idToken } = req.body;
+
+        // ✅ Parse stringified JSON from FormData
+        if (typeof aiResponse === "string") {
+            aiResponse = JSON.parse(aiResponse);
+        }
 
         if (!idToken) {
             return res.status(401).json({ error: "Unauthorized: No ID token provided." });
         }
 
-        // Log incoming request to verify aiResponse
-        console.log("🔍 Received /add-plant request:", { aiResponse });
-
-        // Verify the user's Firebase authentication
+        // ✅ Authenticate user
         const user = await verifyFirebaseToken(idToken);
         const userId = user.uid;
 
         let imageUrl = null;
 
-        // Ensure AI Response is available
-        if (!aiResponse || aiResponse.trim() === "") {
-            console.error("❌ [Add Plant] AI Response is missing.");
-            return res.status(400).json({ error: "AI response is required." });
-        }
+        // ✅ Extract simplified plant data
+        const {
+            plantName,
+            scientificName,
+            sunlight,
+            wateringSchedule,
+            commonIssues
+        } = extractPlantDetailsFromAI(aiResponse);
+        
+        // ✅ Summarize for card layout
+        const summarySunlight = summarizeField(sunlight, "sunlight");
+        const summaryWatering = summarizeField(wateringSchedule, "watering");
+        
 
-        // Extract plant details from AI-generated text
-        const { plantName, scientificName, wateringSchedule } = extractPlantDetailsFromAI(aiResponse);
-
-        // If an image is uploaded, store it in Firebase Storage
+        // ✅ Upload image if provided
         if (req.file) {
+            console.log("📸 Uploading plant image...");
             const bucket = storage.bucket();
-            const fileName = `users/${userId}/plants/${Date.now()}_${req.file.originalname}`;
+            const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`;
             const file = bucket.file(fileName);
+
             await file.save(req.file.buffer, { contentType: req.file.mimetype });
-            await file.makePublic(); // Ensure the file is publicly accessible
-            imageUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+
+            const [url] = await file.getSignedUrl({
+                action: 'read',
+                expires: '03-09-2030',
+            });
+
+            imageUrl = url;
         }
 
-        // Save the plant data in Firestore
+        // ✅ Save plant card in `userPlants`
         const userPlantRef = db.collection("users").doc(userId).collection("userPlants").doc();
         await userPlantRef.set({
             plantName,
             scientificName,
-            wateringSchedule,
+            sunlight: summarySunlight,
+            wateringSchedule: summaryWatering,
+            commonIssues,
             imageUrl,
             addedAt: new Date().toISOString(),
         });
 
-        console.log(`✅ [Firestore] Stored plant for user ${userId}: ${plantName}`);
+        console.log(`✅ [Firestore] Saved plant card for ${userId}: ${plantName}`);
 
-        res.json({ success: true, message: "Plant added successfully!", imageUrl, plantName, wateringSchedule });
+        // ✅ Save full chat to `chats`
+        const chatRef = db.collection("users").doc(userId).collection("chats").doc();
+        await chatRef.set({
+            userMessage: `Identified plant: ${plantName}`,
+            aiResponse,
+            plantName,
+            imageUrl,
+            createdAt: new Date().toISOString(),
+        });
+
+        console.log(`💬 [Firestore] Saved chat log for ${userId}: ${chatRef.id}`);
+
+        res.json({
+            success: true,
+            message: "Plant added successfully!",
+            plantName,
+            imageUrl,
+            sunlight,
+            wateringSchedule,
+            commonIssues,
+        });
+
     } catch (error) {
         console.error("❌ [Add Plant Route] Error:", error);
-        res.status(500).json({ error: "Failed to add plant.", details: error.message });
+        res.status(500).json({
+            error: "Failed to add plant.",
+            details: error.message,
+        });
     }
 });
+
+
+
+
 
 router.get("/get-last-chat", async (req, res) => {
     try {
         const { userId } = req.query;
+
         if (!userId) {
             return res.status(400).json({ error: "User ID is required." });
         }
 
-        // Fetch the last AI response
+        console.log(`🔍 Fetching last chat for userId: ${userId}`);
+
         const chatSnapshot = await db.collection("users")
             .doc(userId)
             .collection("chats")
@@ -192,15 +263,18 @@ router.get("/get-last-chat", async (req, res) => {
             .get();
 
         if (chatSnapshot.empty) {
+            console.log("⚠️ No chat found.");
             return res.json({ aiResponse: null });
         }
 
         const lastChat = chatSnapshot.docs[0].data();
+        console.log("✅ Last chat found:", lastChat);
+
         res.json({ aiResponse: lastChat.aiResponse });
 
     } catch (error) {
         console.error("❌ Failed to fetch last AI response:", error);
-        res.status(500).json({ error: "Failed to fetch AI response." });
+        res.status(500).json({ error: "Failed to fetch AI response.", details: error.message });
     }
 });
 

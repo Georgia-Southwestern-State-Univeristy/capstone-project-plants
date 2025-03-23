@@ -1,12 +1,9 @@
-module.exports = {
-    moduleFileExtensions: ['js', 'vue'],
-    transform: {
-      '^.+\\.vue$': 'vue-jest',
-      '^.+\\.js$': 'babel-jest'
-    },
-    moduleNameMapper: {
-      '^@/(.*)$': '<rootDir>/src/$1'
-    },
-    testMatch: ['**/tests/unit/**/*.spec.js'],
-    setupFiles: ['./tests/unit/setup.js']
-  }
+export default {
+  transform: {
+    "^.+\\.m?[jt]sx?$": "babel-jest"
+  },
+  testEnvironment: "node",
+  moduleFileExtensions: ["js", "mjs", "json"],
+  testMatch: ["**/tests/**/*.test.mjs"],
+  setupFiles: ["<rootDir>/tests/setup.js"]
+};
