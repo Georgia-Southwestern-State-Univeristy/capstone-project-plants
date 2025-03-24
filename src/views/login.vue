@@ -72,13 +72,14 @@
                       </button>
                     </div>
 
-                    <a 
+                    <router-link 
                       id="forgotPasswordButton" 
                       class="small" 
-                      href="#!"
-                      @click.prevent="forgotPassword">
+                      to="/forgot"
+                      >
                       Forgot password?
-                    </a>
+                  </router-link>
+                  
                     <p class="mb-5 pb-lg-2" style="color: #072d13;">
                       Don't have an account? 
                       <router-link 
