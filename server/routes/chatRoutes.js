@@ -6,6 +6,8 @@ import { generateGeminiResponse } from '../services/geminiService.js';
 import { verifyFirebaseToken } from '../utils/firebaseAdmin.js'; // ✅ Ensure correct import
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
+import { uploadImageToStorage } from "../services/storage.js";
+
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -15,9 +17,7 @@ const storage = getStorage();
 
 router.post("/chat", upload.single("image"), async (req, res) => {
     try {
-        console.log("🔍 Incoming Chat Request:", req.body, req.file);
-
-        const { message, idToken } = req.body; // ✅ Add this
+        const { message, idToken } = req.body;
 
         if (!idToken) {
             return res.status(401).json({ error: "Unauthorized: No ID token provided." });
@@ -26,31 +26,26 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         const user = await verifyFirebaseToken(idToken);
         const userId = user.uid;
 
-        console.log("✅ User authenticated:", userId);
         let userMessage = message || "";
-
         let plantLabels = [];
         let plantName = "Unknown Plant";
         let imageUrl = null;
 
         if (req.file) {
-            console.log("📸 Processing uploaded image...");
+            imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
             const bucket = storage.bucket();
             const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`;
             const file = bucket.file(fileName);
 
             await file.save(req.file.buffer, { contentType: req.file.mimetype });
-            
-            // Generate a signed URL instead of making public
+
             const [url] = await file.getSignedUrl({
                 action: 'read',
                 expires: '03-09-2030',
             });
 
             imageUrl = url;
-            console.log("✅ Image uploaded:", imageUrl);
 
-            // Analyze image for plant identification
             plantLabels = await analyzeImage(req.file.buffer);
             if (plantLabels.length > 0) {
                 plantName = plantLabels[0].description;
@@ -58,42 +53,32 @@ router.post("/chat", upload.single("image"), async (req, res) => {
             }
         }
 
-        console.log("✅ Identified Plant Name:", plantName);
-        let plantData = await fetchPlantFromPerenual(plantName);
-        if (!plantData) {
-            console.log("⚠️ No plant data found, using default.");
-            plantData = { common_name: plantName, scientific_name: ["Unknown"] };
-        }
+        const fullPrompt = `I uploaded an image of a plant that looks like a ${plantName}.`;
+        const aiResponse = await generateGeminiResponse(fullPrompt);
 
-        let fullMessage = `I uploaded an image of a plant that looks like a ${plantName}.`;
-        if (plantData) {
-            fullMessage += ` This plant is likely a ${plantData.common_name} (${plantData.scientific_name}). It requires ${plantData.sunlight || "unknown"} sunlight and ${plantData.watering || "unknown"} watering.`;
-        }
+        const chatRef = db.collection("users").doc(userId).collection("chats").doc();
+        await chatRef.set({
+            userMessage,
+            aiResponse,
+            plantName,
+            imageUrl,
+            createdAt: new Date().toISOString(),
+        });
 
-        console.log("✅ Sending AI Prompt:", fullMessage);
-        const aiResponse = await generateGeminiResponse(fullMessage);
-
-        // const chatRef = db.collection("users").doc(userId).collection("chats").doc();
-        // await chatRef.set({
-        //     userMessage,
-        //     aiResponse,
-        //     plantName,
-        //     imageUrl,
-        //     createdAt: new Date().toISOString(),
-        // });
-
-        res.json({ 
-            message: aiResponse || "I couldn't find any information on this plant.", 
-            // chatId: chatRef.id, 
-            imageUrl 
-          });
-          
+        res.json({
+            message: aiResponse,
+            imageUrl,
+            chatId: chatRef.id,
+        });
 
     } catch (error) {
         console.error("❌ Chat Route Error:", error);
-        res.status(500).json({ error: "Failed to process chat.", details: error.message });
+        if (!res.headersSent) {
+            res.status(500).json({ error: "Failed to process chat.", details: error.message });
+        }
     }
 });
+
 
 //  * Extracts key plant details from AI-generated text.
 
@@ -163,7 +148,7 @@ router.post("/add-plant", upload.single("image"), async (req, res) => {
         const user = await verifyFirebaseToken(idToken);
         const userId = user.uid;
 
-        let imageUrl = null;
+        let imageUrl = req.body.imageUrl || null;
 
         // ✅ Extract simplified plant data
         const {
@@ -181,6 +166,7 @@ router.post("/add-plant", upload.single("image"), async (req, res) => {
 
         // ✅ Upload image if provided
         if (req.file) {
+            imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
             console.log("📸 Uploading plant image...");
             const bucket = storage.bucket();
             const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`;

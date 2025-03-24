@@ -234,7 +234,7 @@ const sendMessage = async () => {
     const userMessage = {
       id: Date.now(),
       type: hasImage && userInput.value.trim() ? "both" : 
-           (hasImage ? "image" : "text"),
+      (hasImage ? "image" : "text"),
       content: userInput.value.trim(),
       image: hasImage ? URL.createObjectURL(uploadedFiles.value[0].file) : null,
       isUser: true,
@@ -261,14 +261,16 @@ const sendMessage = async () => {
 
     const aiMessage = {
       id: Date.now() + 1,
-      type: response.data.image ? (response.data.message ? "both" : "image") : "text",
+      type: response.data.imageUrl ? (response.data.message ? "both" : "image") : "text",
       content: response.data.message ? response.data.message : "I couldn't retrieve plant details.",
-      image: response.data.image || null,
+      image: response.data.imageUrl || null,
+      imageUrl: response.data.imageUrl || null, // ✅ Explicit storage
       isUser: false,
       timestamp: new Date(),
       isResponseToImage: hasImage,
-};
+    };
 
+ 
 
     chatStore.sendMessage(aiMessage);
 
@@ -404,6 +406,10 @@ const fetchLastAIResponse = async () => {
 
 
 const addPlantToCollection = async (message) => {
+  
+    console.log("🧪 message received:", message);
+    console.log("🧪 image:", message.image);
+
     if (!authStore.isAuthenticated) {
         alert("Please log in to add plants to your collection");
         router.push('/login');
@@ -432,10 +438,24 @@ const addPlantToCollection = async (message) => {
         const idToken = await user.getIdToken();
 
         // Create FormData for image upload
+        // const formData = new FormData();
+        // formData.append("plantName", plantName);
+        // formData.append("aiResponse", JSON.stringify(plantInfo));
+        // formData.append("idToken", idToken);
+        const imageUrl = message.imageUrl || message.image || null;
         const formData = new FormData();
-        formData.append("plantName", plantName);
-        formData.append("aiResponse", JSON.stringify(plantInfo));
+
+        formData.append("imageUrl", imageUrl); // ✅ NEW
+        formData.append("aiResponse", JSON.stringify(aiResponse));
         formData.append("idToken", idToken);
+        
+        console.log("🚀 Sending to /add-plant:", {
+          plantName,
+          aiResponse,
+          imageUrl,
+          idToken,
+        });
+
 
         if (message.image) {
             const response = await fetch(message.image);

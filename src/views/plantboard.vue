@@ -86,6 +86,7 @@
               <div class="plant-details">
                 <p class="plant-info"><span class="detail-label">Type:</span> {{ plant.type }}</p>
                 <p class="plant-info"><span class="detail-label">Watering Schedule:</span> {{ plant.watering_schedule }}</p>
+                <p class="plant-info"><span class="detail-label">Sunlight:</span> {{ plant.sunlight }}</p>
                 <p class="plant-info"><span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
                 <p class="plant-info"><span class="detail-label">Health Status:</span> {{ plant.health_status }}</p>
                 <p class="plant-info"><span class="detail-label">Notes:</span> {{ plant.notes }}</p>
@@ -107,6 +108,11 @@
   </template>
   
   <script>
+
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { db } from '@/utils/firebase'; // update based on your setup
+
   export default {
     name: 'plantBoard',
     data() {
@@ -132,16 +138,38 @@
       this.loadPlants();
     },
     methods: {
-      loadPlants() {
-        // Try to load plants from local storage
-        const savedPlants = localStorage.getItem('plants');
-        if (savedPlants) {
-          this.plants = JSON.parse(savedPlants);
+      async loadPlants() {
+        try {
+          const auth = getAuth();
+          const user = auth.currentUser;
+          if (!user) {
+            console.warn("User not logged in");
+            return;
+          }
+
+          const userPlantsRef = collection(db, "users", user.uid, "userPlants");
+          const snapshot = await getDocs(userPlantsRef);
+
+          const firebasePlants = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              name: data.plantName || "Unknown",
+              type: data.scientificName || "Unknown",
+              watering_schedule: data.wateringSchedule || "Unknown",
+              sunlight: data.sunlight || "Unknown",
+              last_watered: data.lastWatered || null,  // if you start tracking this
+              health_status: "Healthy",  // default for now
+              notes: "",
+              image_url: data.imageUrl || "/default-plant.jpg",
+            };
+          });
+
+          this.plants = firebasePlants;
+        } catch (error) {
+          console.error("❌ Failed to load plants from Firestore:", error);
         }
-        
-        // Or fetch from API if using backend
-        // this.fetchPlantsFromAPI();
       },
+
       toggleUploadForm() {
         this.showUploadForm = !this.showUploadForm;
         if (!this.showUploadForm) {
