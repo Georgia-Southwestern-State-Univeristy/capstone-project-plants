@@ -288,9 +288,6 @@
     display: flex;
   }
   
-  .breadcrumb-item {
-    margin-right: 10px;
-  }
   
   .breadcrumb-link {
     color: #072d13;
