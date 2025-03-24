@@ -327,18 +327,18 @@ watch(() => chatStore.messages, async () => {
 
 
 // 🔹 Load chat history on mount
-// onMounted(async () => {
-//   if (authStore.isAuthenticated) {
-//     await chatStore.loadChatHistory(authStore.user.uid);
-//   }
+onMounted(async () => {
+   if (authStore.isAuthenticated) {
+     await chatStore.loadChatHistory(authStore.user.uid);
+   }
 
-//   document.addEventListener('click', (event) => {
-//     const dropdown = document.querySelector('.dropdown');
-//     if (!dropdown.contains(event.target)) {
-//       isDropdownOpen.value = false;
-//     }
-//   });
-// });
+   document.addEventListener('click', (event) => {
+     const dropdown = document.querySelector('.dropdown');
+     if (!dropdown.contains(event.target)) {
+       isDropdownOpen.value = false;
+     }
+   });
+ });
 
 // KENDRICK CHANGE - I added this so that the add plant button only appears
 // when the AI is describing a plant
@@ -438,12 +438,12 @@ const addPlantToCollection = async (message) => {
         const idToken = await user.getIdToken();
 
         // Create FormData for image upload
-        // const formData = new FormData();
-        // formData.append("plantName", plantName);
-        // formData.append("aiResponse", JSON.stringify(plantInfo));
-        // formData.append("idToken", idToken);
+         const formData = new FormData();
+         formData.append("plantName", plantName);
+         formData.append("aiResponse", JSON.stringify(plantInfo));
+         formData.append("idToken", idToken);
         const imageUrl = message.imageUrl || message.image || null;
-        const formData = new FormData();
+        
 
         formData.append("imageUrl", imageUrl); // ✅ NEW
         formData.append("aiResponse", JSON.stringify(aiResponse));

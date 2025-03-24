@@ -216,8 +216,8 @@ import { db } from '@/utils/firebase'; // update based on your setup
         if (this.newPlant.image) {
           try {
             // If using a backend, upload the image and get URL
-            // const imageUrl = await this.uploadImageToServer(this.newPlant.image);
-            // plantToSave.image_url = imageUrl;
+            const imageUrl = await this.uploadImageToServer(this.newPlant.image);
+            plantToSave.image_url = imageUrl;
             
             // For demo purposes, we'll just use a dataURL
             plantToSave.image_url = this.previewImage;
@@ -268,25 +268,25 @@ import { db } from '@/utils/firebase'; // update based on your setup
       // For backend implementation
       async fetchPlantsFromAPI() {
         // Example API call
-        // try {
-        //   const response = await fetch('/api/plants');
-        //   this.plants = await response.json();
-        // } catch (error) {
-        //   console.error('Failed to fetch plants:', error);
-        // }
+        try {
+        const response = await fetch('/api/plants');
+         this.plants = await response.json();
+        } catch (error) {
+          console.error('Failed to fetch plants:', error);
+         }
       },
       async uploadImageToServer(file) {
         // Example implementation for backend
-        // const formData = new FormData();
-        // formData.append('image', file);
+        const formData = new FormData();
+         formData.append('image', file);
         
-        // const response = await fetch('/api/upload', {
-        //   method: 'POST',
-        //   body: formData
-        // });
+         const response = await fetch('/api/upload', {
+           method: 'POST',
+           body: formData
+         });
         
-        // const data = await response.json();
-        // return data.imageUrl;
+         const data = await response.json();
+         return data.imageUrl;
       }
     }
   }
