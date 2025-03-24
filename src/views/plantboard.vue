@@ -101,7 +101,7 @@
       </div>
   
       <!-- Empty State Message -->
-      <div v-else class="empty-state">
+      <div v-else class="empty-state" >
         <p>You haven't added any plants yet. Click the "Add a new plant" button to get started!</p>
       </div>
     </div>
@@ -493,11 +493,12 @@ import { db } from '@/utils/firebase'; // update based on your setup
   }
   
   .empty-state {
-    background-color: white;
+    background-color: #072d13;
     padding: 20px;
     border-radius: 10px;
     text-align: center;
     margin-top: 10px;
+    color: white;
   }
   
   @media (max-width: 768px) {
