@@ -3,16 +3,15 @@
   <div class="profile-page">
   <section>
     <div class="container py-5">
-      <div class="row">
-  <div class="col position-relative">
-    <nav aria-label="breadcrumb" class="custom-nav rounded-3 p-3 mb-4 d-flex justify-content-center nav-left-position" id="profile-nav">
-      <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><router-link to="/chat" id="return-link">Return to Chat</router-link></li>
-        <li class="breadcrumb-item"><router-link to="/plantboard" id="return-link">Go to Plant Gallery</router-link></li>
-        <li class="breadcrumb-item"><router-link to="/login" id="return-link">Sign Out</router-link></li>
-      </ol>
-    </nav>
-  </div>
+      <!-- Replace the current breadcrumb navigation -->
+<div class="top-navigation">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><router-link to="/chat">Chat</router-link></li>
+      <li class="breadcrumb-item"><router-link to="/plantboard">Go to Plant Gallery</router-link></li>
+      <li class="breadcrumb-item"><router-link to="/login">Sign Out</router-link></li>
+    </ol>
+  </nav>
 </div>
 
       <div class="row" style="background-color: #F5E6D3;">
@@ -606,28 +605,45 @@ export default {
  
 
  
- .nav-left-position {
-  position: relative;
-  left: 0;
-  margin-left: 0;
-  transform: translateX(0);
+ .top-navigation {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: #341c02; /* Brown background */
+  padding: 8px 15px;
+  border-radius: 5px;
+  z-index: 10;
 }
 
-.custom-nav {
-  background-color: #341c02; 
+.breadcrumb {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
 }
 
-#profile-nav {
-  background-color: #341c02; 
-  width: 45%;
-  margin-left: 0 !important;
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb-item:not(:last-child)::after {
+  margin: 0 10px;
+  color: #F5E6D3; /* Cream color for the separator */
+}
+
+.breadcrumb-item a {
+  color: #F5E6D3; /* Cream color for the text */
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.breadcrumb-item a:hover {
+  text-decoration: underline;
 }
 
 /* Override any default margins/transforms that might be centering the element */
-.col {
-  display: flex;
-  justify-content: flex-start;
-}
+
 
 @media (max-width: 768px) {
   #profile-nav {

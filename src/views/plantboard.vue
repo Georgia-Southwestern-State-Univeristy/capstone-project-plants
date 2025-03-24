@@ -316,9 +316,6 @@ import { db } from '@/utils/firebase'; // update based on your setup
     display: flex;
   }
   
-  .breadcrumb-item {
-    margin-right: 10px;
-  }
   
   .breadcrumb-link {
     color: #072d13;
