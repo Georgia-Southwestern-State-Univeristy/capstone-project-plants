@@ -79,18 +79,21 @@
       <!-- Plants Gallery -->
       <div v-if="plants.length > 0" class="row row-cols-1 row-cols-md-3 g-4">
         <div class="col" v-for="(plant, index) in plants" :key="index">
-          <div class="card plant-card">
-            <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" :alt="plant.name">
+          <div class="card plant-card .h-100">
+            <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" :alt="plant.name" id="cardImage">
             <div class="card-body">
-              <h5 class="card-title">{{ plant.name }}</h5>
-              <div class="plant-details">
-                <p class="plant-info"><span class="detail-label">Type:</span> {{ plant.type }}</p>
-                <p class="plant-info"><span class="detail-label">Watering Schedule:</span> {{ plant.watering_schedule }}</p>
-                <p class="plant-info"><span class="detail-label">Sunlight:</span> {{ plant.sunlight }}</p>
-                <p class="plant-info"><span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
-                <p class="plant-info"><span class="detail-label">Health Status:</span> {{ plant.health_status }}</p>
-                <p class="plant-info"><span class="detail-label">Notes:</span> {{ plant.notes }}</p>
+              <div class="plant-header">
+              <h5 class="card-title plant-name">{{ plant.name }}</h5>
               </div>
+              
+              <div class="plant-details">
+  <p class="plant-info"><span class="detail-emoji">🌿</span> <span class="detail-label">Type:</span> {{ plant.type }}</p>
+  <p class="plant-info"><span class="detail-emoji">💧</span> <span class="detail-label">Watering:</span> {{ plant.watering_schedule }}</p>
+  <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Sunlight:</span> {{ plant.sunlight }}</p>
+  <p class="plant-info"><span class="detail-emoji">📅</span> <span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
+  <p class="plant-info"><span class="detail-emoji">❤️</span> <span class="detail-label">Health:</span> {{ plant.health_status }}</p>
+  <p class="plant-info"><span class="detail-emoji">📝</span> <span class="detail-label">Notes:</span> {{ plant.notes }}</p>
+</div>
               <div class="card-actions">
                 <button @click="editPlant(index)" class="btn-edit">Edit</button>
                 <button @click="deletePlant(index)" class="btn-delete">Delete</button>
@@ -321,7 +324,7 @@ import { db } from '@/utils/firebase'; // update based on your setup
   .breadcrumb-link {
     color: #072d13;
     text-decoration: none;
-    font-weight: 500;
+    font-weight: bold;
   }
   
   .breadcrumb-link:hover {
@@ -438,12 +441,59 @@ import { db } from '@/utils/firebase'; // update based on your setup
   }
   
   .plant-card {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s;
     margin-bottom: 20px;
     background-color: white;
+    border: 10px solid white;
+    border-radius: 15px;
+    padding: 5px  5px 2px 5px;
+    display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  }
+
+  .plant-header {
+  margin-bottom: 0;
+  position: relative;
+  z-index: 2;
+  padding-bottom: 17px; /* Space for the fade */
+}
+
+.plant-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #072d13;
+  margin-bottom: 5px;
+}
+
+
+.plant-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 25px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.9) 40%,
+    rgba(255, 255, 255, 0.7) 70%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  pointer-events: none;
+}
+
+  img#cardImage {
+    border-radius: 15px;
   }
   
+
+.card-body {
+  padding: 2px;
+}
+
   .plant-card:hover {
     transform: translateY(-5px);
   }
@@ -455,27 +505,44 @@ import { db } from '@/utils/firebase'; // update based on your setup
   
   .plant-details {
     margin-top: 15px;
+    flex: 1;
+  overflow-y: auto;
+  max-height: 180px;
+  scrollbar-width: thin;
+  scrollbar-color: #072d13 #f0f0f0;
+  position: relative;
+  margin-top: -10px; /* Pull up slightly to overlap with the fade */
+  padding-top: 15px; 
+  
+
+
   }
   
   .plant-info {
-    margin: 5px 0;
+  margin-bottom: 8px;
+  text-align: left;
   }
+
+
 
 
   .plant-image-container {
   position: relative;
   width: 100%;
   height: 150px;
-  border-radius: 10px;
-  margin-bottom: 10px;
+  border-radius: 10px 10px 0 0;
+  margin-bottom: 0px;
   overflow: hidden;
+
 }
+
+
 
 .plant-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 10px;
+  
 }
 
 .plant-image-container::after {
@@ -502,7 +569,7 @@ import { db } from '@/utils/firebase'; // update based on your setup
   .card-actions {
     display: flex;
     justify-content: space-between;
-    margin-top: 15px;
+    margin-top: 5px;
   }
   
   .btn-delete, .btn-edit {
