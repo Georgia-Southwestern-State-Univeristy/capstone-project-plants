@@ -24,7 +24,7 @@
       </div>
   
       <!-- Plant Upload Form -->
-      <div v-if="showUploadForm" class="upload-form-container">
+      <div v-if="showUploadForm" class="upload-form-container" id="">
         <div class="upload-form">
           <h3>Add a New Plant</h3>
           <div class="form-group">
@@ -92,8 +92,9 @@
                 <p class="plant-info"><span class="detail-label">Notes:</span> {{ plant.notes }}</p>
               </div>
               <div class="card-actions">
-                <button @click="deletePlant(index)" class="btn-delete">Delete</button>
                 <button @click="editPlant(index)" class="btn-edit">Edit</button>
+                <button @click="deletePlant(index)" class="btn-delete">Delete</button>
+                
               </div>
             </div>
           </div>
@@ -216,8 +217,8 @@ import { db } from '@/utils/firebase'; // update based on your setup
         if (this.newPlant.image) {
           try {
             // If using a backend, upload the image and get URL
-            const imageUrl = await this.uploadImageToServer(this.newPlant.image);
-            plantToSave.image_url = imageUrl;
+            //const imageUrl = await this.uploadImageToServer(this.newPlant.image);
+            // plantToSave.image_url = imageUrl;
             
             // For demo purposes, we'll just use a dataURL
             plantToSave.image_url = this.previewImage;
@@ -268,25 +269,25 @@ import { db } from '@/utils/firebase'; // update based on your setup
       // For backend implementation
       async fetchPlantsFromAPI() {
         // Example API call
-        try {
-        const response = await fetch('/api/plants');
-         this.plants = await response.json();
-        } catch (error) {
-          console.error('Failed to fetch plants:', error);
-         }
+        // try {
+        //   const response = await fetch('/api/plants');
+        //   this.plants = await response.json();
+        // } catch (error) {
+        //   console.error('Failed to fetch plants:', error);
+        // }
       },
       async uploadImageToServer(file) {
         // Example implementation for backend
-        const formData = new FormData();
-         formData.append('image', file);
+        // const formData = new FormData();
+        // formData.append('image', file);
         
-         const response = await fetch('/api/upload', {
-           method: 'POST',
-           body: formData
-         });
+        // const response = await fetch('/api/upload', {
+        //   method: 'POST',
+        //   body: formData
+        // });
         
-         const data = await response.json();
-         return data.imageUrl;
+        // const data = await response.json();
+        // return data.imageUrl;
       }
     }
   }
@@ -459,9 +460,42 @@ import { db } from '@/utils/firebase'; // update based on your setup
   .plant-info {
     margin: 5px 0;
   }
+
+
+  .plant-image-container {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.plant-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.plant-image-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(to bottom, transparent, white);
+  pointer-events: none;
+}
   
   .detail-label {
-    color: #588157;
+    color: #072d13;
+    font-weight: bold;
+  }
+
+  .card-title {
+    color: #072d13;
     font-weight: bold;
   }
   
@@ -481,11 +515,13 @@ import { db } from '@/utils/firebase'; // update based on your setup
   .btn-delete {
     background-color: #dc3545;
     color: white;
+    font-weight: bold;
   }
   
   .btn-edit {
-    background-color: #588157;
+    background-color: #072d13;
     color: white;
+    font-weight: bold;
   }
   
   .plants-gallery-container {
