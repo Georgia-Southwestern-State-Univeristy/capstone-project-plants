@@ -79,7 +79,7 @@
       <!-- Plants Gallery -->
       <div v-if="plants.length > 0" class="row row-cols-1 row-cols-md-3 g-4">
         <div class="col" v-for="(plant, index) in plants" :key="index">
-          <div class="card plant-card .h-100">
+          <div class="card plant-card .h-200">
             <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" :alt="plant.name" id="cardImage">
             <div class="card-body">
               <div class="plant-header">
