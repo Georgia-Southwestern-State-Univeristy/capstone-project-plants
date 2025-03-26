@@ -4,9 +4,9 @@
     <div class="top-navigation">
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a href="/chat" class="breadcrumb-link">Chat</a></li>
-          <li class="breadcrumb-item"><a href="/userprofile" class="breadcrumb-link">Account</a></li>
-          <li class="breadcrumb-item"><a href="/login" class="breadcrumb-link">Sign Out</a></li>
+          <li class="breadcrumb-item"><router-link to="/chat" class="breadcrumb-link">Chat</router-link></li>
+          <li class="breadcrumb-item"><router-link to="/userprofile" class="breadcrumb-link">Account</router-link></li>
+          <li class="breadcrumb-item"><router-link to="/login" class="breadcrumb-link">Sign Out</router-link></li>
         </ol>
       </nav>
     </div>
@@ -78,48 +78,40 @@
     </div>
 
     <!-- Plants Gallery Grid -->
-    <div v-if="plants.length > 0" class="plants-grid">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
       <div 
         v-for="(plant, index) in plants" 
         :key="index" 
-        class="plant-card-container"
-        @click="toggleCardDetails(index)"
-        :class="{ 'expanded': expandedCardIndex === index }"
+        class="col"
       >
-        <!-- Card Front (Image with overlay) -->
-        <div class="card-front" v-show="expandedCardIndex !== index">
-          <div class="plant-image-overlay">
-            <img :src="plant.image_url || '/default-plant.jpg'" alt="Plant Image">
+        <div class="card h-100" :class="{'expanded': expandedCardIndex === index}">
+          <!-- Card Front (Image with overlay) -->
+          <div class="plant-card-front" v-if="expandedCardIndex !== index" @click="toggleCardDetails(index)">
+            <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" alt="Plant Image">
             <div class="overlay-content">
-              <h3 class="overlay-title">{{ plant.name }}</h3>
+              <h5 class="overlay-title">{{ plant.name }}</h5>
               <p class="overlay-subtitle">Click for more</p>
             </div>
           </div>
-        </div>
-
-        <!-- Card Back (Details) -->
-        <div class="card-back" v-show="expandedCardIndex === index">
-          <div class="card-back-content">
-            <div class="card-header">
-              <h3 class="plant-name">{{ plant.name }}</h3>
-              <button class="close-card-btn" @click.stop="closeCardDetails(index)">×</button>
-            </div>
+          
+          <!-- Card Back (Details) -->
+          <div class="plant-card-back" v-if="expandedCardIndex === index">
+            <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" alt="Plant Image">
+            <button class="close-btn" @click.stop="closeCardDetails(index)">×</button>
             
-            <div class="card-details-body">
-              <div class="thumbnail-container">
-                <img :src="plant.image_url || '/default-plant.jpg'" alt="Plant thumbnail" class="plant-thumbnail">
-              </div>
-              
-              <div class="plant-info-container">
+            <div class="card-body">
+              <h5 class="card-title">{{ plant.name }}</h5>
+              <div class="plant-details-container">
                 <p class="plant-info"><span class="detail-emoji">🌿</span> <span class="detail-label">Type:</span> {{ plant.type }}</p>
                 <p class="plant-info"><span class="detail-emoji">💧</span> <span class="detail-label">Watering:</span> {{ plant.watering_schedule }}</p>
-                <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Sunlight:</span> {{ plant.sunlight }}</p>
                 <p class="plant-info"><span class="detail-emoji">📅</span> <span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
                 <p class="plant-info"><span class="detail-emoji">❤️</span> <span class="detail-label">Health:</span> {{ plant.health_status }}</p>
-                <p class="plant-info"><span class="detail-emoji">📝</span> <span class="detail-label">Notes:</span> {{ plant.notes }}</p>
+                <p class="plant-info"><span class="detail-emoji">📝</span> <span class="detail-label">Notes:</span> {{ plant.notes || 'No notes added yet.' }}</p>
               </div>
-              
-              <div class="card-actions">
+            </div>
+            
+            <div class="card-footer">
+              <div class="button-group">
                 <button @click.stop="editPlant(index)" class="btn-edit">Edit</button>
                 <button @click.stop="deletePlant(index)" class="btn-delete">Delete</button>
               </div>
@@ -130,7 +122,7 @@
     </div>
 
     <!-- Empty State Message -->
-    <div v-else class="empty-state">
+    <div v-if="plants.length === 0" class="empty-state">
       <p>You haven't added any plants yet. Click the "Add a new plant" button to get started!</p>
     </div>
   </div>
@@ -165,32 +157,12 @@ export default {
   mounted() {
     // Load existing plants from local storage or API
     this.loadPlants();
-    
-    // Add click event listener to close expanded cards when clicking outside
-    document.addEventListener('click', this.handleDocumentClick);
-  },
-  beforeUnmount() {
-    // Clean up event listener
-    document.removeEventListener('click', this.handleDocumentClick);
   },
   methods: {
-    handleDocumentClick(event) {
-      // Check if click is outside any card
-      if (this.expandedCardIndex !== null) {
-        const expandedCard = document.querySelector('.plant-card-container.expanded');
-        if (expandedCard && !expandedCard.contains(event.target)) {
-          this.expandedCardIndex = null;
-        }
-      }
-    },
     toggleCardDetails(index) {
-      if (this.expandedCardIndex === index) {
-        this.expandedCardIndex = null;
-      } else {
-        this.expandedCardIndex = index;
-      }
+      this.expandedCardIndex = index;
     },
-    closeCardDetails(index) {
+    closeCardDetails() {
       this.expandedCardIndex = null;
     },
     async loadPlants() {
@@ -199,6 +171,30 @@ export default {
         const user = auth.currentUser;
         if (!user) {
           console.warn("User not logged in");
+          
+          // For development: load mock data if no user
+          this.plants = [
+            {
+              name: "Snake Plant",
+              type: "Sansevieria trifasciata",
+              watering_schedule: "Every 2-3 weeks",
+              sunlight: "Low to bright indirect light",
+              last_watered: new Date().toISOString().split('T')[0],
+              health_status: "Healthy",
+              notes: "Very hardy plant, perfect for beginners. Tolerates neglect well.",
+              image_url: "https://images.unsplash.com/photo-1572688484438-313a6e50c333?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80"
+            },
+            {
+              name: "Monstera",
+              type: "Monstera deliciosa",
+              watering_schedule: "Weekly",
+              sunlight: "Bright indirect light",
+              last_watered: new Date().toISOString().split('T')[0],
+              health_status: "Healthy",
+              notes: "Beautiful plant with distinctive leaf patterns. Avoid direct sunlight.",
+              image_url: "https://images.unsplash.com/photo-1614594975525-e45190c55d0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80"
+            }
+          ];
           return;
         }
 
@@ -208,18 +204,19 @@ export default {
         const firebasePlants = snapshot.docs.map(doc => {
           const data = doc.data();
           return {
+            id: doc.id,
             name: data.plantName || "Unknown",
             type: data.scientificName || "Unknown",
             watering_schedule: data.wateringSchedule || "Unknown",
             sunlight: data.sunlight || "Unknown",
             last_watered: data.lastWatered || null,  // if you start tracking this
             health_status: "Healthy",  // default for now
-            notes: "",
-            image_url: data.imageUrl || "/default-plant.jpg",
+            notes: data.commonIssues || "",
+            image_url: data.imageUrl || "https://images.unsplash.com/photo-1520412099551-62b6bafeb5bb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80",
           };
         });
 
-        this.plants = firebasePlants;
+        this.plants = firebasePlants.length > 0 ? firebasePlants : this.plants;
       } catch (error) {
         console.error("❌ Failed to load plants from Firestore:", error);
       }
@@ -280,6 +277,9 @@ export default {
           alert('Failed to upload image. Please try again.');
           return;
         }
+      } else if (!plantToSave.image_url) {
+        // Set a default image if none provided
+        plantToSave.image_url = "https://images.unsplash.com/photo-1520412099551-62b6bafeb5bb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80";
       }
       
       // Remove the file object before saving
@@ -293,7 +293,7 @@ export default {
         this.plants.push(plantToSave);
       }
       
-      // Save to local storage
+      // Save to local storage for persistence
       localStorage.setItem('plants', JSON.stringify(this.plants));
       
       // Reset form and hide it
@@ -476,62 +476,72 @@ export default {
   color: #333;
 }
 
-/* Plants Grid Layout */
-.plants-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
+/* MDBootstrap Style Cards */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -15px;
+  margin-left: -15px;
 }
 
-/* Plant Card Container */
-.plant-card-container {
-  height: 300px;
-  border-radius: 15px;
-  overflow: hidden;
+.col {
+  flex: 0 0 100%;
+  max-width: 100%;
+  padding: 0 15px;
+  margin-bottom: 30px;
+}
+
+.row-cols-md-2 > .col {
+  flex: 0 0 50%;
+  max-width: 50%;
+}
+
+.row-cols-lg-3 > .col {
+  flex: 0 0 33.333333%;
+  max-width: 33.333333%;
+}
+
+.g-4 {
+  gap: 1.5rem;
+}
+
+.card {
   position: relative;
-  cursor: pointer;
+  height: 100%;
+  min-width: 0;
+  word-wrap: break-word;
+  background-clip: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: transparent;
   transition: transform 0.3s, box-shadow 0.3s;
-  perspective: 1000px; /* Add perspective for 3D effect */
 }
 
-.plant-card-container:hover {
+.card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
-.plant-card-container.expanded {
-  cursor: default;
-  z-index: 10;
-  transform: translateY(0); /* Reset transform when expanded */
+.card.expanded {
+  transform: none;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Card Front (Image with Overlay) */
-.card-front {
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1; /* Ensure front is above the back initially */
-  transition: opacity 0.3s ease-in-out;
-}
-
-.expanded .card-front {
-  opacity: 0; /* Fade out the front when card is expanded */
-}
-
-.plant-image-overlay {
+.plant-card-front {
   position: relative;
   height: 100%;
-  width: 100%;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
 
-.plant-image-overlay img {
+.plant-card-front img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: brightness(0.6);
+  filter: brightness(0.7);
+  border-radius: 0.5rem;
 }
 
 .overlay-content {
@@ -550,96 +560,107 @@ export default {
 
 .overlay-title {
   color: white;
-  font-size: 24px;
+  font-size: 1.75rem;
   margin-bottom: 10px;
   font-weight: bold;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
 }
 
 .overlay-subtitle {
   color: white;
-  font-size: 16px;
+  font-size: 1rem;
   opacity: 0.9;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
-/* Card Back (Details) */
-.card-back {
-  position: absolute;
-  width: 100%;
+.plant-card-back {
+  position: relative;
   height: 100%;
+  display: flex;
+  flex-direction: column;
   background-color: white;
-  border-radius: 15px;
+  border-radius: 0.5rem;
   overflow: hidden;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  transition: transform 0.4s ease-in-out;
-  transform: translateY(100%); /* Start from below */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.4s ease-in-out;
 }
 
-.expanded .card-back {
-  transform: translateY(0); /* Slide up to fully visible */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
-.card-back-content {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.card-header {
-  background-color: #072d13;
-  color: white;
-  padding: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.plant-name {
-  margin: 0;
-  font-size: 18px;
-}
-
-.close-card-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-
-.card-details-body {
-  padding: 15px;
-  overflow-y: auto;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.thumbnail-container {
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-.plant-thumbnail {
-  width: 100px;
-  height: 100px;
+.card-img-top {
+  width: 100%;
+  height: 240px;
   object-fit: cover;
-  border-radius: 8px;
-  border: 2px solid #072d13;
 }
 
-.plant-info-container {
-  flex: 1;
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.3);
+  color: white;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 10;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.card-body {
+  flex: 1 1 auto;
+  padding: 1.25rem;
+}
+
+.card-title {
+  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #072d13;
+}
+
+.plant-details-container {
+  max-height: 200px;
   overflow-y: auto;
+  margin-bottom: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: #072d13 #f0f0f0;
+}
+
+.plant-details-container::-webkit-scrollbar {
+  width: 5px;
+}
+
+.plant-details-container::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 5px;
+}
+
+.plant-details-container::-webkit-scrollbar-thumb {
+  background-color: #072d13;
+  border-radius: 5px;
 }
 
 .plant-info {
   margin-bottom: 8px;
-  font-size: 14px;
+  font-size: 0.9rem;
+  color: #333;
 }
 
 .detail-emoji {
@@ -651,11 +672,15 @@ export default {
   color: #072d13;
 }
 
-.card-actions {
+.card-footer {
+  padding: 0.75rem 1.25rem;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-top: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.button-group {
   display: flex;
   justify-content: space-between;
-  margin-top: auto;
-  padding-top: 10px;
 }
 
 .btn-edit, .btn-delete {
@@ -664,6 +689,7 @@ export default {
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
+  transition: all 0.2s;
 }
 
 .btn-edit {
@@ -671,9 +697,17 @@ export default {
   color: white;
 }
 
+.btn-edit:hover {
+  background-color: #0a3b1a;
+}
+
 .btn-delete {
   background-color: #dc3545;
   color: white;
+}
+
+.btn-delete:hover {
+  background-color: #c82333;
 }
 
 /* Empty State */
@@ -686,19 +720,22 @@ export default {
   color: white;
 }
 
-/* Responsive Styles */
-@media (max-width: 768px) {
-  .plants-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+/* Responsive styles */
+@media (max-width: 991.98px) {
+  .row-cols-lg-3 > .col {
+    flex: 0 0 50%;
+    max-width: 50%;
   }
   
-  .plant-card-container {
-    height: 250px;
+  .card-img-top {
+    height: 200px;
   }
-  
-  .plant-thumbnail {
-    width: 80px;
-    height: 80px;
+}
+
+@media (max-width: 767.98px) {
+  .row-cols-md-2 > .col {
+    flex: 0 0 100%;
+    max-width: 100%;
   }
   
   .top-navigation {
@@ -720,12 +757,12 @@ export default {
 }
 
 @media (max-width: 480px) {
-  .plants-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .plantboard-container {
     padding: 15px;
+  }
+  
+  .col {
+    padding: 0 10px;
   }
 }
 </style>
