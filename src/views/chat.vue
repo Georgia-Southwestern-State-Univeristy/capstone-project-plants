@@ -57,8 +57,13 @@
   </div>
 </div>
 
+<!-- Text Message - only show for text messages when not displaying plant data -->
+<div v-else-if="msg.content && (msg.type === 'text' || msg.type === 'both') && (!isValidPlantData(msg.content) || msg.isUser)" class="text-message">
+  {{ msg.content }}
+</div>
+
   <!-- Image Message - show if there's an image -->
-  <div v-if="msg.image || (msg.type === 'image' && msg.content)" class="image-message">
+  <div v-if="msg.image || (msg.type === 'image' && msg.content) || msg.type === 'both'" class="image-message">
     <img 
       :src="msg.image || msg.content" 
       class="img-fluid rounded" 
@@ -122,9 +127,10 @@
           ></textarea>
 
           <!-- 🔹 Send Button -->
-          <button class="send-button" @click="sendMessage">
-            <i class="bi bi-send-fill"></i>
-          </button>
+        <button class="send-button" @click="sendMessage" :disabled="isLoading">
+        <i v-if="!isLoading" class="bi bi-send-fill"></i>
+        <span v-else class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        </button>
         </div>
       </div>
     </div>
@@ -160,6 +166,7 @@ const messagesContainer = ref(null);
 const userInput = ref('');
 const uploadedFiles = ref([]);
 const isDropdownOpen = ref(false);
+const isLoading = ref(false);
 
 // 🔹 Adjust textarea height dynamically
 console.log("🔍 Chat Store Initialized:", chatStore);
@@ -167,8 +174,25 @@ if (!chatStore) {
   console.error("❌ chatStore is undefined! Check if Pinia is initialized.");
 }
 
+
+// KENDRICK CHANGE - To prevent JSON data from appearing in AI responses
 const isValidPlantData = (content) => {
-  return content && typeof content === "object" && content.plantName;
+  // First, check if content is a string that looks like JSON
+  if (typeof content === 'string' && (content.startsWith('{') || content.startsWith('['))) {
+    try {
+      // Try to parse it as JSON
+      content = JSON.parse(content);
+    } catch (e) {
+      // If parsing fails, it's not valid JSON
+      return false;
+    }
+  }
+  
+  // Now check if the content (original or parsed) is a valid plant data object
+  return content && 
+         typeof content === "object" && 
+         content.plantName !== undefined &&
+         !Array.isArray(content);
 };
 
 const adjustTextarea = () => {
@@ -215,6 +239,7 @@ const triggerFileUpload = () => {
 
 // 🔹 Send Message (Handles Text & Image Upload)
 // Replace the sendMessage function with this:
+/*
 const sendMessage = async () => {
   if (!uploadedFiles.value.length && !userInput.value.trim()) return;
 
@@ -289,7 +314,101 @@ const sendMessage = async () => {
     console.error("❌ Chat API Error:", error);
   }
 };
+*/
 
+
+// KENDRICK CHANGE - NEW SEND MESSAGE TO INCLUDE FEEDBACK
+// 🔹 Send Message (Handles Text & Image Upload)
+const sendMessage = async () => {
+  if (!uploadedFiles.value.length && !userInput.value.trim()) return;
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+  
+  if (!user) {
+    console.error("🚫 User not authenticated");
+    return;
+  }
+
+  try {
+    isLoading.value = true; // Set loading to true at the start
+    const idToken = await user.getIdToken();
+
+    // Determine message type based on content
+    const hasImage = uploadedFiles.value.length > 0;
+    const userMessage = {
+      id: Date.now(),
+      type: hasImage && userInput.value.trim() ? "both" : 
+            (hasImage ? "image" : "text"),
+      content: userInput.value.trim(),
+      image: hasImage ? URL.createObjectURL(uploadedFiles.value[0].file) : null,
+      isUser: true,
+      timestamp: new Date(),
+    };
+
+    chatStore.sendMessage(userMessage);
+
+    const formData = new FormData();
+    formData.append("message", userInput.value.trim());
+
+    if (hasImage) {
+      formData.append("image", uploadedFiles.value[0].file);
+    }
+
+    formData.append("idToken", idToken);
+
+    // Save the current input value before clearing it
+    const currentInput = userInput.value;
+    
+    // Reset inputs immediately for better UX
+    uploadedFiles.value = [];
+    userInput.value = "";
+    
+    // Reset file input
+    if (fileInput.value) {
+      fileInput.value.value = "";
+    }
+    
+    await nextTick();
+    scrollToBottom();
+
+    // Perform the API call
+    const response = await axios.post("/api/chat/chat", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    console.log("📩 Received AI Response:", response.data.message);
+
+    const aiMessage = {
+      id: Date.now() + 1,
+      type: response.data.imageUrl ? (response.data.message ? "both" : "image") : "text",
+      content: response.data.message ? response.data.message : "I couldn't retrieve plant details.",
+      image: response.data.imageUrl || null,
+      imageUrl: response.data.imageUrl || null,
+      isUser: false,
+      timestamp: new Date(),
+      isResponseToImage: hasImage,
+    };
+
+    chatStore.sendMessage(aiMessage);
+    
+    await nextTick();
+    scrollToBottom();
+  } catch (error) {
+    console.error("❌ Chat API Error:", error);
+    
+    // Show an error message to the user
+    chatStore.sendMessage({
+      id: Date.now() + 1,
+      type: "text",
+      content: "Sorry, I encountered an error. Please try again later.",
+      isUser: false,
+      timestamp: new Date(),
+    });
+  } finally {
+    isLoading.value = false; // Set loading to false when done
+  }
+};
 
 // 🔹 Handle user sign-out
 const handleSignOut = async () => {
@@ -493,6 +612,72 @@ const addPlantToCollection = async (message) => {
 
 
 <style scoped>
+
+.text-message {
+  margin-bottom: 12px;
+  white-space: pre-wrap; /* Preserves whitespace and line breaks */
+  word-break: break-word; /* Prevents overflow of long words */
+}
+
+
+.formatted-plant-response {
+  background-color: rgba(52, 28, 2, 0.05);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.plant-title {
+  color: #072d13;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.scientific-name {
+  color: #666;
+  margin-bottom: 12px;
+  font-size: 0.9em;
+}
+
+.plant-info p {
+  margin-bottom: 6px;
+}
+
+
+/* Loading indicator styling */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #341c02; /* Dark brown color */
+  color: #F5E6D3; /* Cream color */
+  padding: 8px 16px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.loading-indicator .spinner-border {
+  color: #F5E6D3; /* Cream color for spinner */
+}
+
+/* Update the send button for the loading state */
+.send-button:disabled {
+  opacity: 0.6;
+}
+
+.send-button .spinner-border {
+  width: 1rem;
+  height: 1rem;
+  color: #341c02; /* Match the icon color */
+}
+
+
 
 .message-content {
   margin-bottom: 12px; /* Space between text and image */

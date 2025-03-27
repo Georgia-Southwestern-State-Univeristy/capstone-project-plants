@@ -102,6 +102,7 @@
             <div class="card-body">
               <h5 class="card-title">{{ plant.name }}</h5>
               <div class="plant-details-container">
+                <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Type:</span> {{ plant.sunlight }}</p>
                 <p class="plant-info"><span class="detail-emoji">🌿</span> <span class="detail-label">Type:</span> {{ plant.type }}</p>
                 <p class="plant-info"><span class="detail-emoji">💧</span> <span class="detail-label">Watering:</span> {{ plant.watering_schedule }}</p>
                 <p class="plant-info"><span class="detail-emoji">📅</span> <span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
@@ -143,6 +144,7 @@ export default {
       newPlant: {
         name: '',
         type: '',
+        sunlight: '',
         watering_schedule: '',
         last_watered: '',
         health_status: 'Healthy',
