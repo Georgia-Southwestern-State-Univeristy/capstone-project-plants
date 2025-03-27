@@ -310,8 +310,17 @@ export default {
 .plantboard-container {
   background-color: #072d13;
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
   padding: 30px;
   position: relative;
+}
+
+
+.plantboard-container .row {
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
 }
 
 .top-navigation {
@@ -456,8 +465,11 @@ export default {
 .row {
   display: flex;
   flex-wrap: wrap;
-  margin-right: -15px;
-  margin-left: -15px;
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  justify-content: flex-start;
 }
 
 .col {
@@ -467,18 +479,19 @@ export default {
   margin-bottom: 30px;
 }
 
-.row-cols-md-2 > .col {
-  flex: 0 0 50%;
-  max-width: 50%;
+/* Ensure proper 3-column grid */
+.row.row-cols-1.row-cols-md-2.row-cols-lg-3.g-4 > .col {
+  flex: 0 0 33.33% !important;
+  max-width: 33.33% !important;
+  width: 33.33% !important;
 }
 
-.row-cols-lg-3 > .col {
-  flex: 0 0 33.333333%;
-  max-width: 33.333333%;
-}
-
-.g-4 {
-  gap: 1.5rem;
+/* Adjust padding on columns to prevent overflow */
+.row.row-cols-1.row-cols-md-2.row-cols-lg-3.g-4 {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  margin: 0;
 }
 
 /* Fixed card dimensions */
@@ -487,7 +500,7 @@ export default {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 600px; /* Fixed height for all cards */
+  height: 500px; 
   min-width: 0;
   word-wrap: break-word;
   background-clip: border-box;
@@ -506,6 +519,7 @@ export default {
 .card.expanded {
   transform: none;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
 }
 
 .plant-card-front {
@@ -607,8 +621,10 @@ export default {
 
 .card-body {
   flex: 1 1 auto;
-  padding: 1.25rem;
+  padding: 0.5rem;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-title {
@@ -619,25 +635,28 @@ export default {
 }
 
 .plant-details-container {
-  height: 800px; /* Fixed height for details */
+  max-height: 180px;
   overflow-y: auto;
   margin-bottom: 0.5rem;
+  padding-right: 5px;
+  
+  /* Custom scrollbar styling */
   scrollbar-width: thin;
-  scrollbar-color: #072d13 #f0f0f0;
+  scrollbar-color: #072d13 transparent;
 }
 
+/* For Webkit browsers (Chrome, Safari, etc.) */
 .plant-details-container::-webkit-scrollbar {
   width: 5px;
 }
 
 .plant-details-container::-webkit-scrollbar-track {
-  background: #f0f0f0;
-  border-radius: 5px;
+  background: transparent;
 }
 
 .plant-details-container::-webkit-scrollbar-thumb {
   background-color: #072d13;
-  border-radius: 5px;
+  border-radius: 10px;
 }
 
 .plant-info {
@@ -656,7 +675,7 @@ export default {
 }
 
 .card-footer {
-  padding: 0.75rem 1.25rem;
+  padding: 0.2rem 1rem;
   background-color: rgba(0, 0, 0, 0.03);
   border-top: 1px solid rgba(0, 0, 0, 0.125);
 }
@@ -664,20 +683,30 @@ export default {
 .button-group {
   display: flex;
   justify-content: space-between;
+  min-width: 100%; /* Ensure full width */
+  gap: 8px; /* Add minimum gap between buttons */
 }
 
 .btn-edit, .btn-delete {
-  padding: 8px 15px;
-  border: none;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  flex: 1; /* Allow buttons to grow/shrink proportionally */
+  min-width: 60px; /* Ensure minimum width */
+  max-width: calc(50% - 4px); /* Prevent buttons from exceeding half the width minus gap */
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   border-radius: 5px;
-  cursor: pointer;
   font-weight: bold;
-  transition: all 0.2s;
 }
 
 .btn-edit {
   background-color: #072d13;
   color: white;
+  border-color:white;
+  border: solid;
+  
 }
 
 .btn-edit:hover {
@@ -687,6 +716,8 @@ export default {
 .btn-delete {
   background-color: #dc3545;
   color: white;
+  border-color: white;
+  border: solid;
 }
 
 .btn-delete:hover {
@@ -704,14 +735,14 @@ export default {
 }
 
 /* Responsive styles */
-@media (max-width: 991.98px) {
+@media (max-width: 992px) {
   .row-cols-lg-3 > .col {
     flex: 0 0 50%;
     max-width: 50%;
   }
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 768px) {
   .row-cols-md-2 > .col {
     flex: 0 0 100%;
     max-width: 100%;
@@ -737,6 +768,19 @@ export default {
   .card {
     height: 380px; /* Slightly smaller cards on mobile */
   }
+}
+
+@media (min-width: 992px) {
+  .col {
+    flex: 0 0 calc(33.333333% - 30px);
+    max-width: calc(33.333333% - 30px);
+    width: calc(33.333333% - 30px);
+  }
+}
+
+/* Increase space for plant details */
+.plant-details-container {
+  max-height: 210px; /* More space for details */
 }
 
 @media (max-width: 480px) {
