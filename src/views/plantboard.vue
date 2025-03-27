@@ -84,7 +84,7 @@
         :key="index" 
         class="col"
       >
-        <div class="card h-100" :class="{'expanded': expandedCardIndex === index}">
+        <div class="card" :class="{'expanded': expandedCardIndex === index}">
           <!-- Card Front (Image with overlay) -->
           <div class="plant-card-front" v-if="expandedCardIndex !== index" @click="toggleCardDetails(index)">
             <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" alt="Plant Image">
@@ -155,7 +155,7 @@ export default {
     }
   },
   mounted() {
-    // Load existing plants from local storage or API
+    // Load existing plants from database
     this.loadPlants();
   },
   methods: {
@@ -171,30 +171,6 @@ export default {
         const user = auth.currentUser;
         if (!user) {
           console.warn("User not logged in");
-          
-          // For development: load mock data if no user
-          this.plants = [
-            {
-              name: "Snake Plant",
-              type: "Sansevieria trifasciata",
-              watering_schedule: "Every 2-3 weeks",
-              sunlight: "Low to bright indirect light",
-              last_watered: new Date().toISOString().split('T')[0],
-              health_status: "Healthy",
-              notes: "Very hardy plant, perfect for beginners. Tolerates neglect well.",
-              image_url: "https://images.unsplash.com/photo-1572688484438-313a6e50c333?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80"
-            },
-            {
-              name: "Monstera",
-              type: "Monstera deliciosa",
-              watering_schedule: "Weekly",
-              sunlight: "Bright indirect light",
-              last_watered: new Date().toISOString().split('T')[0],
-              health_status: "Healthy",
-              notes: "Beautiful plant with distinctive leaf patterns. Avoid direct sunlight.",
-              image_url: "https://images.unsplash.com/photo-1614594975525-e45190c55d0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80"
-            }
-          ];
           return;
         }
 
@@ -216,7 +192,7 @@ export default {
           };
         });
 
-        this.plants = firebasePlants.length > 0 ? firebasePlants : this.plants;
+        this.plants = firebasePlants;
       } catch (error) {
         console.error("❌ Failed to load plants from Firestore:", error);
       }
@@ -476,7 +452,7 @@ export default {
   color: #333;
 }
 
-/* MDBootstrap Style Cards */
+/* MDBootstrap Style Cards with fixed dimensions */
 .row {
   display: flex;
   flex-wrap: wrap;
@@ -505,9 +481,13 @@ export default {
   gap: 1.5rem;
 }
 
+/* Fixed card dimensions */
 .card {
   position: relative;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 600px; /* Fixed height for all cards */
   min-width: 0;
   word-wrap: break-word;
   background-clip: border-box;
@@ -530,6 +510,7 @@ export default {
 
 .plant-card-front {
   position: relative;
+  width: 100%;
   height: 100%;
   cursor: pointer;
   border-radius: 0.5rem;
@@ -575,6 +556,7 @@ export default {
 
 .plant-card-back {
   position: relative;
+  width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -596,7 +578,7 @@ export default {
 
 .card-img-top {
   width: 100%;
-  height: 240px;
+  height: 200px; /* Fixed height for images */
   object-fit: cover;
 }
 
@@ -626,6 +608,7 @@ export default {
 .card-body {
   flex: 1 1 auto;
   padding: 1.25rem;
+  overflow: hidden;
 }
 
 .card-title {
@@ -636,7 +619,7 @@ export default {
 }
 
 .plant-details-container {
-  max-height: 200px;
+  height: 800px; /* Fixed height for details */
   overflow-y: auto;
   margin-bottom: 0.5rem;
   scrollbar-width: thin;
@@ -726,10 +709,6 @@ export default {
     flex: 0 0 50%;
     max-width: 50%;
   }
-  
-  .card-img-top {
-    height: 200px;
-  }
 }
 
 @media (max-width: 767.98px) {
@@ -753,6 +732,10 @@ export default {
   
   .your-plants-title {
     font-size: 1.7rem;
+  }
+  
+  .card {
+    height: 380px; /* Slightly smaller cards on mobile */
   }
 }
 
