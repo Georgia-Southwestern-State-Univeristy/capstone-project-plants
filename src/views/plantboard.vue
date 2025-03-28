@@ -333,12 +333,10 @@ export default {
   padding: 8px 12px;
   margin-right: 16px; /* Add more space after button */
   cursor: pointer;
+  font-weight: bold;
 }
 
-/* Hover effect for the button */
-.form-group input[type="file"]::file-selector-button:hover {
-  background-color: #4b9062; /* Slightly lighter green on hover */
-}
+
 
 
 
@@ -488,6 +486,7 @@ export default {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  font-weight: bold;
 }
 
 .btn-save {
@@ -496,7 +495,7 @@ export default {
 }
 
 .btn-cancel {
-  background-color: #f0f0f0;
+  background-color: #a2a6a3;
   color: #333;
 }
 
