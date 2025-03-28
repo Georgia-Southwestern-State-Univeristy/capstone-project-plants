@@ -316,6 +316,32 @@ export default {
 </script>
 
 <style scoped>
+
+/* Fix for the file input to prevent button cutoff */
+.form-group input[type="file"] {
+  padding: 20px;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Style just the "Choose file" button part */
+.form-group input[type="file"]::file-selector-button {
+  background-color: #072d13; /* Green button */
+  color: white; /* White text */
+  border: 1px solid white;
+  border-radius: 5px;
+  padding: 8px 12px;
+  margin-right: 16px; /* Add more space after button */
+  cursor: pointer;
+}
+
+/* Hover effect for the button */
+.form-group input[type="file"]::file-selector-button:hover {
+  background-color: #4b9062; /* Slightly lighter green on hover */
+}
+
+
+
 .plantboard-container {
   background-color: #072d13;
   min-height: 100vh;
@@ -411,11 +437,13 @@ export default {
 .upload-form {
   background-color: white;
   padding: 30px;
-  border-radius: 10px;
+  border-radius: 5px;
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #072d13 transparent;
 }
 
 
