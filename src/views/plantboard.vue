@@ -109,7 +109,7 @@
               <div class="plant-details-container">
                 
                 <p class="plant-info"><span class="detail-emoji">🌿</span> <span class="detail-label">Type:</span> {{ plant.type }}</p>
-                <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Sunlight</span> {{ plant.sunlight_schedule }}</p>
+                <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Sunlight:</span> {{ plant.sunlight_schedule }}</p>
                 <p class="plant-info"><span class="detail-emoji">💧</span> <span class="detail-label">Watering:</span> {{ plant.watering_schedule }}</p>
                 <p class="plant-info"><span class="detail-emoji">📅</span> <span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
                 <p class="plant-info"><span class="detail-emoji">❤️</span> <span class="detail-label">Health:</span> {{ plant.health_status }}</p>
@@ -418,6 +418,8 @@ export default {
   overflow-y: auto;
 }
 
+
+
 .form-group {
   margin-bottom: 15px;
 }
@@ -601,7 +603,7 @@ export default {
 
 .card-img-top {
   width: 100%;
-  height: 200px; /* Fixed height for images */
+  height: 180px; /* Fixed height for images */
   object-fit: cover;
 }
 
