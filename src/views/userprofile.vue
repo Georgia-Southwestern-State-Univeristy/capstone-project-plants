@@ -3,16 +3,16 @@
   <div class="profile-page">
   <section>
     <div class="container py-5">
-      <div class="row">
-        <div class="col">
-          <!-- For the navigation bar itself -->
-<nav aria-label="breadcrumb" class="custom-nav rounded-3 p-3 mb-4 d-flex justify-content-center" id="profile-nav">
-  <ol class="breadcrumb mb-0">
-    <li class="breadcrumb-item"><router-link to="/chat" id="return-link">Return to Chat</router-link></li>
-  </ol>
-</nav>
-        </div>
-      </div>
+      <!-- Replace the current breadcrumb navigation -->
+<div class="top-navigation">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><router-link to="/chat">Chat</router-link></li>
+      <li class="breadcrumb-item"><router-link to="/plantboard">Go to Plant Gallery</router-link></li>
+      <li class="breadcrumb-item"><router-link to="/login">Sign Out</router-link></li>
+    </ol>
+  </nav>
+</div>
 
       <div class="row" style="background-color: #F5E6D3;">
         <!-- Profile Image Column -->
@@ -181,51 +181,7 @@
           </div>
         </div>
 
-  <!-- Plants Section -->
-        <div class="col-12 mt-4">
-          <div class="card" style="border-width: 2px; border-color: #341c02;">
-            <div class="card-body">
-              <!-- Plants Heading -->
-              <h3 style="color: #072d13; font-weight: bold; margin-bottom: 20px;">Your Plants</h3>
-
-              <!-- Add Plant Button -->
-              <div class="mb-3">
-                <router-link to="/add" class="btn add-plant-btn" id="addButtonProfile">
-                  Add a New Plant
-                </router-link>
-              </div>
-
-              <!-- Loading Indicator -->
-              <div v-if="loading" class="text-center text-muted py-4">
-                <p>Loading your plants...</p>
-              </div>
-
-              <!-- Plants List -->
-              <div v-else-if="userPlants.length" class="plants-container">
-                <div v-for="plant in userPlants" :key="plant.id" class="plant-card">
-                  <!-- Plant Image -->
-                  <img 
-                    v-if="plant.imageUrl" 
-                    :src="plant.imageUrl" 
-                    class="plant-image img-fluid rounded" 
-                    alt="Plant Image"
-                  />
-                  
-                  <!-- Plant Info -->
-                  <div class="plant-info">
-                    <h4 class="plant-name">{{ plant.plantName }}</h4>
-                    <p><strong>Watering:</strong> {{ plant.wateringSchedule }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- No Plants Message -->
-              <div v-else class="text-center text-muted py-4">
-                <p>No plants added yet. Add your first plant to get started!</p>
-              </div>
-            </div>
-          </div>
-        </div>
+  
       </div>
     </div>
   </section>
@@ -393,8 +349,13 @@ export default {
       }
     };
     
-    
-
+    // KENDRICK CHANGE - added handleSignOut to add functionality to new
+    // sign out button on user profile
+      // 🔹 Handle user sign-out
+    const handleSignOut = async () => {
+    await authStore.logout();
+    router.push('/login');
+    };
 
     // ✅ Handle Profile Image Upload
     const handleImageUpload = async (event) => {
@@ -472,8 +433,9 @@ export default {
       savePasswordChange,
       cancelPasswordChange,
       toggleEdit,// KENDRICK - added toggleEdit to return section
-
-      // KENDRICK CHANGE - added function
+      handleSignOut, // KENDRICK CHANGE - added handleSignOut
+      authStore // KENDRICK CHANGE - added authStore
+     
 
 
       };
@@ -488,6 +450,8 @@ export default {
 
 /* Plant Card Styling */
 /* Plants container styling */
+
+/* Add this to your <style scoped> section */
 
 
 
@@ -640,14 +604,51 @@ export default {
 
  
 
-.custom-nav {
-  background-color: #341c02; 
+ 
+ .top-navigation {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: #341c02; /* Brown background */
+  padding: 8px 15px;
+  border-radius: 5px;
+  z-index: 10;
 }
 
-#profile-nav {
-  background-color: #341c02; 
-  width: 15%;
- 
+.breadcrumb {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb-item:not(:last-child)::after {
+  margin: 0 10px;
+  color: #F5E6D3; /* Cream color for the separator */
+}
+
+.breadcrumb-item a {
+  color: #F5E6D3; /* Cream color for the text */
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.breadcrumb-item a:hover {
+  text-decoration: underline;
+}
+
+/* Override any default margins/transforms that might be centering the element */
+
+
+@media (max-width: 768px) {
+  #profile-nav {
+    width: 100%;
+  }
 }
 
 #return-link {

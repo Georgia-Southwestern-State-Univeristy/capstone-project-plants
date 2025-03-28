@@ -6,7 +6,6 @@ import landing from '@/views/landing.vue'
 import login from '@/views/login.vue'
 import register from '@/views/register.vue'
 import chat from '@/views/chat.vue'
-import add from '@/views/addplant.vue'
 import { useAuthStore } from '@/store/authStore';  
 
 
@@ -16,7 +15,8 @@ const routes = [
   { path: '/register', name: 'Register', component: register, meta: { requiresGuest: true } },
   { path: '/chat', name: 'Chat', component: chat, /*meta: { requiresAuth: true }*/ }, 
   { path: '/userprofile', name: 'Profile', component: () => import('@/views/userprofile.vue'), /*meta: { requiresAuth: true }*/ },
-  { path: '/add', name: 'AddPlant', component: () => import('@/views/addplant.vue'), /* meta: { requiresAuth: true } */ }
+  {path: '/plantboard', name: 'Plantboard',  component: () => import('@/views/plantboard.vue'), /* meta: { requiresAuth: true } */ },
+  {path: '/forgot', name: 'Forgot',  component: () => import('@/views/forgot.vue'), /* meta: { requiresAuth: true } */}
 ]
 
 const router = createRouter({
