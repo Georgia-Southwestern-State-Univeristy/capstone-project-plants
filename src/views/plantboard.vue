@@ -37,6 +37,11 @@
           <label for="plantType">Plant Type</label>
           <input type="text" id="plantType" v-model="newPlant.type" class="form-control" placeholder="Enter plant type">
         </div>
+
+        <div class="form-group">
+          <label for="sunlightSchedule">Sunlight Schedule</label>
+          <input type="text" id="sunlightSchedule" v-model="newPlant.sunlight_schedule" class="form-control" placeholder="How often to water">
+        </div>
         
         <div class="form-group">
           <label for="wateringSchedule">Watering Schedule</label>
@@ -102,8 +107,9 @@
             <div class="card-body">
               <h5 class="card-title">{{ plant.name }}</h5>
               <div class="plant-details-container">
-                <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Type:</span> {{ plant.sunlight }}</p>
+                
                 <p class="plant-info"><span class="detail-emoji">🌿</span> <span class="detail-label">Type:</span> {{ plant.type }}</p>
+                <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Sunlight</span> {{ plant.sunlight_schedule }}</p>
                 <p class="plant-info"><span class="detail-emoji">💧</span> <span class="detail-label">Watering:</span> {{ plant.watering_schedule }}</p>
                 <p class="plant-info"><span class="detail-emoji">📅</span> <span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
                 <p class="plant-info"><span class="detail-emoji">❤️</span> <span class="detail-label">Health:</span> {{ plant.health_status }}</p>
@@ -144,7 +150,7 @@ export default {
       newPlant: {
         name: '',
         type: '',
-        sunlight: '',
+        sunlight_schedule: '',
         watering_schedule: '',
         last_watered: '',
         health_status: 'Healthy',
@@ -186,7 +192,7 @@ export default {
             name: data.plantName || "Unknown",
             type: data.scientificName || "Unknown",
             watering_schedule: data.wateringSchedule || "Unknown",
-            sunlight: data.sunlight || "Unknown",
+            sunlight_schedule: data.sunlight || "Unknown",
             last_watered: data.lastWatered || null,  // if you start tracking this
             health_status: "Healthy",  // default for now
             notes: data.commonIssues || "",
