@@ -40,12 +40,12 @@
 
         <div class="form-group">
           <label for="sunlightSchedule">Sunlight Schedule</label>
-          <input type="text" id="sunlightSchedule" v-model="newPlant.sunlight_schedule" class="form-control" placeholder="How often to water">
+          <input type="text" id="sunlightSchedule" v-model="newPlant.sunlight_schedule" class="form-control" placeholder="How often to leave in sunlight each day">
         </div>
         
         <div class="form-group">
           <label for="wateringSchedule">Watering Schedule</label>
-          <input type="text" id="wateringSchedule" v-model="newPlant.watering_schedule" class="form-control" placeholder="How often to water">
+          <input type="text" id="wateringSchedule" v-model="newPlant.watering_schedule" class="form-control" placeholder="How often to water each day">
         </div>
         
         <div class="form-group">
@@ -191,8 +191,8 @@ export default {
             id: doc.id,
             name: data.plantName || "Unknown",
             type: data.scientificName || "Unknown",
+            sunlight_schedule: data.sunlight_schedule || "Unknown",
             watering_schedule: data.wateringSchedule || "Unknown",
-            sunlight_schedule: data.sunlight || "Unknown",
             last_watered: data.lastWatered || null,  // if you start tracking this
             health_status: "Healthy",  // default for now
             notes: data.commonIssues || "",
@@ -223,6 +223,7 @@ export default {
       this.newPlant = {
         name: '',
         type: '',
+        sunlight_schedule: '',
         watering_schedule: '',
         last_watered: '',
         health_status: 'Healthy',
