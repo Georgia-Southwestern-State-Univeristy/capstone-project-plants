@@ -65,9 +65,7 @@
             </router-link>
           
 
-            <router-link class="btn-link" to="/chat">
-        <button class="btn btn-primary" id="chatButton" >Go to Chat</button>
-            </router-link>
+          
           </div>
         </div>
         
@@ -233,7 +231,7 @@ button#logInButton {
   color: #072d13;
   background-color: white;
   border: none;
-  width: 25%;
+  width: 28%;
   padding: 12px;
   display: flex; /* Claude AI */
   flex-direction: column; /* Claude AI */
@@ -248,8 +246,8 @@ button#logInButton {
 }
 
 button#createAccountButton {
-  width: 25%;
-  padding: 12px;
+  width: 28%;
+  padding: 20px;
   margin-top: 2rem; /* Claude AI */
   margin-left: 6rem; /* Claude AI */
   font-weight: bold;
@@ -264,6 +262,8 @@ button#createAccountButton {
   background-color: #072d13;
   border-color: white;
 }
+
+
 
 .button-container {
   display: flex; /* Claude AI */
