@@ -102,6 +102,10 @@
 
 <style scoped>
 
+
+
+
+
   a:link { 
   text-decoration: none; 
 } 
@@ -147,8 +151,8 @@ img#landingImagePlant {
 }
 
 .circular-container {
-  width: 400px;
-  height: 400px;
+  width: min(400px, 100%); /* Use the smaller of 400px or 100% of parent width */
+  height: min(400px, 100vw); /* Keep it circular by maintaining aspect ratio */
   border-radius: 50%;
   background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, rgba(144, 238, 144, 0.5) 100%);
   overflow: hidden;
@@ -157,19 +161,15 @@ img#landingImagePlant {
   align-items: center;
   border: 5px solid white;
   position: relative;
-  animation: float 6s ease-in-out infinite;
 }
 
 
 img#landingPageImage {
-  height: 400px;
-  width: 400px;
-  position: absolute;
-  left: 700px;
-  bottom: 500px;
-  top: 200px;
-  right: 5px;
+  max-width: 85%;
+  max-height: 85%;
+  object-fit: contain;
   animation: float 6s ease-in-out infinite;
+  transform-origin: center;
 }
 
 img#landingPageImageRim {
@@ -194,7 +194,7 @@ ul#promotionBullets{
   color: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin-top: 75px;
-  margin-left: 100px;
+  margin-left: 2.5rem;
   line-height: 2; /* Claude AI */
   font-size: clamp(0.875rem, 2vw, 1rem); /* Claude AI */
   margin-bottom: 2.5rem;
@@ -205,7 +205,7 @@ div#healthcareComment {
     background-color: #072d13;
     border-color: white;
     width: 20%;
-    margin-left: 100px;
+    margin-left: 2.5rem;
     text-align: center;
     font-weight: bold;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -215,6 +215,8 @@ div#healthcareComment {
     padding: 0.75rem 1.5rem;
     border-radius: 20px;
     margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
 }
 
 
@@ -231,8 +233,10 @@ button#logInButton {
   color: #072d13;
   background-color: white;
   border: none;
-  width: 28%;
-  padding: 12px;
+  padding-left: 35px;
+  padding-right: 35px;
+  padding-top: 10px;
+  padding-bottom: 10px;
   display: flex; /* Claude AI */
   flex-direction: column; /* Claude AI */
   gap: 1rem; /* Claude AI */
@@ -246,8 +250,10 @@ button#logInButton {
 }
 
 button#createAccountButton {
-  width: 28%;
-  padding: 20px;
+  padding-left: 35px;
+  padding-right: 35px;
+  padding-top: 10px;
+  padding-bottom: 10px;
   margin-top: 2rem; /* Claude AI */
   margin-left: 6rem; /* Claude AI */
   font-weight: bold;
@@ -261,6 +267,29 @@ button#createAccountButton {
   color: white;
   background-color: #072d13;
   border-color: white;
+  border: solid;
+}
+
+
+
+/* Add this to the <style scoped> section in landing.vue */
+.button-section .btn-link {
+  display: inline-block;
+  width: 28%; /* Match the width of your buttons */
+}
+
+.button-section button {
+  width: 100% !important; /* Override the 28% width in the original styles */
+  margin-left: 0 !important; /* Remove the margin from buttons */
+}
+
+/* Add a proper margin to the container instead */
+.button-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-left: 6rem; /* Move the left margin here */
+  gap: 2rem; /* This replaces the top margin between buttons */
 }
 
 
@@ -307,13 +336,25 @@ header#greenHeaderPlantPicture {
 
 div#landingPageContentBody{
   background-color: #072d13;
-  padding:clamp(1rem, 5vw, 4rem); /* Claude AI */
-  min-height: calc(100vh - 76px); /* Claude AI */
-  display: grid; /* Claude AI */
-  grid-template-columns:  minmax(300px, 1fr) minmax(300px, 1fr); /* Claude AI */
-  gap: var(--spacing-md); /* Claude AI */
-  align-items: left; /* Claude AI */
+  padding: clamp(1rem, 5vw, 4rem);
+  min-height: calc(100vh - 76px);
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr); /* Keep two columns */
+  gap: var(--spacing-md);
+  align-items: center;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 
+}
+
+.image-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
 }
 
 .content-section {
