@@ -2,10 +2,7 @@
     <div>
       <nav id="landingPageTitleBackground" class="navbar navbar-expand-lg navbar-dark">
         <div class="container px-5">
-          <div class="d-flex align-items-center">
-            <svg id="flowerLandingPage" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-flower3" viewBox="0 0 16 16">
-              <!-- SVG path from original -->
-            </svg>
+          <div class="d-flex align-items-center" id="titleNavHeader">
             <router-link id="landingPageTitle" class="navbar-brand" to="/">Verdure AI</router-link>
           </div>
 
@@ -106,6 +103,7 @@
 
 
 
+
   a:link { 
   text-decoration: none; 
 } 
@@ -194,10 +192,14 @@ ul#promotionBullets{
   color: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin-top: 75px;
-  margin-left: 2.5rem;
+  margin-left: 2rem;
   line-height: 2; /* Claude AI */
   font-size: clamp(0.875rem, 2vw, 1rem); /* Claude AI */
   margin-bottom: 2.5rem;
+  padding-left: 1.5rem; /* Add some padding for the bullets */
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
 }
 
 div#healthcareComment {
@@ -205,7 +207,7 @@ div#healthcareComment {
     background-color: #072d13;
     border-color: white;
     width: 20%;
-    margin-left: 2.5rem;
+    margin-left: 2rem;
     text-align: center;
     font-weight: bold;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -217,6 +219,7 @@ div#healthcareComment {
     margin-bottom: 2rem;
     display: flex;
     flex-direction: column;
+    align-self: flex-start;
 }
 
 
@@ -288,8 +291,9 @@ button#createAccountButton {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  margin-left: 6rem; /* Move the left margin here */
+  margin-left: 2rem; /* Move the left margin here */
   gap: 2rem; /* This replaces the top margin between buttons */
+  width: 100%
 }
 
 
@@ -383,9 +387,7 @@ div#landingPageContentBody{
     align-items: center;
   }
   
-  .button-section {
-    margin: 0 auto;
-  }
+  
   
   .image-section {
     margin-top: 2rem;
