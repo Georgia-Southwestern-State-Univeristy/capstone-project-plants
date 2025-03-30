@@ -96,7 +96,6 @@
                       </div>
                     </div>
 
-                    <!-- Terms of service checkbox -->
                     
 
                     <!-- Submit button -->
@@ -163,7 +162,6 @@ export default {
     const email = ref('');
     const password = ref('');
     const confirmPassword = ref('');
-    const termsAccepted = ref(false);
     const error = ref('');
     const isLoading = ref(false);
 
@@ -172,8 +170,8 @@ export default {
       return name.value.trim() &&
              email.value.trim() &&
              password.value &&
-             password.value === confirmPassword.value &&
-             termsAccepted.value;
+             password.value === confirmPassword.value;
+            
     });
 
     const handleRegister = async () => {
