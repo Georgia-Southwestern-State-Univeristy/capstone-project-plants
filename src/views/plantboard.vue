@@ -40,12 +40,12 @@
 
         <div class="form-group">
           <label for="sunlightSchedule">Sunlight Schedule</label>
-          <input type="text" id="sunlightSchedule" v-model="newPlant.sunlight_schedule" class="form-control" placeholder="How often to leave in sunlight each day">
+          <input type="text" id="sunlightSchedule" v-model="newPlant.sunlight_schedule" class="form-control" placeholder="How often should the plant be left in sunlight each day?">
         </div>
         
         <div class="form-group">
           <label for="wateringSchedule">Watering Schedule</label>
-          <input type="text" id="wateringSchedule" v-model="newPlant.watering_schedule" class="form-control" placeholder="How often to water each day">
+          <input type="text" id="wateringSchedule" v-model="newPlant.watering_schedule" class="form-control" placeholder="How often should the plant be watered each day?">
         </div>
         
         <div class="form-group">
@@ -55,11 +55,13 @@
         
         <div class="form-group">
           <label for="healthStatus">Health Status</label>
+          <div class="select-wrapper">
           <select id="healthStatus" v-model="newPlant.health_status" class="form-control">
             <option value="Healthy">Healthy</option>
             <option value="Needs Attention">Needs Attention</option>
             <option value="Critical">Critical</option>
           </select>
+        </div>
         </div>
         
         <div class="form-group">
@@ -241,7 +243,7 @@ export default {
     },
     async savePlant() {
       if (!this.newPlant.name) {
-        alert('Please enter a plant name');
+        alert('Please enter a plant name.');
         return;
       }
       
@@ -316,6 +318,39 @@ export default {
 </script>
 
 <style scoped>
+
+/* Custom select with chevron styling */
+.select-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.select-wrapper::after {
+  content: '\25BC'; /* Unicode for downward triangle */
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  pointer-events: none; /* Allows clicks to pass through to select */
+  font-size: 12px; /* Small chevron size */
+  color: black;
+}
+
+/* Style the select to make room for the chevron */
+.select-wrapper select {
+  appearance: none; /* Remove default arrow in modern browsers */
+  -webkit-appearance: none; /* For Safari */
+  -moz-appearance: none; /* For Firefox */
+  padding-right: 30px; /* Make room for the custom arrow */
+  cursor: pointer;
+}
+
+/* Hide default dropdown arrow in IE10+ */
+.select-wrapper select::-ms-expand {
+  display: none;
+}
+
 
 /* Fix for the file input to prevent button cutoff */
 .form-group input[type="file"] {
@@ -567,6 +602,9 @@ export default {
   cursor: pointer;
   border-radius: 0.5rem;
   overflow: hidden;
+  display: flex; /* Added for better centering */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
 }
 
 .plant-card-front img {
@@ -587,21 +625,31 @@ export default {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 15px; /* Slightly reduced padding */
   text-align: center;
+  box-sizing: border-box; /* Include padding in width calculation */
 }
 
 .overlay-title {
   color: white;
-  font-size: 1.75rem;
+  font-size: clamp(1rem, 5vw, 1.75rem); /* Responsive font size */
   margin-bottom: 10px;
   font-weight: bold;
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+  word-wrap: break-word; /* Allow text to wrap */
+  overflow-wrap: break-word;
+  max-width: 100%; /* Ensure text doesn't exceed container width */
+  padding: 0 10px; /* Add some horizontal padding */
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Limit to 2 lines if very long */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
 }
 
 .overlay-subtitle {
   color: white;
-  font-size: 1rem;
+  font-size: clamp(0.75rem, 3vw, 1rem); /* Responsive font size */
   opacity: 0.9;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
