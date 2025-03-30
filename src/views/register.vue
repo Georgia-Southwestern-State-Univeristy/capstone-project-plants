@@ -176,7 +176,7 @@ export default {
 
     const handleRegister = async () => {
       if (!isFormValid.value) {
-        error.value = 'Please fill all fields correctly and accept the terms';
+        error.value = 'Please fill all fields correctly.';
         return;
       }
 
@@ -218,7 +218,6 @@ export default {
       email,
       password,
       confirmPassword,
-      termsAccepted,
       error,
       isLoading,
       isFormValid,

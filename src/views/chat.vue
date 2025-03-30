@@ -234,8 +234,7 @@ const triggerFileUpload = () => {
   fileInput.value?.click();
 };
 
-// KENDRICK CHANGE - I edited the send message feature so the user can 
-// see both their text input and their picture upload within the same card.
+// KENDRICK CHANGE - ORIGINAL SEND MESSAGE FUNCTION COMMENTED OUT ON MARCH 29TH
 
 // 🔹 Send Message (Handles Text & Image Upload)
 // Replace the sendMessage function with this:
@@ -317,7 +316,7 @@ const sendMessage = async () => {
 */
 
 
-// KENDRICK CHANGE - NEW SEND MESSAGE TO INCLUDE FEEDBACK
+// KENDRICK CHANGE - NEW SEND MESSAGE FUNCTION DONE ON MARCH 29. 
 // 🔹 Send Message (Handles Text & Image Upload)
 const sendMessage = async () => {
   if (!uploadedFiles.value.length && !userInput.value.trim()) return;
@@ -530,7 +529,7 @@ const addPlantToCollection = async (message) => {
     console.log("🧪 image:", message.image);
 
     if (!authStore.isAuthenticated) {
-        alert("Please log in to add plants to your collection");
+        alert("Please log in to add plants to your collection.");
         router.push('/login');
         return;
     }
