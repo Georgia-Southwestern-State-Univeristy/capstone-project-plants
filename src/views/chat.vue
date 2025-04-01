@@ -574,13 +574,6 @@ const addPlantToCollection = async (message) => {
           idToken,
         });
 
-
-        if (message.image) {
-            const response = await fetch(message.image);
-            const blob = await response.blob();
-            formData.append("image", blob, "plant.jpg");
-        }
-
         console.log("🚀 Sending to /add-plant:", { plantName, aiResponse, idToken });
 
         // Send request to backend
