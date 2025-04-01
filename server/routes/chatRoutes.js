@@ -39,12 +39,8 @@ router.post("/chat", upload.single("image"), async (req, res) => {
 
             await file.save(req.file.buffer, { contentType: req.file.mimetype });
 
-            const [url] = await file.getSignedUrl({
-                action: 'read',
-                expires: '03-09-2030',
-            });
+            imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
 
-            imageUrl = url;
 
             plantLabels = await analyzeImage(req.file.buffer);
             if (plantLabels.length > 0) {
@@ -165,22 +161,23 @@ router.post("/add-plant", upload.single("image"), async (req, res) => {
         
 
         // ✅ Upload image if provided
-        if (req.file) {
-            imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
+        // if (req.file) {
+        //     imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
+        //     console.log("📸 Uploading plant image...");
+        //     const bucket = storage.bucket();
+        //     const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`;
+        //     const file = bucket.file(fileName);
+
+        //     await file.save(req.file.buffer, { contentType: req.file.mimetype });
+
+        //imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
+
+        // }
+        if (!imageUrl && req.file) {
             console.log("📸 Uploading plant image...");
-            const bucket = storage.bucket();
-            const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`;
-            const file = bucket.file(fileName);
-
-            await file.save(req.file.buffer, { contentType: req.file.mimetype });
-
-            const [url] = await file.getSignedUrl({
-                action: 'read',
-                expires: '03-09-2030',
-            });
-
-            imageUrl = url;
+            imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
         }
+        
 
         // ✅ Save plant card in `userPlants`
         const userPlantRef = db.collection("users").doc(userId).collection("userPlants").doc();

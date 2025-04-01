@@ -1,6 +1,6 @@
 <template>
     <div class="forgot-password-container">
-      <div class="card text-center" style="width: 300px;">
+      <div id="forgotCard" class="card text-center" style="width: 300px;">
         <div class="card-header h5 text-white bg-verdure">Password Reset</div>
         <div class="card-body px-5">
           <p class="card-text py-2">
@@ -14,9 +14,8 @@
               class="form-control my-3" 
               placeholder="Email address"
             />
-            <label class="form-label" for="typeEmail">Email input</label>
           </div>
-          <button @click="resetPassword" class="btn bg-verdure text-white w-100">Reset password</button>
+          <button @click="resetPassword" class="btn bg-verdure text-white w-100" id="resetButton">Reset password</button>
           <div class="d-flex justify-content-between mt-4">
             <router-link to="/login" class="verdure-link">Login</router-link>
             <router-link to="/register" class="verdure-link">Register</router-link>
@@ -65,6 +64,7 @@
     min-height: 100vh;
     background-color: #072d13;
     padding: 20px;
+    
   }
   
   .bg-verdure {
@@ -74,7 +74,7 @@
   .verdure-link {
     color: #072d13;
     text-decoration: none;
-    font-weight: 500;
+    font-weight: bold;
   }
   
   .verdure-link:hover {
@@ -82,6 +82,17 @@
   }
   
   .card {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    border-width: 10px;
+    border-color: white;
+  }
+
+  .card-header {
+    border-radius: 5px;
+
+  }
+
+  button#resetButton {
+    font-weight: bold;
   }
   </style>

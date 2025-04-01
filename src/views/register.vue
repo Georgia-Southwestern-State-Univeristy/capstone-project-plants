@@ -96,20 +96,7 @@
                       </div>
                     </div>
 
-                    <!-- Terms of service checkbox -->
-                    <div class="form-check d-flex justify-content-center mb-5">
-                      <input 
-                        class="form-check-input me-2" 
-                        type="checkbox"
-                        v-model="termsAccepted"
-                        id="form2Example3c" />
-                      <label 
-                        style="color:#072d13; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;" 
-                        class="form-check-label" 
-                        for="form2Example3">
-                        I agree all statements in <a style="color: #4a9161" href="#!">Terms of service</a>
-                      </label>
-                    </div>
+                    
 
                     <!-- Submit button -->
                     <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
@@ -117,7 +104,7 @@
                         type="submit" 
                         style="background-color: #072d13; border: none;"
                         class="btn btn-primary btn-lg"
-                        :disabled="isLoading || !isFormValid">
+                        >
                         {{ isLoading ? 'Registering...' : 'Register' }}
                       </button>
                     </div>
@@ -175,7 +162,6 @@ export default {
     const email = ref('');
     const password = ref('');
     const confirmPassword = ref('');
-    const termsAccepted = ref(false);
     const error = ref('');
     const isLoading = ref(false);
 
@@ -184,13 +170,13 @@ export default {
       return name.value.trim() &&
              email.value.trim() &&
              password.value &&
-             password.value === confirmPassword.value &&
-             termsAccepted.value;
+             password.value === confirmPassword.value;
+            
     });
 
     const handleRegister = async () => {
       if (!isFormValid.value) {
-        error.value = 'Please fill all fields correctly and accept the terms';
+        error.value = 'Please fill all fields correctly.';
         return;
       }
 
@@ -232,7 +218,6 @@ export default {
       email,
       password,
       confirmPassword,
-      termsAccepted,
       error,
       isLoading,
       isFormValid,

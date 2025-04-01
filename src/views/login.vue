@@ -59,8 +59,8 @@
                         {{ isLoading ? 'Logging in...' : 'Login' }}
                       </button>
                     </div>
-
-                    <!-- Google login button with original styling -->
+                     
+                    <!-- Google login button with original styling 
                     <div class="pt-1 mb-4">
                       <button 
                         type="button"
@@ -71,7 +71,7 @@
                         Sign in with Google
                       </button>
                     </div>
-
+                  -->
                     <router-link 
                       id="forgotPasswordButton" 
                       class="small" 
