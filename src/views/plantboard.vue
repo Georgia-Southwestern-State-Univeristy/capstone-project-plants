@@ -553,11 +553,13 @@ export default {
 }
 
 /* Ensure proper 3-column grid */
+/* Let Bootstrap handle responsive column sizes via classes */
 .row.row-cols-1.row-cols-md-2.row-cols-lg-3.g-4 > .col {
-  flex: 0 0 33.33% !important;
-  max-width: 33.33% !important;
-  width: 33.33% !important;
+  padding-left: 15px;
+  padding-right: 15px;
+  margin-bottom: 30px;
 }
+
 
 /* Adjust padding on columns to prevent overflow */
 .row.row-cols-1.row-cols-md-2.row-cols-lg-3.g-4 {
