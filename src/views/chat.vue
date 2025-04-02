@@ -190,9 +190,9 @@ const isValidPlantData = (content) => {
   
   // Now check if the content (original or parsed) is a valid plant data object
   return content && 
-         typeof content === "object" && 
-         content.plantName !== undefined &&
-         !Array.isArray(content);
+  typeof content === "object" && 
+  content.plantName !== undefined &&
+  !Array.isArray(content);
 };
 
 const adjustTextarea = () => {
@@ -234,86 +234,6 @@ const triggerFileUpload = () => {
   fileInput.value?.click();
 };
 
-// KENDRICK CHANGE - ORIGINAL SEND MESSAGE FUNCTION COMMENTED OUT ON MARCH 29TH
-
-// 🔹 Send Message (Handles Text & Image Upload)
-// Replace the sendMessage function with this:
-/*
-const sendMessage = async () => {
-  if (!uploadedFiles.value.length && !userInput.value.trim()) return;
-
-  const auth = getAuth();
-  const user = auth.currentUser;
-  
-  if (!user) {
-    console.error("🚫 User not authenticated");
-    return;
-  }
-
-  try {
-    const idToken = await user.getIdToken(); // ✅ Fetch latest token
-
-    // Determine message type based on content
-    const hasImage = uploadedFiles.value.length > 0;
-    const userMessage = {
-      id: Date.now(),
-      type: hasImage && userInput.value.trim() ? "both" : 
-      (hasImage ? "image" : "text"),
-      content: userInput.value.trim(),
-      image: hasImage ? URL.createObjectURL(uploadedFiles.value[0].file) : null,
-      isUser: true,
-      timestamp: new Date(),
-    };
-
-    chatStore.sendMessage(userMessage);
-
-    const formData = new FormData();
-    formData.append("message", userInput.value.trim());
-
-    if (hasImage) {
-      formData.append("image", uploadedFiles.value[0].file);
-    }
-
-    // ✅ Attach Firebase ID Token
-    formData.append("idToken", idToken);
-
-    const response = await axios.post("/api/chat/chat", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-
-    console.log("📩 Received AI Response:", response.data.message);
-
-    const aiMessage = {
-      id: Date.now() + 1,
-      type: response.data.imageUrl ? (response.data.message ? "both" : "image") : "text",
-      content: response.data.message ? response.data.message : "I couldn't retrieve plant details.",
-      image: response.data.imageUrl || null,
-      imageUrl: response.data.imageUrl || null, // ✅ Explicit storage
-      isUser: false,
-      timestamp: new Date(),
-      isResponseToImage: hasImage,
-    };
-
- 
-
-    chatStore.sendMessage(aiMessage);
-
-    // Reset inputs
-    uploadedFiles.value = [];
-    userInput.value = "";
-
-    // Reset file input to allow the same file to be selected again
-    if (fileInput.value) {
-      fileInput.value.value = ""; // This clears the file input
-    }
-
-    await nextTick();
-    scrollToBottom();
-  } catch (error) {
-    console.error("❌ Chat API Error:", error);
-  }
-};
-*/
 
 
 // KENDRICK CHANGE - NEW SEND MESSAGE FUNCTION DONE ON MARCH 29. 
@@ -525,79 +445,76 @@ const fetchLastAIResponse = async () => {
 
 const addPlantToCollection = async (message) => {
   
-    console.log("🧪 message received:", message);
-    console.log("🧪 image:", message.image);
+  console.log("🧪 message received:", message);
+  console.log("🧪 image:", message.image);
 
-    if (!authStore.isAuthenticated) {
-        alert("Please log in to add plants to your collection.");
-        router.push('/login');
-        return;
+  if (!authStore.isAuthenticated) {
+      alert("Please log in to add plants to your collection.");
+      router.push('/login');
+      return;
+  }
+
+  try {
+      // Fetch the latest AI response before adding the plant
+      const aiResponse = await fetchLastAIResponse();
+      if (!aiResponse) {
+          alert("No plant information found to add to collection.");
+          return;
+      }
+
+      const plantInfo = message.content;
+      let plantName = typeof plantInfo === "object" && plantInfo.plantName
+      ? plantInfo.plantName
+      : "Unknown Plant";
+
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+          alert("User is not logged in.");
+          return;
+      }
+      const idToken = await user.getIdToken();
+
+      // Create FormData for image upload
+      // const formData = new FormData();
+      // formData.append("plantName", plantName);
+      // formData.append("aiResponse", JSON.stringify(plantInfo));
+      // formData.append("idToken", idToken);
+      const imageUrl = message.imageUrl || message.image || null;
+      const formData = new FormData();
+
+      formData.append("imageUrl", imageUrl); // ✅ NEW
+      formData.append("aiResponse", JSON.stringify(aiResponse));
+      formData.append("idToken", idToken);
+      
+      console.log("🚀 Sending to /add-plant:", {
+        plantName,
+        aiResponse,
+        imageUrl,
+        idToken,
+      });
+
+      console.log("🚀 Sending to /add-plant:", { plantName, aiResponse, idToken });
+
+      // Send request to backend
+      const res = await fetch("/api/chat/add-plant", {
+          method: "POST",
+          body: formData,
+      });
+
+      const data = await res.json();
+
+    if (data.success) {
+      const confirmedPlantName = data.plantName || "your plant"; // Ensure a valid name is displayed
+      alert(`${confirmedPlantName} added to your plant collection!`);
+    } else {
+        alert("Failed to add plant to collection.");
     }
-
-    try {
-        // Fetch the latest AI response before adding the plant
-        const aiResponse = await fetchLastAIResponse();
-        if (!aiResponse) {
-            alert("No plant information found to add to collection.");
-            return;
-        }
-
-        const plantInfo = message.content;
-        let plantName = typeof plantInfo === "object" && plantInfo.plantName
-        ? plantInfo.plantName
-        : "Unknown Plant";
-
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (!user) {
-            alert("User is not logged in.");
-            return;
-        }
-        const idToken = await user.getIdToken();
-
-        // Create FormData for image upload
-        // const formData = new FormData();
-        // formData.append("plantName", plantName);
-        // formData.append("aiResponse", JSON.stringify(plantInfo));
-        // formData.append("idToken", idToken);
-        const imageUrl = message.imageUrl || message.image || null;
-        const formData = new FormData();
-
-        formData.append("imageUrl", imageUrl); // ✅ NEW
-        formData.append("aiResponse", JSON.stringify(aiResponse));
-        formData.append("idToken", idToken);
-        
-        console.log("🚀 Sending to /add-plant:", {
-          plantName,
-          aiResponse,
-          imageUrl,
-          idToken,
-        });
-
-        console.log("🚀 Sending to /add-plant:", { plantName, aiResponse, idToken });
-
-        // Send request to backend
-        const res = await fetch("/api/chat/add-plant", {
-            method: "POST",
-            body: formData,
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-    const confirmedPlantName = data.plantName || "your plant"; // Ensure a valid name is displayed
-    alert(`${confirmedPlantName} added to your plant collection!`);
-} else {
-    alert("Failed to add plant to collection.");
-}
-    } catch (error) {
-        console.error("Error adding plant to collection:", error);
-        alert("An error occurred while adding the plant.");
-    }
+  } catch (error) {
+      console.error("Error adding plant to collection:", error);
+      alert("An error occurred while adding the plant.");
+  }
 };
-
-
-
 
 
 </script>

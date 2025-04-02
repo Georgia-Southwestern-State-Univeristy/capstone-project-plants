@@ -849,12 +849,13 @@ export default {
 }
 
 /* Responsive styles */
-@media (max-width: 992px) {
-  .row-cols-lg-3 > .col {
+@media (max-width: 991.98px) {
+  .row-cols-md-3 > .col {
     flex: 0 0 50%;
     max-width: 50%;
   }
 }
+
 
 @media (max-width: 768px) {
   .row-cols-md-2 > .col {
@@ -906,4 +907,12 @@ export default {
     padding: 0 10px;
   }
 }
+@media (max-width: 768px) {
+  .row-cols-md-2 > .col,
+  .row-cols-lg-3 > .col {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+}
+
 </style>
