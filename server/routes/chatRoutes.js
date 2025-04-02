@@ -184,12 +184,13 @@ router.post("/add-plant", upload.single("image"), async (req, res) => {
         await userPlantRef.set({
             plantName,
             scientificName,
-            sunlight: summarySunlight,
+            sunlight_schedule: summarySunlight, // ✅ match frontend expectation
             wateringSchedule: summaryWatering,
             commonIssues,
             imageUrl,
             addedAt: new Date().toISOString(),
         });
+        
 
         console.log(`✅ [Firestore] Saved plant card for ${userId}: ${plantName}`);
 
