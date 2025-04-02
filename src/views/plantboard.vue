@@ -287,19 +287,45 @@ export default {
       this.resetForm();
       this.showUploadForm = false;
     },
-    deletePlant(index) {
-      if (confirm('Are you sure you want to delete this plant?')) {
-        this.plants.splice(index, 1);
-        localStorage.setItem('plants', JSON.stringify(this.plants));
-        // Reset expanded index if deleted card was expanded
-        if (this.expandedCardIndex === index) {
-          this.expandedCardIndex = null;
-        } else if (this.expandedCardIndex > index) {
-          // Adjust index if needed
-          this.expandedCardIndex--;
+
+    async deletePlant(index) {
+      if (!confirm('Are you sure you want to delete this plant?')) return;
+
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) {
+          alert("You must be logged in to delete a plant.");
+          return;
         }
+
+        const plantId = this.plants[index].id;
+
+        const res = await fetch(`/api/plants/users/${user.uid}/plants/${plantId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            idToken: await user.getIdToken(),
+            plantId: plantId
+          }),
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+          this.plants.splice(index, 1);
+          alert("Plant deleted successfully.");
+        } else {
+          alert("Failed to delete plant. Try again.");
+        }
+      } catch (error) {
+        console.error("❌ Failed to delete plant:", error);
+        alert("An error occurred while deleting the plant.");
       }
     },
+
     editPlant(index) {
       const plant = this.plants[index];
       this.newPlant = { ...plant };

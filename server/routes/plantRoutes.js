@@ -5,7 +5,7 @@ import { db } from '../utils/firebaseAdmin.js';
 const router = express.Router();
 
 /**
- * ✅ GET /plants/perenual/:plantId
+ *⚙️  GET /plants/perenual/:plantId
  * Fetch plant details from the Perenual API
  */
 
@@ -27,7 +27,7 @@ router.get('/plants/perenual/:plantId', async (req, res) => {
 });
 
 /**
- * GET /users/:userId/plants - Retrieve all plants saved by a user
+ *⚙️  GET /users/:userId/plants - Retrieve all plants saved by a user
  */
 router.get('/users/:userId/plants', async (req, res) => {
     const { userId } = req.params;
@@ -42,7 +42,7 @@ router.get('/users/:userId/plants', async (req, res) => {
 });
 
 /**
- * GET /users/:userId/plants/:plantId - Fetch plant from Perenual API and store in Firestore
+ *⚙️  GET /users/:userId/plants/:plantId - Fetch plant from Perenual API and store in Firestore
  */
 router.get('/users/:userId/plants/:plantId', async (req, res) => {
     const { userId, plantId } = req.params;
@@ -61,7 +61,7 @@ router.get('/users/:userId/plants/:plantId', async (req, res) => {
 });
 
 /**
- * POST /users/:userId/plants - Add a new plant manually
+ *⚙️  POST /users/:userId/plants - Add a new plant manually
  */
 router.post('/users/:userId/plants', async (req, res) => {
     const { userId } = req.params;
@@ -83,5 +83,22 @@ router.post('/users/:userId/plants', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+/**
+ *⚙️  DELETE /users/:userId/plants/:plantId - Delete a user's plant
+ */
+router.delete('/users/:userId/plants/:plantId', async (req, res) => {
+    const { userId, plantId } = req.params;
+
+    try {
+        const plantRef = db.collection('users').doc(userId).collection('userPlants').doc(plantId);
+        await plantRef.delete();
+        res.status(200).json({ success: true, message: 'Plant deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting plant:', error);
+        res.status(500).json({ success: false, message: 'Failed to delete plant.' });
+    }
+});
+
 
 export default router;
