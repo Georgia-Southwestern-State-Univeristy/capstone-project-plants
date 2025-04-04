@@ -1,7 +1,8 @@
-const sgMail = require('@sendgrid/mail');
-const functions = require('firebase-functions');
+import sgMail from '@sendgrid/mail';
+import { config } from 'firebase-functions';
 
-sgMail.setApiKey(functions.config().sendgrid.key);
+
+sgMail.setApiKey(config().sendgrid.key);
 
 /**
  * Send a watering reminder email
@@ -9,7 +10,8 @@ sgMail.setApiKey(functions.config().sendgrid.key);
  * @param {Array<string>} plants - list of plant names needing watering
  */
 
-function sendWateringReminder(to, plants) {
+
+export async function sendWateringReminder(to, plants) {
   const html = `
     <div style="font-family: Arial, sans-serif; padding: 24px;">
       <h2>🌿 Watering Reminder</h2>
@@ -32,11 +34,6 @@ function sendWateringReminder(to, plants) {
     html
   };
 
-  return sgMail.send(msg);
-}
-  
-  
-
   try {
     await sgMail.send(msg);
     console.log(`✅ Sent watering reminder to ${to}`);
@@ -44,7 +41,3 @@ function sendWateringReminder(to, plants) {
     console.error(`❌ Failed to send email to ${to}:`, error);
   }
 }
-
-module.exports = {
-  sendWateringReminder
-};
