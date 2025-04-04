@@ -2,8 +2,8 @@ import express from 'express';
 
 import { getAuth } from 'firebase-admin/auth'; // Fix for 'auth' is not defined
 import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth'; // Fix missing imports
-import { registerWithEmail, loginWithEmail, resetPassword } from '../services/authService.js';
-import { googleClient } from '../utils/firebaseAdmin.js'; // Ensure googleClient is defined in firebase.js
+import { registerWithEmail, loginWithEmail, resetPassword } from '../functions/services/authService.js';
+import { googleClient } from '../config/firebaseAdmin.js'; // Ensure googleClient is defined in firebase.js
 
 const router = express.Router();
 const auth = getAuth(); // Firebase Admin SDK Auth Instance

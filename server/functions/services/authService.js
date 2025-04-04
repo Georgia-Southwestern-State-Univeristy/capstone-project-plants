@@ -1,4 +1,4 @@
-import { auth, db } from '../utils/firebaseAdmin.js'; // Import Firestore instance
+import { auth, db } from '../../config/firebaseAdmin.js'; // Import Firestore instance
 
 // ✅ Register User & Store in Firestore
 export const registerWithEmail = async (email, password, name) => {

@@ -1,12 +1,12 @@
 import express from 'express';
 import multer from 'multer';
-import { analyzeImage } from '../services/visionService.js';
-import { fetchPlantFromPerenual, analyzePlantHealth } from '../services/perenualService.js';
-import { generateGeminiResponse } from '../services/geminiService.js';
-import { verifyFirebaseToken } from '../utils/firebaseAdmin.js'; // ✅ Ensure correct import
+import { analyzeImage } from '../functions/services/visionService.js';
+import { fetchPlantFromPerenual, analyzePlantHealth } from '../functions/services/perenualService.js';
+import { generateGeminiResponse } from '../functions/services/geminiService.js';
+import { verifyFirebaseToken } from '../config/firebaseAdmin.js'; // ✅ Ensure correct import
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { uploadImageToStorage } from "../services/storage.js";
+import { uploadImageToStorage } from "../config/storage.js";
 
 
 const router = express.Router();

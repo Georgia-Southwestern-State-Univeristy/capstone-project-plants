@@ -4,7 +4,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { OAuth2Client } from 'google-auth-library';
-import { logger } from '../services/logging.js';
+import { logger } from '../functions/services/loggingService.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
