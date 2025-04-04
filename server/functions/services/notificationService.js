@@ -9,41 +9,32 @@ sgMail.setApiKey(functions.config().sendgrid.key);
  * @param {Array<string>} plants - list of plant names needing watering
  */
 
+function sendWateringReminder(to, plants) {
+  const html = `
+    <div style="font-family: Arial, sans-serif; padding: 24px;">
+      <h2>🌿 Watering Reminder</h2>
+      <p>The following plants need watering today:</p>
+      ${plants.map(p => `
+        <div style="display: flex; align-items: center; margin-bottom: 12px;">
+          <img src="${p.imageUrl}" alt="${p.name}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; margin-right: 10px;" />
+          <strong style="font-size: 16px;">${p.name}</strong>
+        </div>
+      `).join('')}
+      <p>Keep up the great work caring for your plants! 💧🌱</p>
+    </div>
+  `;
 
-async function sendWateringReminder(to, plants) {
   const msg = {
     to,
     from: 'yourbot@verdue.ai',
-    subject: '🌱 Don’t Forget to Water Your Plants!',
-    text: `The following plants need watering:\n${plants.join('\n')}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; padding: 24px; max-width: 600px; margin: auto; background: #f9f9f9; border-radius: 12px; border: 1px solid #e0e0e0;">
-        <div style="text-align: center;">
-          <img src="https://i.imgur.com/xWDIK3K.png" alt="Verdue Logo" style="width: 80px; margin-bottom: 12px;" />
-          <h2 style="color: #072d13;">🌿 Watering Reminder</h2>
-        </div>
-  
-        <p style="font-size: 16px; color: #333;">Hello plant parent,</p>
-        <p style="font-size: 15px; color: #333;">
-          The following plants in your Verdue collection need watering today:
-        </p>
-  
-        <ul style="font-size: 15px; color: #072d13; margin-left: 20px;">
-          ${plants.map(p => `<li>${p}</li>`).join('')}
-        </ul>
-  
-        <p style="font-size: 15px; color: #333;">
-          Make sure to give them the love they need. 💧🌞
-        </p>
-  
-        <div style="margin-top: 30px; font-size: 13px; color: #999; border-top: 1px solid #ddd; padding-top: 10px;">
-          You’re receiving this reminder because you signed up for plant care updates on <strong>Verdue</strong>.
-          <br/>
-          <a href="https://your-app.vercel.app/settings" style="color: #999;">Manage your notifications</a>
-        </div>
-      </div>
-    `
+    subject: '🪴 Your Plants Need Watering Today!',
+    text: `Your plants need water!`,
+    html
   };
+
+  return sgMail.send(msg);
+}
+  
   
 
   try {
