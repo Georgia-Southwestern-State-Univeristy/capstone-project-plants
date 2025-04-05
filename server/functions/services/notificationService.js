@@ -1,8 +1,11 @@
 import sgMail from '@sendgrid/mail';
-import { config } from 'firebase-functions';
+import  config  from 'firebase-functions';
+import  dotenv  from 'dotenv';
 
 
-sgMail.setApiKey(config().sendgrid.key);
+dotenv.config();
+sgMail.setApiKey(process.env.SENDGRID_API_KEY || config().sendgrid.key);
+
 
 /**
  * Send a watering reminder email
@@ -28,7 +31,7 @@ export async function sendWateringReminder(to, plants) {
 
   const msg = {
     to,
-    from: 'yourbot@verdue.ai',
+    from: 'verdueai@gmail.com',
     subject: '🪴 Your Plants Need Watering Today!',
     text: `Your plants need water!`,
     html
