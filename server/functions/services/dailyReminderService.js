@@ -22,21 +22,24 @@ async function sendDailyWateringReminders() {
       .collection('userPlants')
       .get();
 
-    const reminders = [];
+      const reminders = [];
 
-    plantSnapshot.forEach((doc) => {
-      const plant = doc.data();
-      if (!plant.lastWatered || !plant.wateringSchedule) return;
-
-      const last = new Date(plant.lastWatered);
-      const now = new Date();
-      const daysSince = Math.floor((now - last) / (1000 * 60 * 60 * 24));
-
-      if (daysSince >= plant.wateringSchedule) {
-        reminders.push(plant.plantName || 'Unnamed Plant');
-      }
-    });
-
+      plantSnapshot.forEach((doc) => {
+        const plant = doc.data();
+        if (!plant.lastWatered || !plant.wateringSchedule) return;
+      
+        const last = new Date(plant.lastWatered);
+        const now = new Date();
+        const daysSince = Math.floor((now - last) / (1000 * 60 * 60 * 24));
+      
+        if (daysSince >= plant.wateringSchedule) {
+          reminders.push({
+            name: plant.plantName || 'Unnamed Plant',
+            imageUrl: plant.imageUrl || 'https://via.placeholder.com/120?text=No+Image'
+          });
+        }
+      });
+      
     if (reminders.length > 0) {
       await sendWateringReminder(userEmail, reminders);
     }

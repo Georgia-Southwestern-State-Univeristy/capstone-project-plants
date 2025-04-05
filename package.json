@@ -8,8 +8,6 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles"
-
-
   },
   "dependencies": {
     "@google-cloud/logging": "^11.2.0",
@@ -17,6 +15,7 @@
     "@google-cloud/vision": "^4.3.2",
     "@googleapis/vision": "^1.5.2",
     "@mdi/font": "^7.4.47",
+    "@sendgrid/mail": "^8.1.4",
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@tensorflow-models/mobilenet": "^2.1.1",
     "@tensorflow/tfjs": "^4.22.0",
@@ -31,6 +30,7 @@
     "express": "^4.21.2",
     "firebase": "^11.2.0",
     "firebase-admin": "^13.1.0",
+    "firebase-functions": "^6.3.2",
     "google-auth-library": "^9.15.1",
     "http2": "^3.3.7",
     "multer": "^1.4.5-lts.1",

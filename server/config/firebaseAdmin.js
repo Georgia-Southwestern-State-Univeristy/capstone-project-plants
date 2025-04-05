@@ -10,21 +10,21 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-// ✅ Initialize Firebase Admin SDK (Server Only)
+// ✅ Initialize Firebase Admin SDK 
 const app = initializeApp({
   credential: cert(serviceAccount),
   storageBucket: process.env.VITE_APP_FIREBASE_STORAGE_BUCKET, 
 });
 
-const auth = getAuth(app); // Firebase Admin Auth (for backend authentication)
+const auth = getAuth(app); 
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// ✅ Google OAuth Client for verifying Google Sign-In tokens
+
 const googleClient = new OAuth2Client(process.env.VITE_APP_GOOGLE_OAUTH_CLIENT_ID);
 
 /**
- * ✅ Verify Firebase ID Token (Google Sign-In Flow)
+ * ✅ Verify Firebase ID Token 
  * @param {string} idToken - Firebase ID Token from frontend
  * @returns {object} - Decoded Firebase user information
  */
@@ -41,18 +41,18 @@ export const verifyFirebaseToken = async (idToken) => {
 
 /**
  * ✅ Handle Google Sign-In via Backend
- * @param {string} idToken - Google ID token from frontend
+ * @param {string} 
  * @returns {object} - Firebase user credentials
  */
 export const authenticateGoogleUser = async (idToken) => {
   try {
-    // Verify the Google ID Token
+    // Verify the Google ID token
     const decodedToken = await auth.verifyIdToken(idToken);
 
     // Get user details
     const { uid, email, name, picture } = decodedToken;
 
-    // Optionally, create or update user record in Firestore
+    
     const userRef = db.collection('users').doc(uid);
     const userDoc = await userRef.get();
 
