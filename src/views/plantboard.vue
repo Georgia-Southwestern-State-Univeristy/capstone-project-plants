@@ -39,13 +39,31 @@
         </div>
 
         <div class="form-group">
-          <label for="sunlightSchedule">Sunlight Schedule</label>
-          <input type="text" id="sunlightSchedule" v-model="newPlant.sunlight_schedule" class="form-control" placeholder="How often should the plant be left in sunlight each day?">
+        <label for="sunlightSchedule">Sunlight Schedule</label>
+          <div class="select-wrapper">
+            <select id="sunlightSchedule" v-model="newPlant.sunlight_schedule" class="form-control">
+              <option disabled value="">-- Select sunlight level --</option>
+              <option value="Full Sun">Full Sun (6+ hrs/day)</option>
+              <option value="Partial Sun">Partial Sun (4–6 hrs/day)</option>
+              <option value="Partial Shade">Partial Shade (2–4 hrs/day)</option>
+              <option value="Full Shade">Full Shade (little to no direct sun)</option>
+            </select>
+          </div>
         </div>
         
         <div class="form-group">
-          <label for="wateringSchedule">Watering Schedule</label>
-          <input type="text" id="wateringSchedule" v-model="newPlant.watering_schedule" class="form-control" placeholder="How often should the plant be watered each day?">
+        <label for="wateringSchedule">Watering Schedule</label>
+          <div class="select-wrapper">
+            <select id="wateringSchedule" v-model="newPlant.watering_schedule" class="form-control">
+              <option disabled value="">-- Select watering frequency --</option>
+              <option value="1">Every day</option>
+              <option value="2">Every 2 days</option>
+              <option value="3">Every 3 days</option>
+              <option value="4">Every 4 days</option>
+              <option value="5">Every 5 days</option>
+              <option value="7">Once a week</option>
+            </select>
+          </div>
         </div>
         
         <div class="form-group">
@@ -57,6 +75,7 @@
           <label for="healthStatus">Health Status</label>
           <div class="select-wrapper">
           <select id="healthStatus" v-model="newPlant.health_status" class="form-control">
+            <option disabled value="">-- Select health status --</option>
             <option value="Healthy">Healthy</option>
             <option value="Needs Attention">Needs Attention</option>
             <option value="Critical">Critical</option>
@@ -108,6 +127,20 @@
             
             <div class="card-body">
               <h5 class="card-title">{{ plant.name }}</h5>
+              <!-- Water Level Visual -->
+              <div class="water-bar-container">
+                <div
+                  class="water-bar"
+                  :style="{
+                    width: waterLevels[index] + '%',
+                    backgroundColor: waterLevels[index] > 50
+                      ? '#4fc3f7'
+                      : (waterLevels[index] > 25 ? '#fdd835' : '#e53935')
+                  }"
+                  :title="'Water level: ' + calculateWaterLevel(plant) + '%'"
+                ></div>
+              </div>
+
               <div class="plant-details-container">
                 
                 <p class="plant-info"><span class="detail-emoji">🌿</span> <span class="detail-label">Type:</span> {{ plant.type }}</p>
@@ -117,6 +150,7 @@
                 <p class="plant-info"><span class="detail-emoji">❤️</span> <span class="detail-label">Health:</span> {{ plant.health_status }}</p>
                 <p class="plant-info"><span class="detail-emoji">📝</span> <span class="detail-label">Notes:</span> {{ plant.notes || 'No notes added yet.' }}</p>
               </div>
+              
             </div>
             
             <div class="card-footer">
@@ -140,7 +174,9 @@
 <script>
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { db } from '@/utils/firebase'; // update based on your setup
+import { db } from '@/utils/firebase'; 
+
+
 
 export default {
   name: 'plantBoard',
@@ -168,7 +204,31 @@ export default {
     // Load existing plants from database
     this.loadPlants();
   },
+  computed: {
+    waterLevels() {
+      return this.plants.map(plant => {
+        const lastWatered = new Date(plant.last_watered);
+        const today = new Date();
+        const schedule = Number(plant.watering_schedule) || 3;
+
+        const daysSince = Math.floor((today - lastWatered) / (1000 * 60 * 60 * 24));
+        const percent = Math.max(0, 100 - (daysSince / schedule) * 100);
+        return Math.round(Math.min(percent, 100));
+      });
+    }
+  },
+
   methods: {
+    calculateWaterLevel(plant) {
+    console.log("🌱 Last watered:", plant.last_watered);
+    const lastWatered = new Date(plant.last_watered);
+    const today = new Date();
+    const schedule = Number(plant.watering_schedule) || 3;
+
+    const daysSince = Math.floor((today - lastWatered) / (1000 * 60 * 60 * 24));
+    const percent = Math.max(0, 100 - (daysSince / schedule) * 100);
+    return Math.round(Math.min(percent, 100));
+   },
     toggleCardDetails(index) {
       this.expandedCardIndex = index;
     },
@@ -195,7 +255,7 @@ export default {
             type: data.scientificName || "Unknown",
             sunlight_schedule: data.sunlight_schedule || "Unknown",
             watering_schedule: data.wateringSchedule || "Unknown",
-            last_watered: data.lastWatered || null,  // if you start tracking this
+            last_watered: data.lastWatered || new Date().toISOString(),  
             health_status: "Healthy",  // default for now
             notes: data.commonIssues || "",
             image_url: data.imageUrl || "https://images.unsplash.com/photo-1520412099551-62b6bafeb5bb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80",
@@ -246,47 +306,51 @@ export default {
         alert('Please enter a plant name.');
         return;
       }
-      
-      // Create a copy of the plant object
-      const plantToSave = { ...this.newPlant };
-      
-      // Handle image upload
-      if (this.newPlant.image) {
-        try {
-          // If using a backend, upload the image and get URL
-          // const imageUrl = await this.uploadImageToServer(this.newPlant.image);
-          // plantToSave.image_url = imageUrl;
-          
-          // For demo purposes, we'll just use a dataURL
-          plantToSave.image_url = this.previewImage;
-        } catch (error) {
-          console.error('Failed to upload image:', error);
-          alert('Failed to upload image. Please try again.');
-          return;
+
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        alert('You must be logged in to save a plant.');
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+
+        formData.append("plantName", this.newPlant.name);
+        formData.append("scientificName", this.newPlant.type);
+        formData.append("sunlight", this.newPlant.sunlight_schedule);
+        formData.append("wateringSchedule", this.newPlant.watering_schedule);
+        formData.append("lastWatered", this.newPlant.last_watered || new Date().toISOString());
+        formData.append("health_status", this.newPlant.health_status);
+        formData.append("notes", this.newPlant.notes || "");
+        formData.append("idToken", await user.getIdToken());
+
+        if (this.newPlant.image) {
+          formData.append("image", this.newPlant.image);
         }
-      } else if (!plantToSave.image_url) {
-        // Set a default image if none provided
-        plantToSave.image_url = "https://images.unsplash.com/photo-1520412099551-62b6bafeb5bb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80";
+
+        const res = await fetch("/api/chat/add-plant", {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+          alert("🌱 Plant added!");
+          this.resetForm();
+          this.showUploadForm = false;
+          this.loadPlants(); // Reload to reflect the new addition
+        } else {
+          throw new Error(result.error || "Unknown error");
+        }
+      } catch (error) {
+        console.error("❌ Failed to save plant:", error);
+        alert("Failed to save plant.");
       }
-      
-      // Remove the file object before saving
-      delete plantToSave.image;
-      
-      if (this.editingIndex !== null) {
-        // Update existing plant
-        this.plants[this.editingIndex] = plantToSave;
-      } else {
-        // Add new plant
-        this.plants.push(plantToSave);
-      }
-      
-      // Save to local storage for persistence
-      localStorage.setItem('plants', JSON.stringify(this.plants));
-      
-      // Reset form and hide it
-      this.resetForm();
-      this.showUploadForm = false;
     },
+
 
     async deletePlant(index) {
       if (!confirm('Are you sure you want to delete this plant?')) return;
@@ -848,6 +912,20 @@ export default {
   color: white;
 }
 
+.water-bar-container {
+  width: 100%;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.water-bar {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
 /* Responsive styles */
 @media (max-width: 991.98px) {
   .row-cols-md-3 > .col {
@@ -884,6 +962,7 @@ export default {
     height: 380px; /* Slightly smaller cards on mobile */
   }
 }
+
 
 @media (min-width: 992px) {
   .col {

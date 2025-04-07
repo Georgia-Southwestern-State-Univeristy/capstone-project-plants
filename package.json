@@ -13,6 +13,7 @@
     "@google-cloud/logging": "^11.2.0",
     "@google-cloud/storage": "^7.15.0",
     "@google-cloud/vision": "^4.3.2",
+    "@google/generative-ai": "^0.24.0",
     "@googleapis/vision": "^1.5.2",
     "@mdi/font": "^7.4.47",
     "@sendgrid/mail": "^8.1.4",

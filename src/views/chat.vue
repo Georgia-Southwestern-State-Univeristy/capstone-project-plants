@@ -47,7 +47,7 @@
   <p class="scientific-name"><i>{{ msg.content.scientificName }}</i></p>
 
   <div class="plant-info">
-    <p><strong>☀️ Sunlight:</strong> {{ msg.content.sunlightSchedule }}</p>
+    <p><strong>☀️ Sunlight:</strong> {{ msg.content.sunlight }}</p>
     <p><strong>💧 Watering:</strong> {{ msg.content.wateringSchedule }}</p>
     <p><strong>🌱 Soil Type:</strong> {{ msg.content.soilType }}</p>
     <p><strong>📈 Growth Habit:</strong> {{ msg.content.growthHabit }}</p>

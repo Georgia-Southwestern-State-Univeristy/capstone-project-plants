@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { analyzeImage } from '../functions/services/visionService.js';
 import { fetchPlantFromPerenual, analyzePlantHealth } from '../functions/services/perenualService.js';
-import { generateGeminiResponse } from '../functions/services/geminiService.js';
+import { generateGeminiResponseWithImage } from '../functions/services/geminiService.js';
 import { verifyFirebaseToken } from '../config/firebaseAdmin.js'; // ✅ Ensure correct import
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
@@ -13,7 +13,6 @@ const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 const db = getFirestore();
 const storage = getStorage();
-
 
 router.post("/chat", upload.single("image"), async (req, res) => {
     try {
@@ -27,31 +26,26 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         const userId = user.uid;
 
         let userMessage = message || "";
-        let plantLabels = [];
         let plantName = "Unknown Plant";
         let imageUrl = null;
+        let aiResponse = null;
 
         if (req.file) {
-            imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
-            const bucket = storage.bucket();
-            const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`;
-            const file = bucket.file(fileName);
-
-            await file.save(req.file.buffer, { contentType: req.file.mimetype });
-
+            console.log("📸 Uploading plant image...");
             imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
 
+            // ✅ Directly send image buffer to Gemini Vision
+            const base64Image = req.file.buffer.toString('base64');
+            aiResponse = await generateGeminiResponseWithImage(base64Image);
 
-            plantLabels = await analyzeImage(req.file.buffer);
-            if (plantLabels.length > 0) {
-                plantName = plantLabels[0].description;
-                userMessage += ` My plant looks like: ${plantName}.`;
-            }
+            plantName = aiResponse.plantName || "Unknown Plant";
+
+            userMessage += ` Here's an image of my plant. Can you tell me what it is?`;
+        } else {
+            return res.status(400).json({ error: "No image uploaded." });
         }
 
-        const fullPrompt = `I uploaded an image of a plant that looks like a ${plantName}.`;
-        const aiResponse = await generateGeminiResponse(fullPrompt);
-
+        // ✅ Save full chat entry to Firestore
         const chatRef = db.collection("users").doc(userId).collection("chats").doc();
         await chatRef.set({
             userMessage,
@@ -74,7 +68,6 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         }
     }
 });
-
 
 //  * Extracts key plant details from AI-generated text.
 
@@ -125,108 +118,92 @@ const summarizeField = (field, type) => {
     return field.split(".")[0]; // fallback: first sentence
   };
   
-
-
-router.post("/add-plant", upload.single("image"), async (req, res) => {
+  router.post("/add-plant", upload.single("image"), async (req, res) => {
     try {
-        let { aiResponse, idToken } = req.body;
-
-        // ✅ Parse stringified JSON from FormData
+      let { aiResponse, idToken } = req.body;
+  
+      if (!idToken) {
+        return res.status(401).json({ error: "Unauthorized: No ID token provided." });
+      }
+  
+      const user = await verifyFirebaseToken(idToken);
+      const userId = user.uid;
+  
+      let imageUrl = req.body.imageUrl || null;
+      let plantData = {};
+  
+      // ✅ Handle AI-generated upload
+      if (aiResponse) {
         if (typeof aiResponse === "string") {
-            aiResponse = JSON.parse(aiResponse);
+          aiResponse = JSON.parse(aiResponse);
         }
-
-        if (!idToken) {
-            return res.status(401).json({ error: "Unauthorized: No ID token provided." });
-        }
-
-        // ✅ Authenticate user
-        const user = await verifyFirebaseToken(idToken);
-        const userId = user.uid;
-
-        let imageUrl = req.body.imageUrl || null;
-
-        // ✅ Extract simplified plant data
+  
         const {
-            plantName,
-            scientificName,
-            sunlight,
-            wateringSchedule,
-            commonIssues
+          plantName,
+          scientificName,
+          sunlight,
+          wateringSchedule,
+          wateringFrequencyDays,
+          commonIssues,
         } = extractPlantDetailsFromAI(aiResponse);
-        
-        // ✅ Summarize for card layout
-        const summarySunlight = summarizeField(sunlight, "sunlight");
-        const summaryWatering = summarizeField(wateringSchedule, "watering");
-        
-
-        // ✅ Upload image if provided
-        // if (req.file) {
-        //     imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
-        //     console.log("📸 Uploading plant image...");
-        //     const bucket = storage.bucket();
-        //     const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`;
-        //     const file = bucket.file(fileName);
-
-        //     await file.save(req.file.buffer, { contentType: req.file.mimetype });
-
-        //imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
-
-        // }
-        if (!imageUrl && req.file) {
-            console.log("📸 Uploading plant image...");
-            imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
-        }
-        
-
-        // ✅ Save plant card in `userPlants`
-        const userPlantRef = db.collection("users").doc(userId).collection("userPlants").doc();
-        await userPlantRef.set({
-            plantName,
-            scientificName,
-            sunlight_schedule: summarySunlight, // ✅ match frontend expectation
-            wateringSchedule: summaryWatering,
-            commonIssues,
-            imageUrl,
-            addedAt: new Date().toISOString(),
-        });
-        
-
-        console.log(`✅ [Firestore] Saved plant card for ${userId}: ${plantName}`);
-
-        // ✅ Save full chat to `chats`
-        const chatRef = db.collection("users").doc(userId).collection("chats").doc();
-        await chatRef.set({
-            userMessage: `Identified plant: ${plantName}`,
-            aiResponse,
-            plantName,
-            imageUrl,
-            createdAt: new Date().toISOString(),
-        });
-
-        console.log(`💬 [Firestore] Saved chat log for ${userId}: ${chatRef.id}`);
-
-        res.json({
-            success: true,
-            message: "Plant added successfully!",
-            plantName,
-            imageUrl,
-            sunlight,
-            wateringSchedule,
-            commonIssues,
-        });
-
+  
+        plantData = {
+          plantName,
+          scientificName,
+          sunlight_schedule: summarizeField(sunlight, "sunlight"),
+          wateringSchedule: summarizeField(wateringSchedule, "watering"),
+          wateringFrequencyDays: wateringFrequencyDays || 3,
+          wateringInstructions: wateringSchedule,
+          commonIssues,
+        };
+  
+      } else {
+        // ✅ Handle manual form upload
+        plantData = {
+          plantName: req.body.plantName,
+          scientificName: req.body.scientificName,
+          sunlight_schedule: req.body.sunlight,
+          wateringSchedule: req.body.wateringSchedule,
+          wateringFrequencyDays: parseInt(req.body.wateringFrequencyDays) || 3,
+          commonIssues: req.body.notes || "",
+          lastWatered: req.body.lastWatered || new Date().toISOString(),
+          health_status: req.body.health_status || "Healthy",
+        };
+      }
+  
+      // ✅ Handle image upload
+      if (!imageUrl && req.file) {
+        console.log("📸 Uploading plant image...");
+        imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
+      }
+  
+      // ✅ Save plant to Firestore
+      const userPlantRef = db.collection("users").doc(userId).collection("userPlants").doc();
+      await userPlantRef.set({
+        ...plantData,
+        imageUrl,
+        addedAt: new Date().toISOString(),
+      });
+  
+      console.log(`✅ [Firestore] Plant saved for ${userId}: ${plantData.plantName}`);
+  
+      res.json({
+        success: true,
+        message: "Plant added successfully!",
+        plantName: plantData.plantName,
+        imageUrl,
+        ...plantData,
+      });
+  
     } catch (error) {
-        console.error("❌ [Add Plant Route] Error:", error);
-        res.status(500).json({
-            error: "Failed to add plant.",
-            details: error.message,
-        });
+      console.error("❌ [Add Plant Route] Error:", error);
+      res.status(500).json({
+        error: "Failed to add plant.",
+        details: error.message,
+      });
     }
-});
-
-
-
+  });
+  
 
 
 router.get("/get-last-chat", async (req, res) => {

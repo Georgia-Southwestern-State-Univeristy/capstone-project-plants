@@ -1,86 +1,88 @@
-import axios from 'axios';
-import dotenv from 'dotenv';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import dotenv from "dotenv";
 
 dotenv.config();
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = "gemini-1.5-pro-latest";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-export const generateGeminiResponse = async (plantInfo) => {
-    try {
-        console.log("🔍 [Gemini Service] Sending request to Gemini API...");
-        console.log("🔹 Plant Information:", plantInfo);
+export async function generateGeminiResponseWithImage(base64Image) {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    
+  const prompt = `
+You are a helpful plant care assistant. Analyze the plant in this photo and return detailed care instructions in **strict JSON format**.
 
-        const response = await axios.post(GEMINI_API_URL, {
-            contents: [
-                { 
-                    parts: [{ text: `
-                        Hey! You're a friendly, knowledgeable plant expert helping someone learn more about their plant. 
-                        Please provide a helpful and engaging response in **a casual tone**, while also being **informative**. 
+Please include the following fields:
+- "plantName": string
+- "scientificName": string
+- "sunlight": string
+- "wateringSchedule": string (e.g. "Every 5 days")
+- "wateringFrequencyDays": number (e.g. 5)
+- "wateringInstructions": string (concise tip, e.g. "Keep soil moist, avoid overwatering.")
+- "soilType": string
+- "growthHabit": string
+- "commonUses": string
+- "commonIssues": string
+- "funFact": string
 
-                        Include details about the plant's name, care needs, and any interesting facts. Try to **keep it light and conversational** 
-                        while still giving useful plant care tips.
+Only return the JSON object. No explanation or markdown.
+`;
 
-                        Format the response as a **JSON object** so it can be displayed easily. Here’s the structure:
+  try {
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType: "image/jpeg",
+          data: base64Image,
+        },
+      },
+      { text: prompt },
+    ]);
 
-                        {
-                          "plantName": "Common plant name (e.g., Spider Plant)",
-                          "scientificName": "Scientific name (e.g., Chlorophytum comosum)",
-                          "sunlight": "Sunlight needs (e.g., Bright, indirect light)",
-                          "wateringSchedule": "How often to water (e.g., Every 7-10 days)",
-                          "soilType": "Best soil type (e.g., Well-draining potting mix)",
-                          "growthHabit": "How the plant grows (e.g., Trailing vine, upright shrub)",
-                          "commonUses": "How people use it (e.g., Indoor air purification, medicinal, culinary)",
-                          "commonIssues": "Common problems (e.g., Overwatering can cause root rot)",
-                          "funFact": "A fun fact about the plant (e.g., 'Spider Plants are great at removing toxins from the air!')"
-                        }
+    const response = await result.response;
+    let rawText = response.text();
 
-                        Here is the plant information: ${plantInfo}
-                    `}] 
-                }
-            ]
-        });
+    // Remove code block markers if present (e.g. ```json)
+    const cleaned = rawText.replace(/```json|```/g, "").trim();
 
-        console.log("✅ [Gemini Service] Raw API Response:", JSON.stringify(response.data, null, 2));
-
-        let aiTextResponse = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (!aiTextResponse) {
-            console.error("❌ [Gemini Service] AI Response is not valid.");
-            return "I couldn't generate a response.";
-        }
-
-        // ✅ REMOVE Markdown-style code blocks (```json ... ```)
-        aiTextResponse = aiTextResponse.replace(/```json\n?|\n?```/g, "").trim();
-
-        try {
-            const aiJson = JSON.parse(aiTextResponse);
-            console.log("✅ [Gemini Service] Parsed AI Response:", aiJson);
-            return aiJson;
-        } catch (error) {
-            console.error("❌ [Gemini Service] Failed to parse AI response as JSON.");
-            return {
-                plantName: "Unknown",
-                scientificName: "Unknown",
-                sunlight: "Unknown",
-                wateringSchedule: "Unknown",
-                soilType: "Unknown",
-                growthHabit: "Unknown",
-                commonUses: "Unknown",
-                commonIssues: "No issues found.",
-                funFact: "No fun fact available."
-            };
-        }
-    } catch (error) {
-        console.error("❌ [Gemini Service] Error:", error.response?.data || error.message);
-        throw new Error("Failed to generate AI response.");
+    // Handle plain text fallback (not JSON)
+    if (!cleaned.startsWith("{")) {
+      console.error("❌ Gemini response was not in JSON format:", cleaned);
+      return getFallback();
     }
-};
 
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (err) {
+      console.error("❌ JSON parsing error:", cleaned);
+      return getFallback();
+    }
 
+    // ✅ Sanitize numeric fields
+    if (isNaN(parsed.wateringFrequencyDays)) {
+      parsed.wateringFrequencyDays = 3; // fallback default
+    }
 
+    return parsed;
+  } catch (error) {
+    console.error("❌ Gemini API failed:", error);
+    return getFallback();
+  }
+}
 
-
-
-
+// Fallback plant object
+function getFallback() {
+  return {
+    plantName: "Unknown Plant",
+    scientificName: "",
+    sunlight: "Moderate light",
+    wateringSchedule: "Every 3 days",
+    wateringFrequencyDays: 3,
+    wateringInstructions: "Keep soil slightly moist.",
+    soilType: "Well-draining soil",
+    growthHabit: "",
+    commonUses: "",
+    commonIssues: "",
+    funFact: "This is a default fallback plant profile.",
+  };
+}
