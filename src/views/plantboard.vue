@@ -39,13 +39,31 @@
         </div>
 
         <div class="form-group">
-          <label for="sunlightSchedule">Sunlight Schedule</label>
-          <input type="text" id="sunlightSchedule" v-model="newPlant.sunlight_schedule" class="form-control" placeholder="How often should the plant be left in sunlight each day?">
+        <label for="sunlightSchedule">Sunlight Schedule</label>
+          <div class="select-wrapper">
+            <select id="sunlightSchedule" v-model="newPlant.sunlight_schedule" class="form-control">
+              <option disabled value="">-- Select sunlight level --</option>
+              <option value="Full Sun">Full Sun (6+ hrs/day)</option>
+              <option value="Partial Sun">Partial Sun (4–6 hrs/day)</option>
+              <option value="Partial Shade">Partial Shade (2–4 hrs/day)</option>
+              <option value="Full Shade">Full Shade (little to no direct sun)</option>
+            </select>
+          </div>
         </div>
         
         <div class="form-group">
-          <label for="wateringSchedule">Watering Schedule</label>
-          <input type="text" id="wateringSchedule" v-model="newPlant.watering_schedule" class="form-control" placeholder="How often should the plant be watered each day?">
+        <label for="wateringSchedule">Watering Schedule</label>
+          <div class="select-wrapper">
+            <select id="wateringSchedule" v-model="newPlant.watering_schedule" class="form-control">
+              <option disabled value="">-- Select watering frequency --</option>
+              <option value="1">Every day</option>
+              <option value="2">Every 2 days</option>
+              <option value="3">Every 3 days</option>
+              <option value="4">Every 4 days</option>
+              <option value="5">Every 5 days</option>
+              <option value="7">Once a week</option>
+            </select>
+          </div>
         </div>
         
         <div class="form-group">
@@ -57,6 +75,7 @@
           <label for="healthStatus">Health Status</label>
           <div class="select-wrapper">
           <select id="healthStatus" v-model="newPlant.health_status" class="form-control">
+            <option disabled value="">-- Select health status --</option>
             <option value="Healthy">Healthy</option>
             <option value="Needs Attention">Needs Attention</option>
             <option value="Critical">Critical</option>
@@ -311,7 +330,7 @@ export default {
           formData.append("image", this.newPlant.image);
         }
 
-        const res = await fetch("/api/plants/add-plant", {
+        const res = await fetch("/api/chat/add-plant", {
           method: "POST",
           body: formData
         });

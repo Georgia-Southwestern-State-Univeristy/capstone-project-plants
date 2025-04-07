@@ -118,87 +118,83 @@ const summarizeField = (field, type) => {
     return field.split(".")[0]; // fallback: first sentence
   };
   
-
   router.post("/add-plant", upload.single("image"), async (req, res) => {
     try {
       let { aiResponse, idToken } = req.body;
-  
-      // ✅ Parse stringified JSON from FormData
-      if (typeof aiResponse === "string") {
-        aiResponse = JSON.parse(aiResponse);
-      }
   
       if (!idToken) {
         return res.status(401).json({ error: "Unauthorized: No ID token provided." });
       }
   
-      // ✅ Now safely access these
-      const wateringFrequencyDays = aiResponse.wateringFrequencyDays || 3;
-      const wateringInstructions = aiResponse.wateringInstructions || "";
-  
-      // ✅ Authenticate user
       const user = await verifyFirebaseToken(idToken);
       const userId = user.uid;
   
       let imageUrl = req.body.imageUrl || null;
+      let plantData = {};
   
-      // ✅ Extract simplified plant data
-      const {
-        plantName,
-        scientificName,
-        sunlight,
-        wateringSchedule,
-        commonIssues,
-      } = extractPlantDetailsFromAI(aiResponse);
+      // ✅ Handle AI-generated upload
+      if (aiResponse) {
+        if (typeof aiResponse === "string") {
+          aiResponse = JSON.parse(aiResponse);
+        }
   
-      // ✅ Summarize for card layout
-      const summarySunlight = summarizeField(sunlight, "sunlight");
-      const summaryWatering = summarizeField(wateringSchedule, "watering");
+        const {
+          plantName,
+          scientificName,
+          sunlight,
+          wateringSchedule,
+          wateringFrequencyDays,
+          commonIssues,
+        } = extractPlantDetailsFromAI(aiResponse);
   
+        plantData = {
+          plantName,
+          scientificName,
+          sunlight_schedule: summarizeField(sunlight, "sunlight"),
+          wateringSchedule: summarizeField(wateringSchedule, "watering"),
+          wateringFrequencyDays: wateringFrequencyDays || 3,
+          wateringInstructions: wateringSchedule,
+          commonIssues,
+        };
+  
+      } else {
+        // ✅ Handle manual form upload
+        plantData = {
+          plantName: req.body.plantName,
+          scientificName: req.body.scientificName,
+          sunlight_schedule: req.body.sunlight,
+          wateringSchedule: req.body.wateringSchedule,
+          wateringFrequencyDays: parseInt(req.body.wateringFrequencyDays) || 3,
+          commonIssues: req.body.notes || "",
+          lastWatered: req.body.lastWatered || new Date().toISOString(),
+          health_status: req.body.health_status || "Healthy",
+        };
+      }
+  
+      // ✅ Handle image upload
       if (!imageUrl && req.file) {
         console.log("📸 Uploading plant image...");
         imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
       }
   
-      // ✅ Save plant card in `userPlants`
+      // ✅ Save plant to Firestore
       const userPlantRef = db.collection("users").doc(userId).collection("userPlants").doc();
       await userPlantRef.set({
-        plantName,
-        scientificName,
-        sunlight_schedule: summarySunlight,
-        wateringSchedule: summaryWatering,
-        wateringFrequencyDays,
-        wateringInstructions,
-        commonIssues,
+        ...plantData,
         imageUrl,
-        lastWatered: new Date().toISOString(), // ✅ Right here
         addedAt: new Date().toISOString(),
       });
-      
   
-      console.log(`✅ [Firestore] Saved plant card for ${userId}: ${plantName}`);
-  
-      // ✅ Save full chat to `chats`
-      const chatRef = db.collection("users").doc(userId).collection("chats").doc();
-      await chatRef.set({
-        userMessage: `Identified plant: ${plantName}`,
-        aiResponse,
-        plantName,
-        imageUrl,
-        createdAt: new Date().toISOString(),
-      });
-  
-      console.log(`💬 [Firestore] Saved chat log for ${userId}: ${chatRef.id}`);
+      console.log(`✅ [Firestore] Plant saved for ${userId}: ${plantData.plantName}`);
   
       res.json({
         success: true,
         message: "Plant added successfully!",
-        plantName,
+        plantName: plantData.plantName,
         imageUrl,
-        sunlight,
-        wateringSchedule,
-        commonIssues,
+        ...plantData,
       });
+  
     } catch (error) {
       console.error("❌ [Add Plant Route] Error:", error);
       res.status(500).json({
