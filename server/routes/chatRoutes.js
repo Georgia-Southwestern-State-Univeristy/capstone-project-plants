@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { analyzeImage } from '../functions/services/visionService.js';
 import { fetchPlantFromPerenual, analyzePlantHealth } from '../functions/services/perenualService.js';
-import { generateGeminiResponse } from '../functions/services/geminiService.js';
+import { generateGeminiResponseWithImage } from '../functions/services/geminiService.js';
 import { verifyFirebaseToken } from '../config/firebaseAdmin.js'; // ✅ Ensure correct import
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
@@ -13,7 +13,6 @@ const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 const db = getFirestore();
 const storage = getStorage();
-
 
 router.post("/chat", upload.single("image"), async (req, res) => {
     try {
@@ -27,31 +26,24 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         const userId = user.uid;
 
         let userMessage = message || "";
-        let plantLabels = [];
         let plantName = "Unknown Plant";
         let imageUrl = null;
+        let aiResponse = null;
 
         if (req.file) {
-            imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
-            const bucket = storage.bucket();
-            const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`;
-            const file = bucket.file(fileName);
-
-            await file.save(req.file.buffer, { contentType: req.file.mimetype });
-
+            console.log("📸 Uploading plant image...");
             imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
 
+            // ✅ Directly send image buffer to Gemini Vision
+            aiResponse = await generateGeminiResponseWithImage(req.file.buffer);
+            plantName = aiResponse.plantName || "Unknown Plant";
 
-            plantLabels = await analyzeImage(req.file.buffer);
-            if (plantLabels.length > 0) {
-                plantName = plantLabels[0].description;
-                userMessage += ` My plant looks like: ${plantName}.`;
-            }
+            userMessage += ` Here's an image of my plant. Can you tell me what it is?`;
+        } else {
+            return res.status(400).json({ error: "No image uploaded." });
         }
 
-        const fullPrompt = `I uploaded an image of a plant that looks like a ${plantName}.`;
-        const aiResponse = await generateGeminiResponse(fullPrompt);
-
+        // ✅ Save full chat entry to Firestore
         const chatRef = db.collection("users").doc(userId).collection("chats").doc();
         await chatRef.set({
             userMessage,
@@ -74,6 +66,66 @@ router.post("/chat", upload.single("image"), async (req, res) => {
         }
     }
 });
+
+// router.post("/chat", upload.single("image"), async (req, res) => {
+//     try {
+//         const { message, idToken } = req.body;
+
+//         if (!idToken) {
+//             return res.status(401).json({ error: "Unauthorized: No ID token provided." });
+//         }
+
+//         const user = await verifyFirebaseToken(idToken);
+//         const userId = user.uid;
+
+//         let userMessage = message || "";
+//         let plantLabels = [];
+//         let plantName = "Unknown Plant";
+//         let imageUrl = null;
+
+//         if (req.file) {
+//             imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
+//             const bucket = storage.bucket();
+//             const fileName = `users/${userId}/uploads/${Date.now()}_plant.jpg`;
+//             const file = bucket.file(fileName);
+
+//             await file.save(req.file.buffer, { contentType: req.file.mimetype });
+
+//             imageUrl = await uploadImageToStorage(req.file.buffer, req.file.mimetype, userId);
+
+
+//             plantLabels = await analyzeImage(req.file.buffer);
+//             if (plantLabels.length > 0) {
+//                 plantName = plantLabels[0].description;
+//                 userMessage += ` My plant looks like: ${plantName}.`;
+//             }
+//         }
+
+//         const fullPrompt = `I uploaded an image of a plant that looks like a ${plantName}.`;
+//         const aiResponse = await generateGeminiResponse(fullPrompt);
+
+//         const chatRef = db.collection("users").doc(userId).collection("chats").doc();
+//         await chatRef.set({
+//             userMessage,
+//             aiResponse,
+//             plantName,
+//             imageUrl,
+//             createdAt: new Date().toISOString(),
+//         });
+
+//         res.json({
+//             message: aiResponse,
+//             imageUrl,
+//             chatId: chatRef.id,
+//         });
+
+//     } catch (error) {
+//         console.error("❌ Chat Route Error:", error);
+//         if (!res.headersSent) {
+//             res.status(500).json({ error: "Failed to process chat.", details: error.message });
+//         }
+//     }
+// });
 
 
 //  * Extracts key plant details from AI-generated text.
