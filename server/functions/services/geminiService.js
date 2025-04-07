@@ -1,73 +1,88 @@
-import axios from 'axios';
-import dotenv from 'dotenv';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import dotenv from "dotenv";
 
 dotenv.config();
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = "gemini-1.5-pro-latest";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+export async function generateGeminiResponseWithImage(base64Image) {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    
+  const prompt = `
+You are a helpful plant care assistant. Analyze the plant in this photo and return detailed care instructions in **strict JSON format**.
 
-export const generateGeminiResponseWithImage = async (imageBuffer) => {
-    try {
-        console.log("🧠 [Gemini] Sending image to Gemini...");
+Please include the following fields:
+- "plantName": string
+- "scientificName": string
+- "sunlight": string
+- "wateringSchedule": string (e.g. "Every 5 days")
+- "wateringFrequencyDays": number (e.g. 5)
+- "wateringInstructions": string (concise tip, e.g. "Keep soil moist, avoid overwatering.")
+- "soilType": string
+- "growthHabit": string
+- "commonUses": string
+- "commonIssues": string
+- "funFact": string
 
-        const base64Image = imageBuffer.toString('base64');
+Only return the JSON object. No explanation or markdown.
+`;
 
-        const response = await axios.post(GEMINI_API_URL, {
-            contents: [
-                {
-                    parts: [
-                        { text: `
-                            You are a helpful plant expert. Analyze the plant in this photo.
-                            Provide the most likely plant name, care instructions, and a fun fact.
-                            Return the result as a JSON object like this:
+  try {
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType: "image/jpeg",
+          data: base64Image,
+        },
+      },
+      { text: prompt },
+    ]);
 
-                            {
-                              "plantName": "...",
-                              "scientificName": "...",
-                              "sunlight": "...",
-                              "wateringSchedule": "...",
-                              "soilType": "...",
-                              "growthHabit": "...",
-                              "commonUses": "...",
-                              "commonIssues": "...",
-                              "funFact": "..."
-                            }
-                        ` },
-                        {
-                            inline_data: {
-                                mime_type: "image/jpeg",
-                                data: base64Image
-                            }
-                        }
-                    ]
-                }
-            ]
-        });
+    const response = await result.response;
+    let rawText = response.text();
 
-        const aiTextResponse = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        const cleaned = aiTextResponse.replace(/```json\n?|\n?```/g, "").trim();
+    // Remove code block markers if present (e.g. ```json)
+    const cleaned = rawText.replace(/```json|```/g, "").trim();
 
-        return JSON.parse(cleaned);
-    } catch (error) {
-        console.error("❌ [Gemini Image] Error:", error.response?.data || error.message);
-        return {
-            plantName: "Unknown",
-            scientificName: "Unknown",
-            sunlight: "Unknown",
-            wateringSchedule: "Unknown",
-            soilType: "Unknown",
-            growthHabit: "Unknown",
-            commonUses: "Unknown",
-            commonIssues: "Unknown",
-            funFact: "Unknown"
-        };
+    // Handle plain text fallback (not JSON)
+    if (!cleaned.startsWith("{")) {
+      console.error("❌ Gemini response was not in JSON format:", cleaned);
+      return getFallback();
     }
-};
 
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (err) {
+      console.error("❌ JSON parsing error:", cleaned);
+      return getFallback();
+    }
 
+    // ✅ Sanitize numeric fields
+    if (isNaN(parsed.wateringFrequencyDays)) {
+      parsed.wateringFrequencyDays = 3; // fallback default
+    }
 
+    return parsed;
+  } catch (error) {
+    console.error("❌ Gemini API failed:", error);
+    return getFallback();
+  }
+}
 
-
-
+// Fallback plant object
+function getFallback() {
+  return {
+    plantName: "Unknown Plant",
+    scientificName: "",
+    sunlight: "Moderate light",
+    wateringSchedule: "Every 3 days",
+    wateringFrequencyDays: 3,
+    wateringInstructions: "Keep soil slightly moist.",
+    soilType: "Well-draining soil",
+    growthHabit: "",
+    commonUses: "",
+    commonIssues: "",
+    funFact: "This is a default fallback plant profile.",
+  };
+}

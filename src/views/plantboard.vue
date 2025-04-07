@@ -156,7 +156,7 @@
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '@/utils/firebase'; 
-import { calculateWaterLevel } from '@/services/waterService.js';
+
 
 
 export default {
@@ -200,6 +200,16 @@ export default {
   },
 
   methods: {
+    calculateWaterLevel(plant) {
+    console.log("🌱 Last watered:", plant.last_watered);
+    const lastWatered = new Date(plant.last_watered);
+    const today = new Date();
+    const schedule = Number(plant.watering_schedule) || 3;
+
+    const daysSince = Math.floor((today - lastWatered) / (1000 * 60 * 60 * 24));
+    const percent = Math.max(0, 100 - (daysSince / schedule) * 100);
+    return Math.round(Math.min(percent, 100));
+   },
     toggleCardDetails(index) {
       this.expandedCardIndex = index;
     },
@@ -226,7 +236,7 @@ export default {
             type: data.scientificName || "Unknown",
             sunlight_schedule: data.sunlight_schedule || "Unknown",
             watering_schedule: data.wateringSchedule || "Unknown",
-            last_watered: data.lastWatered || null,  // if you start tracking this
+            last_watered: data.lastWatered || new Date().toISOString(),  
             health_status: "Healthy",  // default for now
             notes: data.commonIssues || "",
             image_url: data.imageUrl || "https://images.unsplash.com/photo-1520412099551-62b6bafeb5bb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80",
@@ -277,47 +287,51 @@ export default {
         alert('Please enter a plant name.');
         return;
       }
-      
-      // Create a copy of the plant object
-      const plantToSave = { ...this.newPlant };
-      
-      // Handle image upload
-      if (this.newPlant.image) {
-        try {
-          // If using a backend, upload the image and get URL
-          // const imageUrl = await this.uploadImageToServer(this.newPlant.image);
-          // plantToSave.image_url = imageUrl;
-          
-          // For demo purposes, we'll just use a dataURL
-          plantToSave.image_url = this.previewImage;
-        } catch (error) {
-          console.error('Failed to upload image:', error);
-          alert('Failed to upload image. Please try again.');
-          return;
+
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        alert('You must be logged in to save a plant.');
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+
+        formData.append("plantName", this.newPlant.name);
+        formData.append("scientificName", this.newPlant.type);
+        formData.append("sunlight", this.newPlant.sunlight_schedule);
+        formData.append("wateringSchedule", this.newPlant.watering_schedule);
+        formData.append("lastWatered", this.newPlant.last_watered || new Date().toISOString());
+        formData.append("health_status", this.newPlant.health_status);
+        formData.append("notes", this.newPlant.notes || "");
+        formData.append("idToken", await user.getIdToken());
+
+        if (this.newPlant.image) {
+          formData.append("image", this.newPlant.image);
         }
-      } else if (!plantToSave.image_url) {
-        // Set a default image if none provided
-        plantToSave.image_url = "https://images.unsplash.com/photo-1520412099551-62b6bafeb5bb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80";
+
+        const res = await fetch("/api/plants/add-plant", {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+          alert("🌱 Plant added!");
+          this.resetForm();
+          this.showUploadForm = false;
+          this.loadPlants(); // Reload to reflect the new addition
+        } else {
+          throw new Error(result.error || "Unknown error");
+        }
+      } catch (error) {
+        console.error("❌ Failed to save plant:", error);
+        alert("Failed to save plant.");
       }
-      
-      // Remove the file object before saving
-      delete plantToSave.image;
-      
-      if (this.editingIndex !== null) {
-        // Update existing plant
-        this.plants[this.editingIndex] = plantToSave;
-      } else {
-        // Add new plant
-        this.plants.push(plantToSave);
-      }
-      
-      // Save to local storage for persistence
-      localStorage.setItem('plants', JSON.stringify(this.plants));
-      
-      // Reset form and hide it
-      this.resetForm();
-      this.showUploadForm = false;
     },
+
 
     async deletePlant(index) {
       if (!confirm('Are you sure you want to delete this plant?')) return;
