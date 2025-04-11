@@ -121,38 +121,35 @@
           </div>
           
           <!-- Card Back (Details) -->
-          <div class="plant-card-back" v-if="expandedCardIndex === index">
+          <div class="plant-card-back" v-if="expandedCardIndex === index"> 
             <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" alt="Plant Image">
             <button class="close-btn" @click.stop="closeCardDetails(index)">×</button>
-            
-            <div class="card-body">
-              <h5 class="card-title">{{ plant.name }}</h5>
-              <!-- Water Level Visual -->
-              <div class="water-bar-container">
-                <div
-                  class="water-bar"
-                  :style="{
-                    width: waterLevels[index] + '%',
-                    backgroundColor: waterLevels[index] > 50
-                      ? '#4fc3f7'
-                      : (waterLevels[index] > 25 ? '#fdd835' : '#e53935')
-                  }"
-                  :title="'Water level: ' + calculateWaterLevel(plant) + '%'"
-                ></div>
-              </div>
 
-              <div class="plant-details-container">
-                
-                <p class="plant-info"><span class="detail-emoji">🌿</span> <span class="detail-label">Type:</span> {{ plant.type }}</p>
-                <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Sunlight:</span> {{ plant.sunlight_schedule }}</p>
-                <p class="plant-info"><span class="detail-emoji">💧</span> <span class="detail-label">Watering:</span> {{ plant.watering_schedule }}</p>
-                <p class="plant-info"><span class="detail-emoji">📅</span> <span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
-                <p class="plant-info"><span class="detail-emoji">❤️</span> <span class="detail-label">Health:</span> {{ plant.health_status }}</p>
-                <p class="plant-info"><span class="detail-emoji">📝</span> <span class="detail-label">Notes:</span> {{ plant.notes || 'No notes added yet.' }}</p>
+            <!-- Updated layout with vertical water bar -->
+            <div class="card-body-with-waterbar">
+              <div class="water-bar-wrapper">
+                <div class="water-bar-vertical">
+                  <div
+                    class="water-bar-fill"
+                    :style="{ height: waterLevels[index] + '%', backgroundColor: waterLevels[index] > 50 ? '#4fc3f7' : (waterLevels[index] > 25 ? '#fdd835' : '#e53935') }"
+                  ></div>
+                </div>
+
               </div>
-              
+              <!-- Right side: plant info -->
+              <div class="plant-details-container">
+                <h5 class="card-title">{{ plant.name }}</h5>
+                <div class="plant-details-container">
+                  <p class="plant-info"><span class="detail-emoji">🌿</span> <span class="detail-label">Type:</span> {{ plant.type }}</p>
+                  <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Sunlight:</span> {{ plant.sunlight_schedule }}</p>
+                  <p class="plant-info"><span class="detail-emoji">💧</span> <span class="detail-label">Watering:</span> {{ plant.watering_schedule }}</p>
+                  <p class="plant-info"><span class="detail-emoji">📅</span> <span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
+                  <p class="plant-info"><span class="detail-emoji">❤️</span> <span class="detail-label">Health:</span> {{ plant.health_status }}</p>
+                  <p class="plant-info"><span class="detail-emoji">📝</span> <span class="detail-label">Notes:</span> {{ plant.notes || 'No notes added yet.' }}</p>
+                </div>
+              </div>
             </div>
-            
+
             <div class="card-footer">
               <button @click.stop="markWatered(index)" class="water-today-btn">💧 Water</button>
               <div class="button-group">
@@ -290,6 +287,22 @@ export default {
 
         if (result.success) {
           this.plants[index].last_watered = new Date().toISOString();
+
+          // ✅ Animate water bar
+          this.$nextTick(() => {
+            const bar = document.querySelectorAll('.water-bar-vertical')[index];
+            if (bar) {
+              const currentFill = parseFloat(bar.style.getPropertyValue('--water-fill')) || 0;
+              const targetFill = this.calculateWaterLevel(this.plants[index]);
+
+              bar.style.setProperty('--water-fill', `${currentFill}%`); // Reset to current
+              void bar.offsetHeight; // Force reflow
+
+              requestAnimationFrame(() => {
+                bar.style.setProperty('--water-fill', `${targetFill}%`); // Animate to new level
+              });
+            }
+          });
           alert('✅ Plant watered!');
         } else {
           console.error('❌ Failed to water:', result.error);
@@ -300,6 +313,7 @@ export default {
         alert('An error occurred.');
       }
     },
+
 
     toggleUploadForm() {
       this.showUploadForm = !this.showUploadForm;
@@ -335,6 +349,7 @@ export default {
         this.$refs.fileInput.value = '';
       }
     },
+    
     async savePlant() {
       if (!this.newPlant.name) {
         alert('Please enter a plant name.');
@@ -846,17 +861,53 @@ export default {
   color: #072d13;
 }
 
+.card-body-with-waterbar {
+  margin-top: 3%;
+  margin-left: 1.5%;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Sidebar bar wrapper remains top-aligned */
+.water-bar-wrapper {
+  padding-top: 10px;
+}
+
+/* Actual fill bar inside the wrapper */
+.water-bar-vertical {
+  width: 8px;
+  height: 200px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.water-bar-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  border-radius: 5px;
+  transition: height 0.6s ease-in-out;
+}
+
+.water-bar-vertical.animate {
+  animation: riseWater 0.6s ease-out forwards;
+}
+
 .plant-details-container {
-  max-height: 180px;
+  flex: 1;
   overflow-y: auto;
-  margin-bottom: 0.5rem;
-  padding-right: 5px;
-  
-  /* Custom scrollbar styling */
+  max-height: 250px;
+  padding-right: 6px;
+
   scrollbar-width: thin;
   scrollbar-color: #072d13 transparent;
 }
-
 /* For Webkit browsers (Chrome, Safari, etc.) */
 .plant-details-container::-webkit-scrollbar {
   width: 5px;
@@ -961,19 +1012,6 @@ export default {
   color: white;
 }
 
-.water-bar-container {
-  width: 100%;
-  height: 8px;
-  background-color: #e0e0e0;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-top: 10px;
-}
-
-.water-bar {
-  height: 100%;
-  transition: width 0.3s ease, background-color 0.3s ease;
-}
 
 /* Responsive styles */
 @media (max-width: 991.98px) {
