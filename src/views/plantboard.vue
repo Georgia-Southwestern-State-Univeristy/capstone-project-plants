@@ -349,7 +349,7 @@ export default {
         this.$refs.fileInput.value = '';
       }
     },
-    
+
     async savePlant() {
       if (!this.newPlant.name) {
         alert('Please enter a plant name.');
@@ -364,41 +364,70 @@ export default {
       }
 
       try {
-        const formData = new FormData();
+        let res;
 
-        formData.append("plantName", this.newPlant.name);
-        formData.append("scientificName", this.newPlant.type);
-        formData.append("sunlight", this.newPlant.sunlight_schedule);
-        formData.append("wateringSchedule", this.newPlant.watering_schedule);
-        formData.append("lastWatered", this.newPlant.last_watered || new Date().toISOString());
-        formData.append("health_status", this.newPlant.health_status);
-        formData.append("notes", this.newPlant.notes || "");
-        formData.append("idToken", await user.getIdToken());
+        if (this.editingIndex !== null) {
+          // ✅ EDITING an existing plant
+          const plantId = this.plants[this.editingIndex].id;
 
-        if (this.newPlant.image) {
-          formData.append("image", this.newPlant.image);
+          res = await fetch(`/api/plants/users/${user.uid}/plants/${plantId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              idToken: await user.getIdToken(),
+              plantName: this.newPlant.name,
+              scientificName: this.newPlant.type,
+              sunlight: this.newPlant.sunlight_schedule,
+              wateringSchedule: this.newPlant.watering_schedule,
+              lastWatered: this.newPlant.last_watered || new Date().toISOString(),
+              health_status: this.newPlant.health_status,
+              notes: this.newPlant.notes || "",
+              imageUrl: this.newPlant.image_url
+            }),
+          });
+
+        } else {
+          // ✅ ADDING a new plant
+          const formData = new FormData();
+          formData.append("plantName", this.newPlant.name);
+          formData.append("scientificName", this.newPlant.type);
+          formData.append("sunlight", this.newPlant.sunlight_schedule);
+          formData.append("wateringSchedule", this.newPlant.watering_schedule);
+          formData.append("lastWatered", this.newPlant.last_watered || new Date().toISOString());
+          formData.append("health_status", this.newPlant.health_status);
+          formData.append("notes", this.newPlant.notes || "");
+          formData.append("idToken", await user.getIdToken());
+
+          if (this.newPlant.image) {
+            formData.append("image", this.newPlant.image);
+          }
+
+          res = await fetch("/api/chat/add-plant", {
+            method: "POST",
+            body: formData
+          });
         }
-
-        const res = await fetch("/api/chat/add-plant", {
-          method: "POST",
-          body: formData
-        });
 
         const result = await res.json();
 
         if (result.success) {
-          alert("🌱 Plant added!");
+          alert(this.editingIndex !== null ? "✅ Plant updated!" : "🌱 Plant added!");
           this.resetForm();
           this.showUploadForm = false;
-          this.loadPlants(); // Reload to reflect the new addition
+          this.editingIndex = null;
+          this.loadPlants();
         } else {
           throw new Error(result.error || "Unknown error");
         }
+
       } catch (error) {
         console.error("❌ Failed to save plant:", error);
         alert("Failed to save plant.");
       }
     },
+
 
 
     async deletePlant(index) {
