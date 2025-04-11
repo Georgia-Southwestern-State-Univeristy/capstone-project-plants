@@ -154,6 +154,7 @@
             </div>
             
             <div class="card-footer">
+              <button @click.stop="markWatered(index)" class="water-today-btn">💧 Water</button>
               <div class="button-group">
                 <button @click.stop="editPlant(index)" class="btn-edit">Edit</button>
                 <button @click.stop="deletePlant(index)" class="btn-delete">Delete</button>
@@ -267,6 +268,39 @@ export default {
         console.error("❌ Failed to load plants from Firestore:", error);
       }
     },
+
+    /// Function to update the last watered date in Firebase
+    async markWatered(index) {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) {
+          alert('You must be logged in to water your plant.');
+          return;
+        }
+
+        const plantId = this.plants[index].id;
+        const response = await fetch(`/api/plants/users/${user.uid}/plants/${plantId}/water`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: await user.getIdToken() }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          this.plants[index].last_watered = new Date().toISOString();
+          alert('✅ Plant watered!');
+        } else {
+          console.error('❌ Failed to water:', result.error);
+          alert('Failed to update plant.');
+        }
+      } catch (error) {
+        console.error('❌ Error watering plant:', error);
+        alert('An error occurred.');
+      }
+    },
+
     toggleUploadForm() {
       this.showUploadForm = !this.showUploadForm;
       if (!this.showUploadForm) {
@@ -852,56 +886,71 @@ export default {
   color: #072d13;
 }
 
+/* Card footer ===================================== */
 .card-footer {
-  padding: 0.2rem 1rem;
+  padding: 0.4rem 0.75rem;
   background-color: rgba(0, 0, 0, 0.03);
   border-top: 1px solid rgba(0, 0, 0, 0.125);
-}
-
-.button-group {
   display: flex;
   justify-content: space-between;
-  min-width: 100%; /* Ensure full width */
-  gap: 8px; /* Add minimum gap between buttons */
+  align-items: center;
 }
 
-.btn-edit, .btn-delete {
-  padding: 6px 12px;
+/* Water Button (left aligned, no black border, smooth styling) */
+.water-today-btn {
+  padding: 8px 16px;
+  background-color: #03a9f4;
+  color: white;
   font-size: 0.9rem;
-  flex: 1; /* Allow buttons to grow/shrink proportionally */
-  min-width: 60px; /* Ensure minimum width */
-  max-width: calc(50% - 4px); /* Prevent buttons from exceeding half the width minus gap */
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-radius: 5px;
   font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  box-shadow: none; /* remove unwanted shadow or outline */
 }
 
+.water-today-btn:hover {
+  background-color: #039be5;
+}
+
+/* Edit/Delete Group (right aligned, smaller and compact) */
+.button-group {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-edit,
+.btn-delete {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  font-weight: bold;
+  border: none;
+  white-space: nowrap;
+}
+
+/* Edit button */
 .btn-edit {
   background-color: #072d13;
   color: white;
-  border-color:white;
-  border: solid;
-  
 }
 
 .btn-edit:hover {
   background-color: #0a3b1a;
 }
 
+/* Delete button */
 .btn-delete {
   background-color: #dc3545;
   color: white;
-  border-color: white;
-  border: solid;
 }
 
 .btn-delete:hover {
   background-color: #c82333;
 }
 
+/* Card footer ===================================== */
 /* Empty State */
 .empty-state {
   background-color: rgba(255, 255, 255, 0.1);
