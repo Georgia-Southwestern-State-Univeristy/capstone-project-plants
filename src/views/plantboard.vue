@@ -1,6 +1,9 @@
 <!-- plantboard.vue -->
 <template>
   <div class="plantboard-container">
+    <div v-if="toastMessage" :class="['toast-popup', toastType]">
+      {{ toastMessage }}
+    </div>
     <div class="top-navigation">
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -154,7 +157,14 @@
               <button @click.stop="markWatered(index)" class="water-today-btn">💧 Water</button>
               <div class="button-group">
                 <button @click.stop="editPlant(index)" class="btn-edit">Edit</button>
-                <button @click.stop="deletePlant(index)" class="btn-delete">Delete</button>
+                <button @click.stop="requestDelete(index)" class="btn-delete">Delete</button>
+              </div>
+            </div>
+            <div v-if="confirmDeleteIndex === index" class="delete-confirm-overlay">
+              <p>Are you sure you want to delete this plant?</p>
+              <div class="delete-confirm-buttons">
+                <button class="btn-delete" @click="deletePlant(index)">Yes, Delete</button>
+                <button class="btn-cancel" @click="cancelDelete">Cancel</button>
               </div>
             </div>
           </div>
@@ -179,25 +189,29 @@ import { db } from '@/utils/firebase';
 export default {
   name: 'plantBoard',
   data() {
-    return {
-      plants: [],
-      showUploadForm: false,
-      expandedCardIndex: null,
-      newPlant: {
-        name: '',
-        type: '',
-        sunlight_schedule: '',
-        watering_schedule: '',
-        last_watered: '',
-        health_status: 'Healthy',
-        notes: '',
-        image: null,
-        image_url: ''
-      },
-      previewImage: null,
-      editingIndex: null
+  return {
+    plants: [],
+    showUploadForm: false,
+    expandedCardIndex: null,
+    previewImage: null,
+    editingIndex: null,
+    confirmDeleteIndex: null, 
+    toastMessage: '',
+    toastType: 'info', // success | error | warning
+    newPlant: {
+      name: '',
+      type: '',
+      sunlight_schedule: '',
+      watering_schedule: '',
+      last_watered: '',
+      health_status: 'Healthy',
+      notes: '',
+      image: null,
+      image_url: ''
     }
-  },
+  };
+},
+
   mounted() {
     // Load existing plants from database
     this.loadPlants();
@@ -233,6 +247,29 @@ export default {
     closeCardDetails() {
       this.expandedCardIndex = null;
     },
+
+    requestDelete(index) {
+      this.confirmDeleteIndex = index;
+    },
+    cancelDelete() {
+      this.confirmDeleteIndex = null;
+    },
+    showToast(message, type = 'info') {
+      this.toastMessage = message;
+      this.toastType = type;
+
+      setTimeout(() => {
+        this.toastMessage = '';
+      }, 3000);
+    },
+
+    showCardMessage(index, message) {
+      this.$set(this.notificationMessages, index, message);
+      setTimeout(() => {
+        this.$set(this.notificationMessages, index, '');
+      }, 3000);
+    },
+
     async loadPlants() {
       try {
         const auth = getAuth();
@@ -261,6 +298,7 @@ export default {
         });
 
         this.plants = firebasePlants;
+        this.notificationMessages = firebasePlants.map(() => '');
       } catch (error) {
         console.error("❌ Failed to load plants from Firestore:", error);
       }
@@ -272,7 +310,7 @@ export default {
         const auth = getAuth();
         const user = auth.currentUser;
         if (!user) {
-          alert('You must be logged in to water your plant.');
+          this.showToast("⚠️ Login required.", "warning");
           return;
         }
 
@@ -287,6 +325,7 @@ export default {
 
         if (result.success) {
           this.plants[index].last_watered = new Date().toISOString();
+          this.showToast("💧 Watered successfully", "success");
 
           // ✅ Animate water bar
           this.$nextTick(() => {
@@ -303,14 +342,13 @@ export default {
               });
             }
           });
-          alert('✅ Plant watered!');
         } else {
           console.error('❌ Failed to water:', result.error);
-          alert('Failed to update plant.');
+          this.toastMessage = "❌ Failed to water. Please try again.";
         }
       } catch (error) {
         console.error('❌ Error watering plant:', error);
-        alert('An error occurred.');
+        this.toastMessage = "❌ An error occurred while watering the plant.";
       }
     },
 
@@ -352,14 +390,14 @@ export default {
 
     async savePlant() {
       if (!this.newPlant.name) {
-        alert('Please enter a plant name.');
+        this.showToast("⚠️ Plant name is required.", "warning");
         return;
       }
 
       const auth = getAuth();
       const user = auth.currentUser;
       if (!user) {
-        alert('You must be logged in to save a plant.');
+        this.showToast("⚠️ Login required.", "warning");
         return;
       }
 
@@ -413,7 +451,7 @@ export default {
         const result = await res.json();
 
         if (result.success) {
-          alert(this.editingIndex !== null ? "✅ Plant updated!" : "🌱 Plant added!");
+          this.toastMessage = this.editingIndex !== null ? "✅ Plant updated successfully!" : "✅ Plant added successfully!";
           this.resetForm();
           this.showUploadForm = false;
           this.editingIndex = null;
@@ -424,20 +462,18 @@ export default {
 
       } catch (error) {
         console.error("❌ Failed to save plant:", error);
-        alert("Failed to save plant.");
+        this.toastMessage = "❌ Failed to save plant. Please try again.";
       }
     },
 
 
 
     async deletePlant(index) {
-      if (!confirm('Are you sure you want to delete this plant?')) return;
-
       try {
         const auth = getAuth();
         const user = auth.currentUser;
         if (!user) {
-          alert("You must be logged in to delete a plant.");
+          this.toastMessage = "⚠️ Login required.";
           return;
         }
 
@@ -458,13 +494,14 @@ export default {
 
         if (result.success) {
           this.plants.splice(index, 1);
-          alert("Plant deleted successfully.");
+          this.notificationMessages.splice(index, 1);
+          this.confirmDeleteIndex = null;
         } else {
-          alert("Failed to delete plant. Try again.");
+          this.toastMessage = "❌ Failed to delete plant. Please try again.";
         }
       } catch (error) {
-        console.error("❌ Failed to delete plant:", error);
-        alert("An error occurred while deleting the plant.");
+        console.error("❌ Delete error:", error);
+        this.toastMessage = "❌ An error occurred while deleting the plant.";
       }
     },
 
@@ -492,6 +529,36 @@ export default {
   position: relative;
   display: inline-block;
   width: 100%;
+}
+
+.toast-popup {
+  position: fixed;
+  top: 24px; /* 🔁 changed from bottom */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #323232;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  font-size: 0.95rem;
+  z-index: 9999;
+  opacity: 0.95;
+  animation: toastSlideDown 0.3s ease-out;
+}
+
+
+.toast-popup.success {
+  background-color: #43a047;
+}
+.toast-popup.error {
+  background-color: #e53935;
+}
+.toast-popup.warning {
+  background-color: #ffa000;
+}
+.toast-popup.info {
+  background-color: #2196f3;
 }
 
 .select-wrapper::after {
@@ -538,9 +605,6 @@ export default {
   cursor: pointer;
   font-weight: bold;
 }
-
-
-
 
 
 .plantboard-container {
@@ -994,6 +1058,44 @@ export default {
   background-color: #039be5;
 }
 
+.delete-confirm-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(3px);
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.delete-confirm-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.btn-cancel {
+  background-color: #ccc;
+  color: #333;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background-color: #aaa;
+}
+
+
 /* Edit/Delete Group (right aligned, smaller and compact) */
 .button-group {
   display: flex;
@@ -1041,7 +1143,23 @@ export default {
   color: white;
 }
 
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-5px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-5px); }
+}
 
+@keyframes toastSlideDown {
+  from {
+    transform: translateX(-50%) translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 0.95;
+  }
+}
 /* Responsive styles */
 @media (max-width: 991.98px) {
   .row-cols-md-3 > .col {
