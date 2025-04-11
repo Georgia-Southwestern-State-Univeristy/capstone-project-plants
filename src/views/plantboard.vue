@@ -121,39 +121,37 @@
           </div>
           
           <!-- Card Back (Details) -->
-          <div class="plant-card-back" v-if="expandedCardIndex === index">
+          <div class="plant-card-back" v-if="expandedCardIndex === index"> 
             <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" alt="Plant Image">
             <button class="close-btn" @click.stop="closeCardDetails(index)">×</button>
-            
-            <div class="card-body">
-              <h5 class="card-title">{{ plant.name }}</h5>
-              <!-- Water Level Visual -->
-              <div class="water-bar-container">
-                <div
-                  class="water-bar"
-                  :style="{
-                    width: waterLevels[index] + '%',
-                    backgroundColor: waterLevels[index] > 50
-                      ? '#4fc3f7'
-                      : (waterLevels[index] > 25 ? '#fdd835' : '#e53935')
-                  }"
-                  :title="'Water level: ' + calculateWaterLevel(plant) + '%'"
-                ></div>
-              </div>
 
-              <div class="plant-details-container">
-                
-                <p class="plant-info"><span class="detail-emoji">🌿</span> <span class="detail-label">Type:</span> {{ plant.type }}</p>
-                <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Sunlight:</span> {{ plant.sunlight_schedule }}</p>
-                <p class="plant-info"><span class="detail-emoji">💧</span> <span class="detail-label">Watering:</span> {{ plant.watering_schedule }}</p>
-                <p class="plant-info"><span class="detail-emoji">📅</span> <span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
-                <p class="plant-info"><span class="detail-emoji">❤️</span> <span class="detail-label">Health:</span> {{ plant.health_status }}</p>
-                <p class="plant-info"><span class="detail-emoji">📝</span> <span class="detail-label">Notes:</span> {{ plant.notes || 'No notes added yet.' }}</p>
+            <!-- Updated layout with vertical water bar -->
+            <div class="card-body-with-waterbar">
+              <div class="water-bar-wrapper">
+                <div class="water-bar-vertical">
+                  <div
+                    class="water-bar-fill"
+                    :style="{ height: waterLevels[index] + '%', backgroundColor: waterLevels[index] > 50 ? '#4fc3f7' : (waterLevels[index] > 25 ? '#fdd835' : '#e53935') }"
+                  ></div>
+                </div>
+
               </div>
-              
+              <!-- Right side: plant info -->
+              <div class="plant-details-container">
+                <h5 class="card-title">{{ plant.name }}</h5>
+                <div class="plant-details-container">
+                  <p class="plant-info"><span class="detail-emoji">🌿</span> <span class="detail-label">Type:</span> {{ plant.type }}</p>
+                  <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Sunlight:</span> {{ plant.sunlight_schedule }}</p>
+                  <p class="plant-info"><span class="detail-emoji">💧</span> <span class="detail-label">Watering:</span> {{ plant.watering_schedule }}</p>
+                  <p class="plant-info"><span class="detail-emoji">📅</span> <span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
+                  <p class="plant-info"><span class="detail-emoji">❤️</span> <span class="detail-label">Health:</span> {{ plant.health_status }}</p>
+                  <p class="plant-info"><span class="detail-emoji">📝</span> <span class="detail-label">Notes:</span> {{ plant.notes || 'No notes added yet.' }}</p>
+                </div>
+              </div>
             </div>
-            
+
             <div class="card-footer">
+              <button @click.stop="markWatered(index)" class="water-today-btn">💧 Water</button>
               <div class="button-group">
                 <button @click.stop="editPlant(index)" class="btn-edit">Edit</button>
                 <button @click.stop="deletePlant(index)" class="btn-delete">Delete</button>
@@ -267,6 +265,56 @@ export default {
         console.error("❌ Failed to load plants from Firestore:", error);
       }
     },
+
+    /// Function to update the last watered date in Firebase
+    async markWatered(index) {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) {
+          alert('You must be logged in to water your plant.');
+          return;
+        }
+
+        const plantId = this.plants[index].id;
+        const response = await fetch(`/api/plants/users/${user.uid}/plants/${plantId}/water`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: await user.getIdToken() }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          this.plants[index].last_watered = new Date().toISOString();
+
+          // ✅ Animate water bar
+          this.$nextTick(() => {
+            const bar = document.querySelectorAll('.water-bar-vertical')[index];
+            if (bar) {
+              const currentFill = parseFloat(bar.style.getPropertyValue('--water-fill')) || 0;
+              const targetFill = this.calculateWaterLevel(this.plants[index]);
+
+              bar.style.setProperty('--water-fill', `${currentFill}%`); // Reset to current
+              void bar.offsetHeight; // Force reflow
+
+              requestAnimationFrame(() => {
+                bar.style.setProperty('--water-fill', `${targetFill}%`); // Animate to new level
+              });
+            }
+          });
+          alert('✅ Plant watered!');
+        } else {
+          console.error('❌ Failed to water:', result.error);
+          alert('Failed to update plant.');
+        }
+      } catch (error) {
+        console.error('❌ Error watering plant:', error);
+        alert('An error occurred.');
+      }
+    },
+
+
     toggleUploadForm() {
       this.showUploadForm = !this.showUploadForm;
       if (!this.showUploadForm) {
@@ -301,6 +349,7 @@ export default {
         this.$refs.fileInput.value = '';
       }
     },
+
     async savePlant() {
       if (!this.newPlant.name) {
         alert('Please enter a plant name.');
@@ -315,41 +364,70 @@ export default {
       }
 
       try {
-        const formData = new FormData();
+        let res;
 
-        formData.append("plantName", this.newPlant.name);
-        formData.append("scientificName", this.newPlant.type);
-        formData.append("sunlight", this.newPlant.sunlight_schedule);
-        formData.append("wateringSchedule", this.newPlant.watering_schedule);
-        formData.append("lastWatered", this.newPlant.last_watered || new Date().toISOString());
-        formData.append("health_status", this.newPlant.health_status);
-        formData.append("notes", this.newPlant.notes || "");
-        formData.append("idToken", await user.getIdToken());
+        if (this.editingIndex !== null) {
+          // ✅ EDITING an existing plant
+          const plantId = this.plants[this.editingIndex].id;
 
-        if (this.newPlant.image) {
-          formData.append("image", this.newPlant.image);
+          res = await fetch(`/api/plants/users/${user.uid}/plants/${plantId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              idToken: await user.getIdToken(),
+              plantName: this.newPlant.name,
+              scientificName: this.newPlant.type,
+              sunlight: this.newPlant.sunlight_schedule,
+              wateringSchedule: this.newPlant.watering_schedule,
+              lastWatered: this.newPlant.last_watered || new Date().toISOString(),
+              health_status: this.newPlant.health_status,
+              notes: this.newPlant.notes || "",
+              imageUrl: this.newPlant.image_url
+            }),
+          });
+
+        } else {
+          // ✅ ADDING a new plant
+          const formData = new FormData();
+          formData.append("plantName", this.newPlant.name);
+          formData.append("scientificName", this.newPlant.type);
+          formData.append("sunlight", this.newPlant.sunlight_schedule);
+          formData.append("wateringSchedule", this.newPlant.watering_schedule);
+          formData.append("lastWatered", this.newPlant.last_watered || new Date().toISOString());
+          formData.append("health_status", this.newPlant.health_status);
+          formData.append("notes", this.newPlant.notes || "");
+          formData.append("idToken", await user.getIdToken());
+
+          if (this.newPlant.image) {
+            formData.append("image", this.newPlant.image);
+          }
+
+          res = await fetch("/api/chat/add-plant", {
+            method: "POST",
+            body: formData
+          });
         }
-
-        const res = await fetch("/api/chat/add-plant", {
-          method: "POST",
-          body: formData
-        });
 
         const result = await res.json();
 
         if (result.success) {
-          alert("🌱 Plant added!");
+          alert(this.editingIndex !== null ? "✅ Plant updated!" : "🌱 Plant added!");
           this.resetForm();
           this.showUploadForm = false;
-          this.loadPlants(); // Reload to reflect the new addition
+          this.editingIndex = null;
+          this.loadPlants();
         } else {
           throw new Error(result.error || "Unknown error");
         }
+
       } catch (error) {
         console.error("❌ Failed to save plant:", error);
         alert("Failed to save plant.");
       }
     },
+
 
 
     async deletePlant(index) {
@@ -812,17 +890,53 @@ export default {
   color: #072d13;
 }
 
+.card-body-with-waterbar {
+  margin-top: 3%;
+  margin-left: 1.5%;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Sidebar bar wrapper remains top-aligned */
+.water-bar-wrapper {
+  padding-top: 10px;
+}
+
+/* Actual fill bar inside the wrapper */
+.water-bar-vertical {
+  width: 8px;
+  height: 200px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.water-bar-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  border-radius: 5px;
+  transition: height 0.6s ease-in-out;
+}
+
+.water-bar-vertical.animate {
+  animation: riseWater 0.6s ease-out forwards;
+}
+
 .plant-details-container {
-  max-height: 180px;
+  flex: 1;
   overflow-y: auto;
-  margin-bottom: 0.5rem;
-  padding-right: 5px;
-  
-  /* Custom scrollbar styling */
+  max-height: 250px;
+  padding-right: 6px;
+
   scrollbar-width: thin;
   scrollbar-color: #072d13 transparent;
 }
-
 /* For Webkit browsers (Chrome, Safari, etc.) */
 .plant-details-container::-webkit-scrollbar {
   width: 5px;
@@ -852,56 +966,71 @@ export default {
   color: #072d13;
 }
 
+/* Card footer ===================================== */
 .card-footer {
-  padding: 0.2rem 1rem;
+  padding: 0.4rem 0.75rem;
   background-color: rgba(0, 0, 0, 0.03);
   border-top: 1px solid rgba(0, 0, 0, 0.125);
-}
-
-.button-group {
   display: flex;
   justify-content: space-between;
-  min-width: 100%; /* Ensure full width */
-  gap: 8px; /* Add minimum gap between buttons */
+  align-items: center;
 }
 
-.btn-edit, .btn-delete {
-  padding: 6px 12px;
+/* Water Button (left aligned, no black border, smooth styling) */
+.water-today-btn {
+  padding: 8px 16px;
+  background-color: #03a9f4;
+  color: white;
   font-size: 0.9rem;
-  flex: 1; /* Allow buttons to grow/shrink proportionally */
-  min-width: 60px; /* Ensure minimum width */
-  max-width: calc(50% - 4px); /* Prevent buttons from exceeding half the width minus gap */
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-radius: 5px;
   font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  box-shadow: none; /* remove unwanted shadow or outline */
 }
 
+.water-today-btn:hover {
+  background-color: #039be5;
+}
+
+/* Edit/Delete Group (right aligned, smaller and compact) */
+.button-group {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-edit,
+.btn-delete {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  font-weight: bold;
+  border: none;
+  white-space: nowrap;
+}
+
+/* Edit button */
 .btn-edit {
   background-color: #072d13;
   color: white;
-  border-color:white;
-  border: solid;
-  
 }
 
 .btn-edit:hover {
   background-color: #0a3b1a;
 }
 
+/* Delete button */
 .btn-delete {
   background-color: #dc3545;
   color: white;
-  border-color: white;
-  border: solid;
 }
 
 .btn-delete:hover {
   background-color: #c82333;
 }
 
+/* Card footer ===================================== */
 /* Empty State */
 .empty-state {
   background-color: rgba(255, 255, 255, 0.1);
@@ -912,19 +1041,6 @@ export default {
   color: white;
 }
 
-.water-bar-container {
-  width: 100%;
-  height: 8px;
-  background-color: #e0e0e0;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-top: 10px;
-}
-
-.water-bar {
-  height: 100%;
-  transition: width 0.3s ease, background-color 0.3s ease;
-}
 
 /* Responsive styles */
 @media (max-width: 991.98px) {
