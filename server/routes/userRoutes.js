@@ -1,8 +1,12 @@
 import express from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
+import multer from 'multer';
 
+const storage = getStorage();
 const router = express.Router();
 const db = getFirestore();
+const upload = multer({ storage: multer.memoryStorage() });
 
 // ✅ Get User Profile (Now Includes Plants)
 router.get('/profile/:userId', async (req, res) => {
@@ -80,5 +84,46 @@ router.post('/message', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+router.post('/profile/:userId/avatar', upload.single('avatar'), async (req, res) => {
+    console.log("✅ Hit /profile/:userId/avatar route");
+
+    try {
+      const file = req.file;
+      const { userId } = req.params;
+  
+      if (!file) return res.status(400).json({ error: 'No file uploaded' });
+  
+      const bucket = storage.bucket();
+      const fileName = `avatars/${userId}/${Date.now()}_${file.originalname}`;
+      const fileUpload = bucket.file(fileName);
+  
+      const stream = fileUpload.createWriteStream({
+        metadata: {
+          contentType: file.mimetype,
+        },
+      });
+  
+      stream.on('error', (err) => {
+        return res.status(500).json({ error: err.message });
+      });
+  
+      stream.on('finish', async () => {
+        await fileUpload.makePublic();
+        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+  
+        await db.collection('users').doc(userId).update({
+          profileImage: publicUrl,
+          updatedAt: new Date().toISOString()
+        });
+  
+        res.status(200).json({ success: true, imageUrl: publicUrl });
+      });
+  
+      stream.end(file.buffer);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 
 export default router;
