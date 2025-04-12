@@ -452,6 +452,9 @@ export default {
 
         if (result.success) {
           this.toastMessage = this.editingIndex !== null ? "✅ Plant updated successfully!" : "✅ Plant added successfully!";
+          setTimeout(() => {
+            this.toastMessage = '';
+          }, 3000);
           this.resetForm();
           this.showUploadForm = false;
           this.editingIndex = null;
@@ -496,6 +499,7 @@ export default {
           this.plants.splice(index, 1);
           this.notificationMessages.splice(index, 1);
           this.confirmDeleteIndex = null;
+          this.showToast("✅ Plant deleted successfully!", "success");
         } else {
           this.toastMessage = "❌ Failed to delete plant. Please try again.";
         }
@@ -548,7 +552,7 @@ export default {
 }
 
 
-.toast-popup.success {
+/* .toast-popup.success {
   background-color: #43a047;
 }
 .toast-popup.error {
@@ -559,7 +563,7 @@ export default {
 }
 .toast-popup.info {
   background-color: #2196f3;
-}
+} */
 
 .select-wrapper::after {
   content: '\25BC'; /* Unicode for downward triangle */

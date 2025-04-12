@@ -1,5 +1,8 @@
 <template>
   <main class="w-100 h-100">
+    <div v-if="toastMessage" :class="['toast-popup', toastType]">
+      {{ toastMessage }}
+    </div>
     <div id="chatBackground" class="chat-container px-4 py-5">
       <!-- 🔹 Account Icon Dropdown -->
       <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
@@ -168,6 +171,9 @@ const uploadedFiles = ref([]);
 const isDropdownOpen = ref(false);
 const isLoading = ref(false);
 
+const toastMessage = ref('');
+const toastType = ref('info');
+
 // 🔹 Adjust textarea height dynamically
 console.log("🔍 Chat Store Initialized:", chatStore);
 if (!chatStore) {
@@ -234,6 +240,13 @@ const triggerFileUpload = () => {
   fileInput.value?.click();
 };
 
+const showToast = (message, type = 'info') => {
+  toastMessage.value = message;
+  toastType.value = type;
+  setTimeout(() => {
+    toastMessage.value = '';
+  }, 3000);
+};
 
 
 // KENDRICK CHANGE - NEW SEND MESSAGE FUNCTION DONE ON MARCH 29. 
@@ -449,7 +462,7 @@ const addPlantToCollection = async (message) => {
   console.log("🧪 image:", message.image);
 
   if (!authStore.isAuthenticated) {
-      alert("Please log in to add plants to your collection.");
+      showToast("Please log in to add plants to your collection.", "warning");
       router.push('/login');
       return;
   }
@@ -458,7 +471,7 @@ const addPlantToCollection = async (message) => {
       // Fetch the latest AI response before adding the plant
       const aiResponse = await fetchLastAIResponse();
       if (!aiResponse) {
-          alert("No plant information found to add to collection.");
+          showToast("No AI response found. Please try again.", "error");
           return;
       }
 
@@ -470,7 +483,8 @@ const addPlantToCollection = async (message) => {
       const auth = getAuth();
       const user = auth.currentUser;
       if (!user) {
-          alert("User is not logged in.");
+          showToast("User not authenticated. Please log in.", "error");
+          router.push('/login');
           return;
       }
       const idToken = await user.getIdToken();
@@ -506,13 +520,13 @@ const addPlantToCollection = async (message) => {
 
     if (data.success) {
       const confirmedPlantName = data.plantName || "your plant"; // Ensure a valid name is displayed
-      alert(`${confirmedPlantName} added to your plant collection!`);
+      showToast(`Successfully added ${confirmedPlantName} to your collection!`, "success");
     } else {
-        alert("Failed to add plant to collection.");
+        showToast("Failed to add plant. Please try again.", "error");
     }
   } catch (error) {
       console.error("Error adding plant to collection:", error);
-      alert("An error occurred while adding the plant.");
+        showToast("An error occurred while adding the plant. Please try again.", "error");
   }
 };
 
@@ -672,8 +686,21 @@ const addPlantToCollection = async (message) => {
   animation: fadeInUp 0.3s ease-out forwards;
 }
 
-
-
+.toast-popup {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #072d13;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(108, 39, 18, 0.685);
+  font-size: 0.95rem;
+  z-index: 9999;
+  opacity: 0.95;
+  animation: toastSlideDown 0.3s ease-out;
+}
 
 
 /* Card header styling - consolidated */
