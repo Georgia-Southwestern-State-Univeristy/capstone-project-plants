@@ -1,6 +1,9 @@
 # UserProfile.vue
 <template>
   <div class="profile-page">
+    <div v-if="toastMessage" :class="['toast-popup', toastType]">
+      {{ toastMessage }}
+    </div>
   <section>
     <div class="container py-5">
       <!-- Replace the current breadcrumb navigation -->
@@ -238,7 +241,7 @@ export default {
   },
   
   setup() {
-     const authStore = useAuthStore();
+    const authStore = useAuthStore();
     const { user } = storeToRefs(authStore); // ✅ Get reactive user data from Pinia
     const profileImage = ref(null);
     const userData = ref({
@@ -249,6 +252,13 @@ export default {
       confirmPassword: ''
     });
 
+    const showToast = (message, type = 'info') => {
+      toastMessage.value = message;
+      toastType.value = type;
+      setTimeout(() => {
+        toastMessage.value = '';
+      }, 3000);
+    }
    // KENDRICK - switched isEditing fields to true
     const isEditing = ref({
       name: true,
@@ -259,188 +269,164 @@ export default {
     const showPassword = ref(false);
 
     // KENDRICK - edited originalData to match user data initially
-   const originalData = ref({
+    const originalData = ref({
       name: '',
       email: '',
       currentPassword: '',
       newPassword: '',
       confirmPassword: ''
-   });
+    });
    
-
-
-
-   
-// KENDRICK = Edited toggleEdit with if statement
-  const toggleEdit = (field) => {
-      isEditing.value[field] = !isEditing.value[field];
-       if (!isEditing.value[field]) {
+  
+  // KENDRICK = Edited toggleEdit with if statement
+    const toggleEdit = (field) => {
+    isEditing.value[field] = !isEditing.value[field];
+      if (!isEditing.value[field]) {
         originalData.value[field] = userData.value[field];
-       }
-
-        };
-
-   
-
-    // ✅ Load user profile from Firestore
-    const loadUserProfile = async () => {
-      if (!user.value) {
-    console.log("No user value available");
-    return;
-  }
-
-
-
-      try {
-        const userDocRef = doc(db, 'users', user.value.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (userDocSnap.exists()) {
-          const userDataFromDB = userDocSnap.data();
-          userData.value.name = userDataFromDB.name || '';
-          userData.value.email = user.value.email || '';
-          profileImage.value = userDataFromDB.profileImage || null;
-          originalData.value = { ...userData.value };
-        } else {
-          console.warn('User profile not found in Firestore.');
-        }
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
       }
     };
+    // ✅ Load user profile from Firestore
+  const loadUserProfile = async () => {
+    if (!user.value) {
+      console.log("No user value available");
+      return;
+    }
+    try {
+      const userDocRef = doc(db, 'users', user.value.uid);
+      const userDocSnap = await getDoc(userDocRef);
 
-    // ✅ Watch for user changes and load profile
-    watchEffect(() => {
-      if (user.value) {
-        loadUserProfile();
+      if (userDocSnap.exists()) {
+        const userDataFromDB = userDocSnap.data();
+        userData.value.name = userDataFromDB.name || '';
+        userData.value.email = user.value.email || '';
+        profileImage.value = userDataFromDB.profileImage || null;
+        originalData.value = { ...userData.value };
+      } else {
+        console.warn('User profile not found in Firestore.');
       }
-    });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+    // ✅ Watch for user changes and load profile
+  watchEffect(() => {
+    if (user.value) {
+      loadUserProfile();
+    }
+  });
 
     onMounted(async () => {
-  if (!user.value) {
-    await authStore.fetchUserProfile();
-  } else {
-    await loadUserProfile();
-  }
-});
-
-    
-
-    const hasChanges = computed(() => {
-      return userData.value.name !== originalData.value?.name || 
-      userData.value.email !== originalData.value.email;
+      if (!user.value) {
+        await authStore.fetchUserProfile();
+      } else {
+        await loadUserProfile();
+      }
     });
+    const hasChanges = computed(() => {
+    return userData.value.name !== originalData.value?.name || 
+    userData.value.email !== originalData.value.email;
+  });
 
-    // ✅ Save changes (Name, Profile Image)
-    const saveChanges = async () => {
+  // ✅ Save changes (Name, Profile Image)
+  const saveChanges = async () => {
 
 
-      if (!user.value) return;
+    if (!user.value) return;
+
+    try {
+      const userDocRef = doc(db, 'users', user.value.uid);
+      await updateDoc(userDocRef, { name: userData.value.name });
+
+      showToast('Profile updated successfully!', 'success');
+      originalData.value = { ...userData.value };
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      showToast('Error updating profile', 'error');
+    }
+  };
+
+  // KENDRICK CHANGE - added handleSignOut to add functionality to new
+  // sign out button on user profile
+    // 🔹 Handle user sign-out
+  const handleSignOut = async () => {
+  await authStore.logout();
+  router.push('/login');
+  };
+
+  // ✅ Handle Profile Image Upload
+  const handleImageUpload = async (event) => {
+
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      profileImage.value = e.target.result;
 
       try {
         const userDocRef = doc(db, 'users', user.value.uid);
-        await updateDoc(userDocRef, { name: userData.value.name });
+        await updateDoc(userDocRef, { profileImage: profileImage.value });
 
-        alert('Profile updated successfully!');
-        originalData.value = { ...userData.value };
+        showToast('Profile image updated successfully!', 'success');
       } catch (error) {
-        console.error('Error updating profile:', error);
-        alert('Error updating profile');
+        console.error('Error updating profile image:', error);
+        showToast('Error updating profile image', 'error');
       }
     };
+
+    reader.readAsDataURL(file);
+  };
+  
+  // ✅ Save Password Change
+  const savePasswordChange = async () => {
     
-    // KENDRICK CHANGE - added handleSignOut to add functionality to new
-    // sign out button on user profile
-      // 🔹 Handle user sign-out
-    const handleSignOut = async () => {
-    await authStore.logout();
-    router.push('/login');
-    };
-
-    // ✅ Handle Profile Image Upload
-    const handleImageUpload = async (event) => {
-
+    if (userData.value.newPassword !== userData.value.confirmPassword) {
       
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        profileImage.value = e.target.result;
-
-        try {
-          const userDocRef = doc(db, 'users', user.value.uid);
-          await updateDoc(userDocRef, { profileImage: profileImage.value });
-
-          alert('Profile picture updated successfully!');
-        } catch (error) {
-          console.error('Error updating profile image:', error);
-          alert('Error updating profile picture');
-        }
-      };
-
-      reader.readAsDataURL(file);
-    };
-    
-
-    
-
-    // ✅ Save Password Change
-    const savePasswordChange = async () => {
-     
-      if (userData.value.newPassword !== userData.value.confirmPassword) {
-        
-        alert('New passwords do not match');
-        return;
-      }
-
-      try {
-        const userAuth = auth.currentUser;
-        if (!userAuth) throw new Error('User not logged in');
-
-        await updatePassword(userAuth, userData.value.newPassword);
-        alert('Password updated successfully!');
-
-        cancelPasswordChange();
-      } catch (error) {
-        console.error('Error changing password:', error);
-        alert('Error changing password');
-      }
-    };
-    
-    
-
-    const cancelPasswordChange = () => {
-      userData.value.currentPassword = '';
-      userData.value.newPassword = '';
-      userData.value.confirmPassword = '';
-      isEditing.value.password = false;
-      showPassword.value = false;
-    };
-
-
-    
-
-    return {
-      user,
-      userData,
-      profileImage,
-      isEditing,
-      showPassword,
-      hasChanges, 
-      saveChanges,
-      handleImageUpload,
-      savePasswordChange,
-      cancelPasswordChange,
-      toggleEdit,// KENDRICK - added toggleEdit to return section
-      handleSignOut, // KENDRICK CHANGE - added handleSignOut
-      authStore // KENDRICK CHANGE - added authStore
-     
-
-
-      };
+      showToast('Passwords do not match', 'error');
+      return;
     }
+
+    try {
+      const userAuth = auth.currentUser;
+      if (!userAuth) throw new Error('User not logged in');
+
+      await updatePassword(userAuth, userData.value.newPassword);
+      showToast('Password changed successfully!', 'success');
+
+      cancelPasswordChange();
+    } catch (error) {
+      console.error('Error changing password:', error);
+      showToast('Error changing password', 'error');
+    }
+  };
+  
+  const cancelPasswordChange = () => {
+    userData.value.currentPassword = '';
+    userData.value.newPassword = '';
+    userData.value.confirmPassword = '';
+    isEditing.value.password = false;
+    showPassword.value = false;
+  };
+
+  return {
+    user,
+    userData,
+    profileImage,
+    isEditing,
+    showPassword,
+    hasChanges, 
+    saveChanges,
+    handleImageUpload,
+    savePasswordChange,
+    cancelPasswordChange,
+    toggleEdit,// KENDRICK - added toggleEdit to return section
+    handleSignOut, // KENDRICK CHANGE - added handleSignOut
+    authStore // KENDRICK CHANGE - added authStore
+  
+
+    };
   }
+}
 
 
 </script>
@@ -453,123 +439,20 @@ export default {
 
 /* Add this to your <style scoped> section */
 
-
-
-.plants-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-}
-
-.plant-card {
-  width: 220px;
-  border: 2px solid #341c02;
-  border-radius: 15px;
-  padding: 15px;
-  text-align: center;
-  background: #fff;
-  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
-}
-
-.plant-image-container {
-  width: 100%;
-  height: 150px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #f4f4f4;
-  border-radius: 10px;
-  margin-bottom: 10px;
-}
-
-.plant-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 10px;
-}
-
-.placeholder-image {
-  font-size: 14px;
-  color: #777;
-}
-
-.plant-info {
-  text-align: left;
-}
-
-.plant-name {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #072d13;
-}
-
-
-.plant-name {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #072d13;
-}
-
-.plant-subtitle {
-  padding: 0 16px 12px 16px;
-  font-size: 14px;
-  color: #5a3a1a;
-}
-
-.plant-actions {
-  padding: 0 16px 12px 16px;
-  display: flex;
-  align-items: center;
-}
-
-.action-btn {
-  background-color: #341c02;
-  color: #F5E6D3;
-  border-radius: 16px;
-  padding: 4px 12px;
-  font-weight: bold;
-  transition: all 0.2s ease;
-}
-
-.action-btn:hover {
-  background-color: #5a3a1a;
-  transform: translateY(-2px);
-}
-
-.spacer {
-  flex: 1;
-}
-
-.toggle-btn {
-  background: none;
-  border: none;
-  color: #341c02;
-  cursor: pointer;
-}
-
-.toggle-btn:hover {
-  color: #5a3a1a;
-}
-
-.plant-details {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease;
-}
-
-.plant-details.expanded {
-  max-height: 500px;
-}
-
-.plant-details hr {
-  margin: 0;
-  border-color: #341c02;
-}
-
-.details-content {
-  padding: 16px;
+.toast-popup {
+  position: fixed;
+  top: 24px; /* 🔁 changed from bottom */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #323232;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  font-size: 0.95rem;
+  z-index: 9999;
+  opacity: 0.95;
+  animation: toastSlideDown 0.3s ease-out;
 }
 
 
@@ -755,38 +638,6 @@ p#emailDetails {
 div#detailsCard {
   border-width: 3px;
   border-color: #341c02;
-}
-
-/* Plants section styling */
-.add-plant-btn {
-  background-color: #072d13;
-  color: white;
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 14px;
-  border: none;
-  transition: all 0.2s;
-}
-
-.add-plant-btn:hover {
-  background-color: #0a5623;
-  transform: translateY(-2px);
-}
-
-.plants-container {
-  min-height: 100px;
-  width: 100%;
-}
-
-/* Responsive design for plants section */
-@media (max-width: 768px) {
-  h3 {
-    font-size: 1.5rem;
-  }
-  
-  .add-plant-btn {
-    width: 100%;
-  }
 }
 
 #addButtonProfile {
