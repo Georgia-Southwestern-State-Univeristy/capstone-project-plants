@@ -101,6 +101,6 @@ export const logoutUser = async () => {
 };
 
 // ✅ Export Firebase instances
-export { auth, db, storage  };
+export { auth, db, storage };
 
 //export { auth, db, storage, googleProvider };
