@@ -96,35 +96,43 @@
                       </div>
                     </div>
 
-                    
-
                     <!-- Submit button -->
-                    <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
+                    <div class="d-flex justify-content-around mx-4 mb-3 mb-lg-4 gap-2">
+                      <!-- Register button -->
                       <button 
                         type="submit" 
-                        style="background-color: #072d13; border: none;"
-                        class="btn btn-primary btn-lg"
-                        >
+                        class="btn btn-primary btn-lg flex-fill d-flex align-items-center justify-content-center"
+                        style="background-color: #072d13; border: none; min-width: 180px; height: 48px;"
+                      >
                         {{ isLoading ? 'Registering...' : 'Register' }}
+                      </button>
+
+                      <!-- Google button -->
+                      <button 
+                        type="button" 
+                        @click="handleGoogleLogin"
+                        class="btn btn-light btn-lg flex-fill d-flex align-items-center justify-content-center border"
+                        style="min-width: 180px; height: 48px; white-space: nowrap; gap: 10px;"
+                        :disabled="isLoading"
+                      >
+                        <img src="@/assets/google-icon.png" alt="Google" style="height: 20px;" />
+                        Sign up with Google
                       </button>
                     </div>
                   </form>
 
                   <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
-  <p class="mb-3" style="color: #072d13;">
-    Already have an account? 
-    <router-link 
-      id="loginOffer" 
-      to="/login"
-      style="color: #4a9161">
-      Login here
-    </router-link>
-  </p>
-</div>
+                    <p class="mb-3" style="color: #072d13;">
+                      Already have an account? 
+                      <router-link 
+                        id="loginOffer" 
+                        to="/login"
+                        style="color: #4a9161">
+                        Login here
+                      </router-link>
+                    </p>
+                  </div>
                 </div>
-
-              
-
                 <!-- Image section -->
                 <div class="col-md-10 col-lg-6 col-xl-7 d-flex align-items-center order-1 order-lg-2">
                   <img src="@/assets/signFlowers.jpg" 
@@ -213,6 +221,15 @@ export default {
       }
     };
 
+    const handleGoogleLogin = async () => {
+      try {
+        await authStore.googleLogin();
+        router.push('/plantboard');
+      } catch (error) {
+        console.error("Google login failed:", error);
+      }
+    };
+
     return {
       name,
       email,
@@ -221,7 +238,8 @@ export default {
       error,
       isLoading,
       isFormValid,
-      handleRegister
+      handleRegister,
+      handleGoogleLogin
     };
   }
 };

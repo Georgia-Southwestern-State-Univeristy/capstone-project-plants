@@ -3,7 +3,8 @@ import express from 'express';
 import { getAuth } from 'firebase-admin/auth'; // Fix for 'auth' is not defined
 import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth'; // Fix missing imports
 import { registerWithEmail, loginWithEmail, resetPassword } from '../functions/services/authService.js';
-import { googleClient } from '../config/firebaseAdmin.js'; // Ensure googleClient is defined in firebase.js
+import { googleClient, db, verifyFirebaseToken } from '../config/firebaseAdmin.js'; // Ensure googleClient is defined in firebase.js
+
 
 const router = express.Router();
 const auth = getAuth(); // Firebase Admin SDK Auth Instance
@@ -51,46 +52,34 @@ router.post('/reset-password', async (req, res) => {
 // ✅ Google Sign-In Route (Fixes missing imports & undefined variables)
 router.post('/google-login', async (req, res) => {
     try {
-        const { id_token } = req.body;
-        
-        if (!id_token) {
-            return res.status(400).json({ error: 'Missing ID token' });
-        }
-
-        // ✅ Verify Google token
-        const ticket = await googleClient.verifyIdToken({
-            idToken: id_token,
-            audience: process.env.VITE_APP_GOOGLE_OAUTH_CLIENT_ID
+      const { id_token } = req.body;
+      if (!id_token) return res.status(400).json({ error: 'Missing ID token' });
+  
+      const decodedToken = await verifyFirebaseToken(id_token);
+      const { uid, email, name, picture } = decodedToken;
+  
+      const userRef = db.collection('users').doc(uid);
+      const docSnap = await userRef.get();
+  
+      if (!docSnap.exists) {
+        await userRef.set({
+          email,
+          name,
+          picture,
+          createdAt: new Date().toISOString()
         });
-
-        const payload = ticket.getPayload();
-        const credential = GoogleAuthProvider.credential(id_token);
-        
-        try {
-            const userCredential = await signInWithCredential(auth, credential);
-            res.status(200).json({
-                success: true,
-                user: {
-                    uid: userCredential.user.uid,
-                    email: payload.email,
-                    name: payload.name,
-                    picture: payload.picture
-                }
-            });
-        } catch (firebaseError) {
-            console.error('Firebase authentication error:', firebaseError);
-            res.status(401).json({
-                error: 'Firebase authentication failed',
-                details: firebaseError.message
-            });
-        }
+      }
+  
+      res.status(200).json({
+        success: true,
+        user: { uid, email, name, picture }
+      });
+  
     } catch (error) {
-        console.error('Google authentication error:', error);
-        res.status(401).json({
-            error: 'Authentication failed',
-            details: error.message
-        });
+      console.error('❌ Google Login Failed:', error);
+      res.status(401).json({ error: 'Authentication failed', details: error.message });
     }
-});
+  });
+
 
 export default router;

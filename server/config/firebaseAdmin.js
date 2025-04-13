@@ -44,15 +44,14 @@ export const verifyFirebaseToken = async (idToken) => {
  * @param {string} 
  * @returns {object} - Firebase user credentials
  */
+
 export const authenticateGoogleUser = async (idToken) => {
   try {
-    // Verify the Google ID token
     const decodedToken = await auth.verifyIdToken(idToken);
+    console.log("✅ Decoded Firebase token:", decodedToken);
 
-    // Get user details
     const { uid, email, name, picture } = decodedToken;
 
-    
     const userRef = db.collection('users').doc(uid);
     const userDoc = await userRef.get();
 
@@ -65,14 +64,13 @@ export const authenticateGoogleUser = async (idToken) => {
       });
     }
 
-    logger.logInfo('Google authentication successful', { userId: uid });
-
     return { uid, email, name, picture };
   } catch (error) {
-    logger.logError('Google authentication failed', error);
-    throw new Error('Authentication failed');
+    console.error("❌ Failed in authenticateGoogleUser:", error);
+    throw new Error("Authentication failed");
   }
 };
+
 
 // ✅ Export server-side Firebase instances
 export { auth, db, storage, googleClient };

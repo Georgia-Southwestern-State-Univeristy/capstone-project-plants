@@ -50,6 +50,7 @@
                       {{ error }}
                     </div>
 
+                    
                     <div class="pt-1 mb-4">
                       <button 
                         id="logInButton" 
@@ -60,18 +61,20 @@
                       </button>
                     </div>
                      
-                    <!-- Google login button with original styling 
+                    <!-- Google login button with original styling  -->
                     <div class="pt-1 mb-4">
                       <button 
-                        type="button"
+                        type="button" 
                         @click="handleGoogleLogin"
+                        class="btn btn-light btn-lg flex-fill d-flex align-items-center justify-content-center border"
+                        style="min-width: 180px; height: 48px; white-space: nowrap; gap: 10px;"
                         :disabled="isLoading"
-                        class="btn btn-lg btn-block"
-                        style="background-color: white; color: #072d13; border: 1px solid #072d13;">
-                        Sign in with Google
+                      >
+                        <img src="@/assets/google-icon.png" alt="Google" style="height: 20px;" />
+                        Sign up with Google
                       </button>
                     </div>
-                  -->
+                 
                     <router-link 
                       id="forgotPasswordButton" 
                       class="small" 
@@ -129,45 +132,53 @@ export default {
 
     // ✅ API-based Login (Pinia action)
     const handleLogin = async () => {
-  try {
-    isLoading.value = true;
-    error.value = '';
+      try {
+        isLoading.value = true;
+        error.value = '';
 
-    // ✅ Log in via Pinia action
-    await authStore.login(email.value, password.value);
+        // ✅ Log in via Pinia action
+        await authStore.login(email.value, password.value);
 
-    console.log("✅ Login successful:", authStore.user);
+        console.log("✅ Login successful:", authStore.user);
 
-    // ✅ Wait for Vue to update user state
-    await nextTick();
+        // ✅ Wait for Vue to update user state
+        await nextTick();
 
-    if (authStore.user) {
-      console.log("➡️ Redirecting to /userprofile...");
-      router.push('/userprofile');
-    } else {
-      console.error("❌ User object not set in store after login!");
-    }
-  } catch (err) {
-    console.error('❌ Login error:', err);
-    error.value = err.response?.data?.error || 'Login failed';
+        if (authStore.user) {
+          console.log("➡️ Redirecting to /userprofile...");
+          router.push('/userprofile');
+        } else {
+          console.error("❌ User object not set in store after login!");
+        }
+      } catch (err) {
+        console.error('❌ Login error:', err);
+        error.value = err.response?.data?.error || 'Login failed';
 
-    // ✅ Use `notificationStore.addNotification()`, not `authStore`
-    notificationStore.addNotification({
-      type: 'error',
-      message: error.value
-    });
-  } finally {
-    isLoading.value = false;
-  }
-};
+        // ✅ Use `notificationStore.addNotification()`, not `authStore`
+        notificationStore.addNotification({
+          type: 'error',
+          message: error.value
+        });
+      } finally {
+        isLoading.value = false;
+      }
+    };
 
-
+    const handleGoogleLogin = async () => {
+      try {
+        await authStore.googleLogin();
+        router.push('/plantboard');
+      } catch (error) {
+        console.error("Google login failed:", error);
+      }
+    };
     return {
       email,
       password,
       error,
       isLoading,
-      handleLogin
+      handleLogin,
+      handleGoogleLogin
     };
   }
 };

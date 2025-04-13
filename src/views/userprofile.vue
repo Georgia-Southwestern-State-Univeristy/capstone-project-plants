@@ -1,181 +1,138 @@
-# UserProfile.vue
 <template>
   <div class="profile-page">
-    <div v-if="toastMessage" :class="['toast-popup', toastType]">
-      {{ toastMessage }}
-    </div>
-  <section>
-    <div class="container py-5">
-      <!-- Replace the current breadcrumb navigation -->
-<div class="top-navigation">
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><router-link to="/chat">Chat</router-link></li>
-      <li class="breadcrumb-item"><router-link to="/plantboard">Go to Plant Gallery</router-link></li>
-      <li class="breadcrumb-item"><router-link to="/login">Sign Out</router-link></li>
-    </ol>
-  </nav>
-</div>
-
-      <div class="row" style="background-color: #F5E6D3;">
-        <!-- Profile Image Column -->
-        <!-- Profile Image Column -->
-<div class="col-lg-4">
-  <div class="profile-image-container d-flex justify-content-center align-items-center">
-    <div class="position-relative">
-      <!-- Profile Image with Placeholder Text -->
-      <div class="profile-image-circle" :class="{'has-image': profileImage}">
-        <img 
-          v-if="profileImage" 
-          :src="profileImage" 
-          alt="Profile" 
-          class="profile-img"
-        >
-        <div v-else class="placeholder-text">Add image</div>
+    <div class="profile-background">
+      <!-- Toast -->
+      <div v-if="showToast" :class="['toast-popup', toastType]">
+        {{ toastMessage }}
       </div>
-      
-      <!-- Upload Button Circle -->
-      <label class="upload-button-circle" for="profile-upload">
-        <span class="plus-icon">+</span>
-        <input 
-          id="profile-upload"
-          type="file" 
-          class="d-none" 
-          accept="image/*"
-          @change="handleImageUpload"
-        >
-      </label>
-    </div>
-  </div>
-</div>
 
-        <!-- Profile Details Column -->
-        <div class="col-lg-8">
-          <div class="card mb-4" id="detailsCard">
-            <div class="card-body">
-              <!-- Name Field -->
-              <div class="row mb-4">
-                <div class="col-sm-3">
-                  <p class="mb-0" id="nameDetails">Name</p>
+      <!-- Navigation -->
+      <section>
+        <div class="container py-5">
+          <div class="top-navigation mb-4">
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item"><router-link to="/chat">Chat</router-link></li>
+                <li class="breadcrumb-item"><router-link to="/plantboard">Go to Plant Gallery</router-link></li>
+                <li class="breadcrumb-item"><router-link to="/login">Sign Out</router-link></li>
+              </ol>
+            </nav>
+          </div>
+
+          <div class="card shadow p-4" style="background-color: #F5E6D3;">
+            <!-- Profile Header -->
+            <div class="text-center mb-4">
+              <div class="position-relative d-inline-block">
+                <div class="profile-image-circle" :class="{ 'has-image': profileImage }">
+                  <img v-if="profileImage" :src="profileImage" alt="Profile" class="profile-img" />
+                  <div v-else class="placeholder-text">Add image</div>
                 </div>
+                <label class="upload-button-circle" for="profile-upload">
+                  <span class="plus-icon">+</span>
+                  <input
+                    id="profile-upload"
+                    type="file"
+                    class="d-none"
+                    accept="image/*"
+                    @change="handleImageUpload"
+                  />
+                </label>
+              </div>
+              <h4 class="mt-3 mb-1">{{ userData.username || 'Your username' }}</h4>
+              <p class="text-muted small">{{ userData.email }}</p>
+              <p class="text-sm text-gray-500" v-if="createdAt">
+                🕒 Member since: {{ new Date(createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long' }) }}
+              </p>
+            </div>
+
+
+            <!-- Editable Fields -->
+            <div class="card-body p-0">
+              <!-- username -->
+              <div class="row mb-3">
+                <div class="col-sm-3"><strong>Name</strong></div>
                 <div class="col-sm-9">
                   <div class="d-flex align-items-center">
-                    <div v-if="isEditing.name" class="input-group">
-                      <input 
-                        type="text" 
-                        v-model="userData.name" 
-                        class="form-control"
-                        
-                        @keyup.enter="toggleEdit('name')"
-                      >
-                    
+                    <div v-if="isEditing.username" class="w-100">
+                      <input
+                        v-model="userData.name"
+                        type="text"
+                        placeholder="Name"
+                        class="form-input-underline"/>
                     </div>
-                    <p v-else class="text-muted mb-0">
-                      {{ userData.name }}
-                      <i class="fas fa-pen ms-2 text-primary" 
-                         @click="toggleEdit('name')" 
-                         style="cursor: pointer; color: #072d13 !important">
-                      </i>
+                    <p v-else class="mb-0 text-muted">
+                      {{ userData.username }}
+                      <i class="fas fa-pen ms-2" @click="toggleEdit('username')" style="cursor: pointer; color: #072d13;"></i>
                     </p>
                   </div>
                 </div>
               </div>
 
-              <!-- Email Field -->
-              <div class="row mb-4">
-                <div class="col-sm-3">
-                  <p class="mb-0" id="emailDetails">Email</p>
-                </div>
+              <!-- Email -->
+              <div class="row mb-3">
+                <div class="col-sm-3"><strong>Email</strong></div>
                 <div class="col-sm-9">
                   <div class="d-flex align-items-center">
-                    <div v-if="isEditing.email" class="input-group">
-                      <input 
-                        type="email" 
-                        v-model="userData.email" 
-                        class="form-control"
-                        @keyup.enter="toggleEdit('email')"
-                      >
-                
+                    <div v-if="isEditing.email" class="w-100">
+                      <input
+                        v-model="userData.email"
+                        type="email"
+                        placeholder="Email"
+                        class="form-input-underline"
+                      />
                     </div>
-                    <p v-else class="text-muted mb-0">
+                    <p v-else class="mb-0 text-muted">
                       {{ userData.email }}
-                      <i class="fas fa-pen ms-2 text-primary" 
-                         @click="toggleEdit('email')" 
-                         style="cursor: pointer; color: #072d13 !important">
-                      </i>
+                      <i class="fas fa-pen ms-2" @click="toggleEdit('email')" style="cursor: pointer; color: #072d13;"></i>
                     </p>
                   </div>
                 </div>
               </div>
 
-              <!-- Password Field -->
-              <div class="row mb-4">
-                <div class="col-sm-3">
-                  <p class="mb-0" id="passwordDetails">Password</p>
-                </div>
+              <!-- Password -->
+              <!-- <div class="row mb-3">
+                <div class="col-sm-3"><strong>Password</strong></div>
                 <div class="col-sm-9">
                   <div class="d-flex align-items-center">
                     <div v-if="isEditing.password" class="w-100">
-                      <div class="input-group mb-2">
-                        <input 
-                          :type="showPassword ? 'text' : 'password'" 
-                          v-model="userData.currentPassword" 
-                          class="form-control"
-                          placeholder="Current Password"
-                        >
-                      </div>
-                      <div class="input-group mb-2">
-                        <input 
-                          :type="showPassword ? 'text' : 'password'" 
-                          v-model="userData.newPassword" 
-                          class="form-control"
-                          placeholder="New Password"
-                        >
-                      </div>
-                      <div class="input-group mb-2">
-                        <input 
-                          :type="showPassword ? 'text' : 'password'" 
-                          v-model="userData.confirmPassword" 
-                          class="form-control"
-                          placeholder="Confirm New Password"
-                        >
-                        
-                      </div>
+                      <input
+                        :type="showPassword ? 'text' : 'password'"
+                        v-model="userData.currentPassword"
+                        class="form-control mb-2"
+                        placeholder="Current Password"
+                      />
+                      <input
+                        :type="showPassword ? 'text' : 'password'"
+                        v-model="userData.newPassword"
+                        class="form-control mb-2"
+                        placeholder="New Password"
+                      />
+                      <input
+                        :type="showPassword ? 'text' : 'password'"
+                        v-model="userData.confirmPassword"
+                        class="form-control mb-2"
+                        placeholder="Confirm New Password"
+                      />
                       <div class="d-flex justify-content-end gap-2">
-                        <button 
-                          class="btn btn-secondary" 
-                          @click="cancelPasswordChange"
-                          style="font-weight:bold;"
-                        >
-                          Cancel
-                        </button>
-                        <button 
-                          class="btn btn-primary" 
-                          @click="savePasswordChange"
-                          style="background-color: #072d13; border: none; font-weight: bold;"
-                        >
-                          Update Password
-                        </button>
+                        <button class="btn btn-secondary fw-bold" @click="cancelPasswordChange">Cancel</button>
+                        <button class="btn btn-primary fw-bold" @click="savePasswordChange" style="background-color: #072d13;">Update Password</button>
                       </div>
                     </div>
-                    <p v-else class="text-muted mb-0">
+                    <p v-else class="mb-0 text-muted">
                       ********
-                      <i class="fas fa-pen ms-2 text-primary" 
-                         @click="toggleEdit('password')" 
-                         style="cursor: pointer; color: #072d13 !important">
-                      </i>
+                      <i class="fas fa-pen ms-2" @click="toggleEdit('password')" style="cursor: pointer; color: #072d13;"></i>
                     </p>
                   </div>
                 </div>
-              </div>
+              </div> -->
 
-              <!-- Save Changes Button -->
+              <!-- Save Button -->
               <div class="d-flex justify-content-end mt-4">
-                <button 
-                  @click="saveChanges" 
-                  class="btn btn-primary"
+                <button
+                  @click="saveChanges"
+                  class="btn btn-primary fw-bold"
                   :disabled="!hasChanges"
-                  style="background-color: #072d13; border: none; font-weight:bold"
+                  style="background-color: #072d13;"
                 >
                   Save Changes
                 </button>
@@ -183,69 +140,56 @@
             </div>
           </div>
         </div>
-
-  
-      </div>
+      </section>
     </div>
-  </section>
-</div>
+  </div>
 </template>
 
 <script>
 import { ref, computed, watchEffect, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/authStore';
 import { storeToRefs } from 'pinia';
 import { db, auth } from '@/utils/firebase';
-import { doc, getDocs, getDoc, updateDoc, collection, getFirestore } from 'firebase/firestore';
+import {
+  doc, getDoc, updateDoc, getDocs, collection, getFirestore
+} from 'firebase/firestore';
 import { updatePassword, getAuth } from 'firebase/auth';
 
 export default {
-  name: 'UserProfile',
-
-  // Fetching user plants logic
-  data() {
-    return {
-      userPlants: [],
-      loading: true, // Show loading state
-    };
-  },
-  async mounted() {
-    await this.fetchUserPlants();
-  },
-  methods: {
-    async fetchUserPlants() {
-      try {
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (!user) {
-          console.error("❌ No authenticated user found.");
-          return;
-        }
-
-        const db = getFirestore();
-        const plantsRef = collection(db, "users", user.uid, "userPlants");
-        const querySnapshot = await getDocs(plantsRef);
-
-        this.userPlants = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        console.log("✅ Fetched user plants:", this.userPlants);
-      } catch (error) {
-        console.error("❌ Failed to fetch user plants:", error);
-      } finally {
-        this.loading = false;
-      }
-    },
-  },
-  
+  username: 'UserProfile',
   setup() {
     const authStore = useAuthStore();
-    const { user } = storeToRefs(authStore); // ✅ Get reactive user data from Pinia
+    const { user } = storeToRefs(authStore);
+    const router = useRouter();
+
+    // Refs
     const profileImage = ref(null);
+    const toastMessage = ref('');
+    const toastType = ref('');
+    const userPlants = ref([]);
+    const loading = ref(true);
+    const createdAt = ref(null);
+
     const userData = ref({
-      name: '',
+      username: '',
+      email: '',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+      userusername: ''
+    });
+
+    const isEditing = ref({
+      username: true,
+      email: true,
+      password: true
+    });
+
+    const showPassword = ref(false);
+
+    const originalData = ref({
+      username: '',
       email: '',
       currentPassword: '',
       newPassword: '',
@@ -258,178 +202,171 @@ export default {
       setTimeout(() => {
         toastMessage.value = '';
       }, 3000);
-    }
-   // KENDRICK - switched isEditing fields to true
-    const isEditing = ref({
-      name: true,
-      email: true,
-      password: true
-    });
+    };
 
-    const showPassword = ref(false);
-
-    // KENDRICK - edited originalData to match user data initially
-    const originalData = ref({
-      name: '',
-      email: '',
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
-   
-  
-  // KENDRICK = Edited toggleEdit with if statement
     const toggleEdit = (field) => {
-    isEditing.value[field] = !isEditing.value[field];
+      isEditing.value[field] = !isEditing.value[field];
       if (!isEditing.value[field]) {
         originalData.value[field] = userData.value[field];
       }
     };
-    // ✅ Load user profile from Firestore
-  const loadUserProfile = async () => {
-    if (!user.value) {
-      console.log("No user value available");
-      return;
-    }
-    try {
-      const userDocRef = doc(db, 'users', user.value.uid);
-      const userDocSnap = await getDoc(userDocRef);
 
-      if (userDocSnap.exists()) {
-        const userDataFromDB = userDocSnap.data();
-        userData.value.name = userDataFromDB.name || '';
-        userData.value.email = user.value.email || '';
-        profileImage.value = userDataFromDB.profileImage || null;
-        originalData.value = { ...userData.value };
-      } else {
-        console.warn('User profile not found in Firestore.');
+    const loadUserProfile = async () => {
+      if (!user.value) return;
+
+      try {
+        const userDocRef = doc(db, 'users', user.value.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const userDataFromDB = userDocSnap.data();
+          userData.value.username = userDataFromDB.username || '';
+          userData.value.email = user.value.email || '';
+          profileImage.value = userDataFromDB.profileImage || null;
+          createdAt.value = userDataFromDB.createdAt || null; // ✅ set this
+          originalData.value = { ...userData.value };
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
       }
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-    }
-  };
-    // ✅ Watch for user changes and load profile
-  watchEffect(() => {
-    if (user.value) {
-      loadUserProfile();
-    }
-  });
+    };
+
+    const fetchUserPlants = async () => {
+      try {
+        const db = getFirestore();
+        const plantsRef = collection(db, "users", user.value.uid, "userPlants");
+        const querySnapshot = await getDocs(plantsRef);
+
+        userPlants.value = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        console.log("✅ Fetched user plants:", userPlants.value);
+      } catch (error) {
+        console.error("❌ Failed to fetch user plants:", error);
+      } finally {
+        loading.value = false;
+      }
+    };
 
     onMounted(async () => {
       if (!user.value) {
         await authStore.fetchUserProfile();
-      } else {
-        await loadUserProfile();
+      }
+      await loadUserProfile();
+      await fetchUserPlants();
+    });
+
+    watchEffect(() => {
+      if (user.value) {
+        loadUserProfile();
       }
     });
+
     const hasChanges = computed(() => {
-    return userData.value.name !== originalData.value?.name || 
-    userData.value.email !== originalData.value.email;
-  });
+      return userData.value.username !== originalData.value?.username ||
+             userData.value.email !== originalData.value.email;
+    });
 
-  // ✅ Save changes (Name, Profile Image)
-  const saveChanges = async () => {
-
-
-    if (!user.value) return;
-
-    try {
-      const userDocRef = doc(db, 'users', user.value.uid);
-      await updateDoc(userDocRef, { name: userData.value.name });
-
-      showToast('Profile updated successfully!', 'success');
-      originalData.value = { ...userData.value };
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      showToast('Error updating profile', 'error');
-    }
-  };
-
-  // KENDRICK CHANGE - added handleSignOut to add functionality to new
-  // sign out button on user profile
-    // 🔹 Handle user sign-out
-  const handleSignOut = async () => {
-  await authStore.logout();
-  router.push('/login');
-  };
-
-  // ✅ Handle Profile Image Upload
-  const handleImageUpload = async (event) => {
-
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      profileImage.value = e.target.result;
+    const saveChanges = async () => {
+      if (!user.value) return;
 
       try {
         const userDocRef = doc(db, 'users', user.value.uid);
-        await updateDoc(userDocRef, { profileImage: profileImage.value });
-
-        showToast('Profile image updated successfully!', 'success');
+        await updateDoc(userDocRef, { username: userData.value.username });
+        showToast('Profile updated successfully!', 'success');
+        originalData.value = { ...userData.value };
       } catch (error) {
-        console.error('Error updating profile image:', error);
-        showToast('Error updating profile image', 'error');
+        console.error('Error updating profile:', error);
+        showToast('Error updating profile', 'error');
       }
     };
 
-    reader.readAsDataURL(file);
-  };
-  
-  // ✅ Save Password Change
-  const savePasswordChange = async () => {
-    
-    if (userData.value.newPassword !== userData.value.confirmPassword) {
-      
-      showToast('Passwords do not match', 'error');
-      return;
-    }
+    const handleImageUpload = async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
 
-    try {
-      const userAuth = auth.currentUser;
-      if (!userAuth) throw new Error('User not logged in');
+      const formData = new FormData();
+      formData.append('avatar', file);
 
-      await updatePassword(userAuth, userData.value.newPassword);
-      showToast('Password changed successfully!', 'success');
+      try {
+        const res = await fetch(`/api/users/profile/${user.value.uid}/avatar`, {
+          method: 'POST',
+          body: formData,
+        });
 
-      cancelPasswordChange();
-    } catch (error) {
-      console.error('Error changing password:', error);
-      showToast('Error changing password', 'error');
-    }
-  };
-  
-  const cancelPasswordChange = () => {
-    userData.value.currentPassword = '';
-    userData.value.newPassword = '';
-    userData.value.confirmPassword = '';
-    isEditing.value.password = false;
-    showPassword.value = false;
-  };
+        const data = await res.json();
 
-  return {
-    user,
-    userData,
-    profileImage,
-    isEditing,
-    showPassword,
-    hasChanges, 
-    saveChanges,
-    handleImageUpload,
-    savePasswordChange,
-    cancelPasswordChange,
-    toggleEdit,// KENDRICK - added toggleEdit to return section
-    handleSignOut, // KENDRICK CHANGE - added handleSignOut
-    authStore // KENDRICK CHANGE - added authStore
-  
+        if (data.success) {
+          profileImage.value = data.imageUrl;
+          showToast("✅ Profile image updated!", "success");
+        } else {
+          throw new Error(data.error);
+        }
+      } catch (err) {
+        console.error("Image upload failed:", err);
+        showToast("❌ Upload failed", "error");
+      }
+    };
 
+    const savePasswordChange = async () => {
+      if (userData.value.newPassword !== userData.value.confirmPassword) {
+        showToast('Passwords do not match', 'error');
+        return;
+      }
+
+      try {
+        const userAuth = auth.currentUser;
+        if (!userAuth) throw new Error('User not logged in');
+
+        await updatePassword(userAuth, userData.value.newPassword);
+        showToast('Password changed successfully!', 'success');
+        cancelPasswordChange();
+      } catch (error) {
+        console.error('Error changing password:', error);
+        showToast('Error changing password', 'error');
+      }
+    };
+
+    const cancelPasswordChange = () => {
+      userData.value.currentPassword = '';
+      userData.value.newPassword = '';
+      userData.value.confirmPassword = '';
+      isEditing.value.password = false;
+      showPassword.value = false;
+    };
+
+    const handleSignOut = async () => {
+      await authStore.logout();
+      router.push('/login');
+    };
+
+    return {
+      user,
+      userData,
+      profileImage,
+      toastMessage,
+      toastType,
+      isEditing,
+      showPassword,
+      originalData,
+      userPlants,
+      loading,
+      hasChanges,
+      saveChanges,
+      handleImageUpload,
+      savePasswordChange,
+      cancelPasswordChange,
+      toggleEdit,
+      handleSignOut,
+      showToast,
+      fetchUserPlants
     };
   }
-}
-
-
+};
 </script>
+
 
 
 <style scoped>
@@ -439,21 +376,42 @@ export default {
 
 /* Add this to your <style scoped> section */
 
-.toast-popup {
-  position: fixed;
-  top: 24px; /* 🔁 changed from bottom */
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #323232;
-  color: #fff;
-  padding: 12px 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  font-size: 0.95rem;
-  z-index: 9999;
-  opacity: 0.95;
-  animation: toastSlideDown 0.3s ease-out;
+.profile-background {
+  background-image: url('@/assets/profileBackground.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  min-height: 100vh;
+  padding: 4rem 2rem;
+
+  /* Remove the restrictive flex centering */
+  display: block; /* ✅ use block instead of flex */
 }
+
+.profile-card {
+  width: 50%;
+  max-width: 800px; /* responsive width on all screens */
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 2.5rem 3rem;
+  border-radius: 1rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  transition: max-width 0.3s ease;
+}
+
+/* 🔁 Mobile-first design: stack layout */
+@media (max-width: 768px) {
+  .profile-background {
+    padding: 1rem;
+    display: block;
+  }
+
+    .profile-card {
+    width: 100%;
+    max-width: 90vw; /* 🔁 or clamp for nicer scaling: */
+    max-width: clamp(700px, 90vw, 1400px);
+  }
+}
+
 
 
 .btn-primary:hover {
@@ -482,12 +440,23 @@ export default {
 }
 
 
+.form-input-underline {
+  width: 300px;
+  padding: 6px 0;
+  border: none;
+  border-bottom: 2px solid #555;
+  background: transparent;
+  outline: none;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-input-underline:focus {
+  border-bottom-color: #2c6e49; /* your accent green */
+}
 
  /* #341c02; */
 
- 
-
- 
  .top-navigation {
   position: absolute;
   top: 20px;
@@ -619,7 +588,7 @@ div#profileBox {
 }
 
 
-p#nameDetails {
+p#usernameDetails {
   font-weight: bold;
   color: #072d13;
 }

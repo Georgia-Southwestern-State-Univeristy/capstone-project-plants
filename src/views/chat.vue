@@ -686,21 +686,6 @@ const addPlantToCollection = async (message) => {
   animation: fadeInUp 0.3s ease-out forwards;
 }
 
-.toast-popup {
-  position: fixed;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #072d13;
-  color: #fff;
-  padding: 12px 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(108, 39, 18, 0.685);
-  font-size: 0.95rem;
-  z-index: 9999;
-  opacity: 0.95;
-  animation: toastSlideDown 0.3s ease-out;
-}
 
 
 /* Card header styling - consolidated */
