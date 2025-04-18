@@ -10,6 +10,7 @@
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles"
   },
   "dependencies": {
+    "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
     "@google-cloud/logging": "^11.2.0",
     "@google-cloud/storage": "^7.15.0",
     "@google-cloud/vision": "^4.3.2",

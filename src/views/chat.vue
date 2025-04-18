@@ -1,8 +1,5 @@
 <template>
   <main class="w-100 h-100">
-    <div v-if="toastMessage" :class="['toast-popup', toastType]">
-      {{ toastMessage }}
-    </div>
     <div id="chatBackground" class="chat-container px-4 py-5">
       <!-- 🔹 Account Icon Dropdown -->
       <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
@@ -171,9 +168,6 @@ const uploadedFiles = ref([]);
 const isDropdownOpen = ref(false);
 const isLoading = ref(false);
 
-const toastMessage = ref('');
-const toastType = ref('info');
-
 // 🔹 Adjust textarea height dynamically
 console.log("🔍 Chat Store Initialized:", chatStore);
 if (!chatStore) {
@@ -240,13 +234,6 @@ const triggerFileUpload = () => {
   fileInput.value?.click();
 };
 
-const showToast = (message, type = 'info') => {
-  toastMessage.value = message;
-  toastType.value = type;
-  setTimeout(() => {
-    toastMessage.value = '';
-  }, 3000);
-};
 
 
 // KENDRICK CHANGE - NEW SEND MESSAGE FUNCTION DONE ON MARCH 29. 
@@ -462,7 +449,7 @@ const addPlantToCollection = async (message) => {
   console.log("🧪 image:", message.image);
 
   if (!authStore.isAuthenticated) {
-      showToast("Please log in to add plants to your collection.", "warning");
+      alert("Please log in to add plants to your collection.");
       router.push('/login');
       return;
   }
@@ -471,7 +458,7 @@ const addPlantToCollection = async (message) => {
       // Fetch the latest AI response before adding the plant
       const aiResponse = await fetchLastAIResponse();
       if (!aiResponse) {
-          showToast("No AI response found. Please try again.", "error");
+          alert("No plant information found to add to collection.");
           return;
       }
 
@@ -483,8 +470,7 @@ const addPlantToCollection = async (message) => {
       const auth = getAuth();
       const user = auth.currentUser;
       if (!user) {
-          showToast("User not authenticated. Please log in.", "error");
-          router.push('/login');
+          alert("User is not logged in.");
           return;
       }
       const idToken = await user.getIdToken();
@@ -520,13 +506,13 @@ const addPlantToCollection = async (message) => {
 
     if (data.success) {
       const confirmedPlantName = data.plantName || "your plant"; // Ensure a valid name is displayed
-      showToast(`Successfully added ${confirmedPlantName} to your collection!`, "success");
+      alert(`${confirmedPlantName} added to your plant collection!`);
     } else {
-        showToast("Failed to add plant. Please try again.", "error");
+        alert("Failed to add plant to collection.");
     }
   } catch (error) {
       console.error("Error adding plant to collection:", error);
-        showToast("An error occurred while adding the plant. Please try again.", "error");
+      alert("An error occurred while adding the plant.");
   }
 };
 
@@ -659,15 +645,16 @@ const addPlantToCollection = async (message) => {
 /* Card styling - consolidated to avoid conflicts */
 .message-card {
   width: 100%;
-  max-width: 600px; /* Increase max width */
-  margin-bottom: 8px !important; /* Reduce bottom margin */
-  border: 3px solid #341c02; /* Slightly thinner border */
-  border-radius: 16px !important;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  will-change: transform, opacity;
+  max-width: 600px;
+  margin-bottom: 12px;
+  padding: 1rem;
+  border-radius: 20px;
+  border: none; /* Remove the harsh border */
+  background-color: #ffffff; /* Clean, soft background */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Softer shadow */
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
+
 
 /* Animation keyframes */
 @keyframes fadeInUp {
@@ -685,6 +672,8 @@ const addPlantToCollection = async (message) => {
 .animate-in {
   animation: fadeInUp 0.3s ease-out forwards;
 }
+
+
 
 
 
@@ -732,13 +721,18 @@ const addPlantToCollection = async (message) => {
 
 
 .image-message img {
-  max-width: 100%;
-  max-height: 300px; /* Limit height to prevent huge images */
-  object-fit: contain;
-  border-radius: 8px;
-  margin: 0 auto;
+  width: 100%;
+  max-height: 400px; /* Increase height for taller portraits */
+  object-fit: cover; /* Fill the space while preserving aspect ratio */
+  border-radius: 12px;
   display: block;
+  margin: 0 auto;
 }
+.image-message img {
+  aspect-ratio: 3 / 4; /* Forces portrait aspect */
+  object-fit: cover;
+}
+
 
 /* Add plant button styling */
 .add-plant-btn {
