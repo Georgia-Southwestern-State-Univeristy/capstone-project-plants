@@ -38,7 +38,7 @@
                   />
                 </label>
               </div>
-              <h4 class="mt-3 mb-1">{{ userData.username || 'Your username' }}</h4>
+              <h4 class="mt-3 mb-1">{{ userData.name || 'Your name' }}</h4>
               <p class="text-muted small">{{ userData.email }}</p>
               <p class="text-sm text-gray-500" v-if="createdAt">
                 🕒 Member since: {{ new Date(createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long' }) }}
@@ -48,12 +48,12 @@
 
             <!-- Editable Fields -->
             <div class="card-body p-0">
-              <!-- username -->
+              <!-- name -->
               <div class="row mb-3">
                 <div class="col-sm-3"><strong>Name</strong></div>
                 <div class="col-sm-9">
                   <div class="d-flex align-items-center">
-                    <div v-if="isEditing.username" class="w-100">
+                    <div v-if="isEditing.name" class="w-100">
                       <input
                         v-model="userData.name"
                         type="text"
@@ -61,8 +61,8 @@
                         class="form-input-underline"/>
                     </div>
                     <p v-else class="mb-0 text-muted">
-                      {{ userData.username }}
-                      <i class="fas fa-pen ms-2" @click="toggleEdit('username')" style="cursor: pointer; color: #072d13;"></i>
+                      {{ userData.name }}
+                      <i class="fas fa-pen ms-2" @click="toggleEdit('name')" style="cursor: pointer; color: #072d13;"></i>
                     </p>
                   </div>
                 </div>
@@ -88,6 +88,24 @@
                   </div>
                 </div>
               </div>
+              <!-- Email Notifications -->
+<div class="row mb-3">
+  <div class="col-sm-3"><strong>Notifications</strong></div>
+  <div class="col-sm-9">
+    <div class="form-check">
+      <input
+        class="form-check-input"
+        type="checkbox"
+        id="emailNotifications"
+        v-model="userData.emailNotifications"
+      />
+      <label class="form-check-label" for="emailNotifications">
+        Enable email notifications
+      </label>
+    </div>
+  </div>
+</div>
+
 
               <!-- Password -->
               <!-- <div class="row mb-3">
@@ -157,7 +175,7 @@ import {
 import { updatePassword, getAuth } from 'firebase/auth';
 
 export default {
-  username: 'UserProfile',
+  name: 'UserProfile',
   setup() {
     const authStore = useAuthStore();
     const { user } = storeToRefs(authStore);
@@ -172,16 +190,16 @@ export default {
     const createdAt = ref(null);
 
     const userData = ref({
-      username: '',
+      name: '',
       email: '',
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
-      userusername: ''
+      username: ''
     });
 
     const isEditing = ref({
-      username: true,
+      name: true,
       email: true,
       password: true
     });
@@ -189,7 +207,7 @@ export default {
     const showPassword = ref(false);
 
     const originalData = ref({
-      username: '',
+      name: '',
       email: '',
       currentPassword: '',
       newPassword: '',
@@ -220,7 +238,7 @@ export default {
 
         if (userDocSnap.exists()) {
           const userDataFromDB = userDocSnap.data();
-          userData.value.username = userDataFromDB.username || '';
+          userData.value.name = userDataFromDB.name || '';
           userData.value.email = user.value.email || '';
           profileImage.value = userDataFromDB.profileImage || null;
           createdAt.value = userDataFromDB.createdAt || null; // ✅ set this
@@ -265,7 +283,7 @@ export default {
     });
 
     const hasChanges = computed(() => {
-      return userData.value.username !== originalData.value?.username ||
+      return userData.value.name !== originalData.value?.name ||
              userData.value.email !== originalData.value.email;
     });
 
@@ -274,7 +292,7 @@ export default {
 
       try {
         const userDocRef = doc(db, 'users', user.value.uid);
-        await updateDoc(userDocRef, { username: userData.value.username });
+        await updateDoc(userDocRef, { name: userData.value.name });
         showToast('Profile updated successfully!', 'success');
         originalData.value = { ...userData.value };
       } catch (error) {
@@ -588,7 +606,7 @@ div#profileBox {
 }
 
 
-p#usernameDetails {
+p#nameDetails {
   font-weight: bold;
   color: #072d13;
 }

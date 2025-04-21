@@ -25,6 +25,13 @@
  <!-- 🔹 Messages Display Area -->
 <div class="messages-area mb-4" ref="messagesContainer">
   <div 
+  v-if="chatStore.messages.length === 0" 
+  class="chat-placeholder"
+>
+  🌱 Get started by uploading a plant
+</div>
+
+  <div 
     v-for="msg in chatStore.messages" 
     :key="msg.id" 
     :class="['message-wrapper', msg.isUser ? 'user-wrapper' : 'ai-wrapper']"
@@ -674,6 +681,14 @@ const addPlantToCollection = async (message) => {
 }
 
 
+.chat-placeholder {
+  text-align: center;
+  font-size: 1.8rem;
+  color: #6b6051;
+  margin-top: 6rem;
+  font-weight: 600;
+  opacity: 0.7;
+}
 
 
 

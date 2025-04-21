@@ -167,7 +167,7 @@ export default {
     const handleGoogleLogin = async () => {
       try {
         await authStore.googleLogin();
-        router.push('/plantboard');
+        router.push('/userprofile');
       } catch (error) {
         console.error("Google login failed:", error);
       }
