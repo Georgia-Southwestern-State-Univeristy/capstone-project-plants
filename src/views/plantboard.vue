@@ -4,15 +4,12 @@
     <div v-if="toastMessage" :class="['toast-popup', toastType]">
       {{ toastMessage }}
     </div>
-    <div class="top-navigation">
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item"><router-link to="/chat" class="breadcrumb-link">Chat</router-link></li>
-          <li class="breadcrumb-item"><router-link to="/userprofile" class="breadcrumb-link">Account</router-link></li>
-          <li class="breadcrumb-item"><router-link to="/login" class="breadcrumb-link">Sign Out</router-link></li>
-        </ol>
-      </nav>
-    </div>
+
+  <div class="center-wrapper">
+    <input class="form-input-underline" type="text" placeholder="Search..." />
+  </div>
+
+
     
     <div class="header-section">
       <h1 class="your-plants-title">Your Plants</h1>
@@ -109,47 +106,46 @@
     <!-- Plants Gallery Grid -->
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
       <div 
-        v-for="(plant, index) in plants" 
+        v-for="(plant, index) in filteredPlants" 
         :key="index" 
         class="col"
       >
-        <div class="card" :class="{'expanded': expandedCardIndex === index}">
-          <!-- Card Front (Image with overlay) -->
-          <div class="plant-card-front" v-if="expandedCardIndex !== index" @click="toggleCardDetails(index)">
-            <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" alt="Plant Image">
-            <div class="overlay-content">
-              <h5 class="overlay-title">{{ plant.name }}</h5>
-              <p class="overlay-subtitle">Click for more</p>
-            </div>
-          </div>
-          
-          <!-- Card Back (Details) -->
-          <div class="plant-card-back" v-if="expandedCardIndex === index"> 
-            <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" alt="Plant Image">
-            <button class="close-btn" @click.stop="closeCardDetails(index)">×</button>
 
-            <!-- Updated layout with vertical water bar -->
+      <div class="card" :class="{ expanded: expandedCardIndex === index }">
+  <!-- Single shared image always on top -->
+        <div class="plant-card-front" @click="toggleCardDetails(index)">
+          <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" alt="Plant Image" />
+          <div v-if="expandedCardIndex !== index" class="overlay-content">
+            <h5 class="overlay-title">{{ plant.name }}</h5>
+            <p class="overlay-subtitle">Click for more</p>
+          </div>
+        </div>
+
+        <!-- Slide-reveal content below image -->
+        <transition name="slide-reveal">
+          <div v-if="expandedCardIndex === index" class="plant-card-back slide-body-wrapper">
             <div class="card-body-with-waterbar">
               <div class="water-bar-wrapper">
                 <div class="water-bar-vertical">
                   <div
                     class="water-bar-fill"
-                    :style="{ height: waterLevels[index] + '%', backgroundColor: waterLevels[index] > 50 ? '#4fc3f7' : (waterLevels[index] > 25 ? '#fdd835' : '#e53935') }"
+                    :style="{
+                      height: waterLevels[index] + '%',
+                      backgroundColor: waterLevels[index] > 50 ? '#4fc3f7' :
+                                      waterLevels[index] > 25 ? '#fdd835' : '#e53935'
+                    }"
                   ></div>
                 </div>
-
               </div>
-              <!-- Right side: plant info -->
+
               <div class="plant-details-container">
                 <h5 class="card-title">{{ plant.name }}</h5>
-                <div class="plant-details-container">
-                  <p class="plant-info"><span class="detail-emoji">🌿</span> <span class="detail-label">Type:</span> {{ plant.type }}</p>
-                  <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Sunlight:</span> {{ plant.sunlight_schedule }}</p>
-                  <p class="plant-info"><span class="detail-emoji">💧</span> <span class="detail-label">Watering:</span> {{ plant.watering_schedule }}</p>
-                  <p class="plant-info"><span class="detail-emoji">📅</span> <span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
-                  <p class="plant-info"><span class="detail-emoji">❤️</span> <span class="detail-label">Health:</span> {{ plant.health_status }}</p>
-                  <p class="plant-info"><span class="detail-emoji">📝</span> <span class="detail-label">Notes:</span> {{ plant.notes || 'No notes added yet.' }}</p>
-                </div>
+                <p class="plant-info"><span class="detail-emoji">🌿</span> <span class="detail-label">Type:</span> {{ plant.type }}</p>
+                <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Sunlight:</span> {{ plant.sunlight_schedule }}</p>
+                <p class="plant-info"><span class="detail-emoji">💧</span> <span class="detail-label">Watering:</span> {{ plant.watering_schedule }}</p>
+                <p class="plant-info"><span class="detail-emoji">📅</span> <span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
+                <p class="plant-info"><span class="detail-emoji">❤️</span> <span class="detail-label">Health:</span> {{ plant.health_status }}</p>
+                <p class="plant-info"><span class="detail-emoji">📝</span> <span class="detail-label">Notes:</span> {{ plant.notes || 'No notes added yet.' }}</p>
               </div>
             </div>
 
@@ -160,6 +156,7 @@
                 <button @click.stop="requestDelete(index)" class="btn-delete">Delete</button>
               </div>
             </div>
+
             <div v-if="confirmDeleteIndex === index" class="delete-confirm-overlay">
               <p>Are you sure you want to delete this plant?</p>
               <div class="delete-confirm-buttons">
@@ -168,9 +165,15 @@
               </div>
             </div>
           </div>
-        </div>
+        </transition>
+      </div>
       </div>
     </div>
+    <!-- No Matches Found -->
+  <div v-if="filteredPlants.length === 0 && searchQuery.trim()" class="empty-state">
+    <p>🔍 No plants found matching "{{ searchQuery }}".</p>
+  </div>
+
 
     <!-- Empty State Message -->
     <div v-if="plants.length === 0" class="empty-state">
@@ -196,6 +199,8 @@ export default {
     previewImage: null,
     editingIndex: null,
     confirmDeleteIndex: null, 
+    searchQuery: '',
+    userPlants: [],
     toastMessage: '',
     toastType: 'info', // success | error | warning
     newPlant: {
@@ -212,10 +217,18 @@ export default {
   };
 },
 
+
+
   mounted() {
     // Load existing plants from database
     this.loadPlants();
-  },
+
+    document.addEventListener('click', this.handleOutsideClick);
+    },
+    beforeUnmount() {
+      document.removeEventListener('click', this.handleOutsideClick);
+    },
+
   computed: {
     waterLevels() {
       return this.plants.map(plant => {
@@ -227,6 +240,16 @@ export default {
         const percent = Math.max(0, 100 - (daysSince / schedule) * 100);
         return Math.round(Math.min(percent, 100));
       });
+    },
+    filteredPlants() {
+      if (!this.searchQuery || !this.plants || this.plants.length === 0) {
+        return this.plants; // ✅ return full list if nothing typed yet
+      }
+
+      const query = this.searchQuery.toLowerCase();
+      return this.plants.filter(plant =>
+        plant.name.toLowerCase().includes(query)
+      );
     }
   },
 
@@ -242,8 +265,11 @@ export default {
     return Math.round(Math.min(percent, 100));
    },
     toggleCardDetails(index) {
-      this.expandedCardIndex = index;
+      setTimeout(() => {
+    this.expandedCardIndex = index;
+    }, 0); // wait one tick
     },
+    
     closeCardDetails() {
       this.expandedCardIndex = null;
     },
@@ -270,6 +296,20 @@ export default {
       }, 3000);
     },
 
+    handleOutsideClick(event) {
+      const backCards = document.querySelectorAll('.plant-card-back');
+      const frontCards = document.querySelectorAll('.plant-card-front');
+
+      for (const card of [...backCards, ...frontCards]) {
+        if (card.contains(event.target)) {
+          return; // click was inside a card
+        }
+      }
+
+      this.expandedCardIndex = null;
+    },
+
+    
     async loadPlants() {
       try {
         const auth = getAuth();
@@ -535,21 +575,31 @@ export default {
   width: 100%;
 }
 
+.center-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+
+.form-input-underline {
+  width: 70vw;                /* 60% of the viewport width */
+  max-width: 100%;
+  margin: 40px auto 1rem;     /* top, auto (horizontal), bottom */
+  padding: 6px 0;
+  border: none;
+  border-bottom: 3px solid #4f2e15;
+  background: transparent;
+  outline: none;
+  font-size: 2rem;
+  color: #ffffff;
+}
 
 
 
-/* .toast-popup.success {
-  background-color: #43a047;
+.form-input-underline:focus {
+  border-bottom-color: #9ef09e;
 }
-.toast-popup.error {
-  background-color: #e53935;
-}
-.toast-popup.warning {
-  background-color: #ffa000;
-}
-.toast-popup.info {
-  background-color: #2196f3;
-} */
+
 
 .select-wrapper::after {
   content: '\25BC'; /* Unicode for downward triangle */
@@ -613,15 +663,7 @@ export default {
   width: 100%;
 }
 
-.top-navigation {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background-color: white;
-  padding: 8px 15px;
-  border-radius: 5px;
-  z-index: 10;
-}
+
 
 .breadcrumb {
   margin: 0;
@@ -891,14 +933,29 @@ export default {
   animation: slideUp 0.4s ease-in-out;
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
+.slide-body-wrapper {
+  overflow: hidden;
 }
+
+/* Transition classes for slide-reveal */
+.slide-reveal-enter-active,
+.slide-reveal-leave-active {
+  transition: max-height 0.6s ease, opacity 0.5s ease;
+}
+
+.slide-reveal-enter-from,
+.slide-reveal-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+.slide-reveal-enter-to,
+.slide-reveal-leave-from {
+  max-height: 600px; /* or adjust as needed */
+  opacity: 1;
+}
+
+
 
 .card-img-top {
   width: 100%;
@@ -906,7 +963,7 @@ export default {
   object-fit: cover;
 }
 
-.close-btn {
+/* .close-btn {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -927,7 +984,7 @@ export default {
 
 .close-btn:hover {
   background-color: rgba(0, 0, 0, 0.5);
-}
+} */
 
 .card-body {
   flex: 1 1 auto;
@@ -1165,14 +1222,7 @@ export default {
     max-width: 100%;
   }
   
-  .top-navigation {
-    position: relative;
-    top: 0;
-    right: 0;
-    width: fit-content;
-    margin-left: auto;
-    margin-bottom: 20px;
-  }
+
   
   .header-section {
     margin-top: 20px;

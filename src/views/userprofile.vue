@@ -9,16 +9,6 @@
       <!-- Navigation -->
       <section>
         <div class="container py-5">
-          <div class="top-navigation mb-4">
-            <nav aria-label="breadcrumb">
-              <ol class="breadcrumb">
-                <li class="breadcrumb-item"><router-link to="/chat">Chat</router-link></li>
-                <li class="breadcrumb-item"><router-link to="/plantboard">Go to Plant Gallery</router-link></li>
-                <li class="breadcrumb-item"><router-link to="/login">Sign Out</router-link></li>
-              </ol>
-            </nav>
-          </div>
-
           <div class="card shadow p-4" style="background-color: #F5E6D3;">
             <!-- Profile Header -->
             <div class="text-center mb-4">
@@ -88,23 +78,27 @@
                   </div>
                 </div>
               </div>
+              <p class="text-sm text-gray-600 mt-4">
+                🌿 You have {{ plantCount }} {{ plantCount === 1 ? 'plant' : 'plants' }} saved
+              </p>
+
               <!-- Email Notifications -->
-<div class="row mb-3">
-  <div class="col-sm-3"><strong>Notifications</strong></div>
-  <div class="col-sm-9">
-    <div class="form-check">
-      <input
-        class="form-check-input"
-        type="checkbox"
-        id="emailNotifications"
-        v-model="userData.emailNotifications"
-      />
-      <label class="form-check-label" for="emailNotifications">
-        Enable email notifications
-      </label>
-    </div>
-  </div>
-</div>
+              <div class="row mb-3">
+                <div class="col-sm-3"><strong>Enable email notifications</strong></div>
+                <div class="col-sm-9">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="emailNotifications"
+                      v-model="userData.emailNotifications"
+                    />
+                    <label class="form-check-label" for="emailNotifications">
+                      Enable email notifications
+                    </label>
+                  </div>
+                </div>
+              </div>
 
 
               <!-- Password -->
@@ -188,6 +182,8 @@ export default {
     const userPlants = ref([]);
     const loading = ref(true);
     const createdAt = ref(null);
+    const plantCount = ref(0);
+
 
     const userData = ref({
       name: '',
@@ -260,6 +256,7 @@ export default {
           ...doc.data()
         }));
 
+        plantCount.value = querySnapshot.size;
         console.log("✅ Fetched user plants:", userPlants.value);
       } catch (error) {
         console.error("❌ Failed to fetch user plants:", error);
@@ -284,7 +281,7 @@ export default {
 
     const hasChanges = computed(() => {
       return userData.value.name !== originalData.value?.name ||
-             userData.value.email !== originalData.value.email;
+      userData.value.email !== originalData.value.email;
     });
 
     const saveChanges = async () => {
@@ -355,10 +352,7 @@ export default {
       showPassword.value = false;
     };
 
-    const handleSignOut = async () => {
-      await authStore.logout();
-      router.push('/login');
-    };
+
 
     return {
       user,
@@ -377,9 +371,10 @@ export default {
       savePasswordChange,
       cancelPasswordChange,
       toggleEdit,
-      handleSignOut,
       showToast,
-      fetchUserPlants
+      fetchUserPlants,
+      userPlants,
+      plantCount,
     };
   }
 };
@@ -473,17 +468,6 @@ export default {
   border-bottom-color: #2c6e49; /* your accent green */
 }
 
- /* #341c02; */
-
- .top-navigation {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  background-color: #341c02; /* Brown background */
-  padding: 8px 15px;
-  border-radius: 5px;
-  z-index: 10;
-}
 
 .breadcrumb {
   margin: 0;

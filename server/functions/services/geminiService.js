@@ -15,7 +15,7 @@ Please include the following fields:
 - "plantName": string
 - "scientificName": string
 - "sunlight": string
-- "wateringSchedule": string (e.g. "Every 5 days")
+"wateringSchedule": string (e.g. "Every 5 days"). DO NOT return a range like "Every 4-5 days" — round to the most typical number of days.
 - "wateringFrequencyDays": number (e.g. 5)
 - "wateringInstructions": string (concise tip, e.g. "Keep soil moist, avoid overwatering.")
 - "soilType": string
