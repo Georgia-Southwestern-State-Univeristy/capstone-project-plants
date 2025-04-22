@@ -62,10 +62,7 @@
       <!-- Add Plant Button (only show for AI responses with plant info) -->
     <!-- Add Plant Button (only show for AI responses to image uploads) -->
     <div v-if="!msg.isUser && msg.isResponseToImage && (isPlantDescription(msg.content) || msg.image)" class="mt-3 text-end">
-      <button 
-        class="btn add-plant-btn" 
-        @click="addPlantToCollection(msg)"
-      >
+      <button class="btn add-plant-btn" @click="addPlantToCollection(msg)">
         Add plant to collection
       </button>
     </div>

@@ -66,7 +66,7 @@
     width: 240px;
     background-color: #2f1b0c;
     color: white;
-    z-index: 40;
+    z-index: 500;
     transition: left 0.3s ease;
     padding: 1rem;
     display: flex;
