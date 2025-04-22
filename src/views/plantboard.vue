@@ -126,8 +126,7 @@
           <!-- Card Back (Details) -->
           <div class="plant-card-back" v-if="expandedCardIndex === index"> 
             <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" alt="Plant Image">
-            <button class="close-btn" @click.stop="closeCardDetails(index)">×</button>
-
+            <!-- <button class="close-btn" @click.stop="closeCardDetails(index)">×</button> -->
             <!-- Updated layout with vertical water bar -->
             <div class="card-body-with-waterbar">
               <div class="water-bar-wrapper">
@@ -224,7 +223,13 @@ export default {
   mounted() {
     // Load existing plants from database
     this.loadPlants();
-  },
+
+    document.addEventListener('click', this.handleOutsideClick);
+    },
+    beforeUnmount() {
+      document.removeEventListener('click', this.handleOutsideClick);
+    },
+
   computed: {
     waterLevels() {
       return this.plants.map(plant => {
@@ -289,6 +294,20 @@ export default {
       }, 3000);
     },
 
+    handleOutsideClick(event) {
+      const backCards = document.querySelectorAll('.plant-card-back');
+      const frontCards = document.querySelectorAll('.plant-card-front');
+
+      for (const card of [...backCards, ...frontCards]) {
+        if (card.contains(event.target)) {
+          return; // click was inside a card
+        }
+      }
+
+      this.expandedCardIndex = null;
+    },
+
+    
     async loadPlants() {
       try {
         const auth = getAuth();
@@ -920,7 +939,7 @@ export default {
   object-fit: cover;
 }
 
-.close-btn {
+/* .close-btn {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -941,7 +960,7 @@ export default {
 
 .close-btn:hover {
   background-color: rgba(0, 0, 0, 0.5);
-}
+} */
 
 .card-body {
   flex: 1 1 auto;
