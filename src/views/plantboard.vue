@@ -113,21 +113,22 @@
         class="col"
       >
 
-        <div class="card" :class="{'expanded': expandedCardIndex === index}">
-          <!-- Card Front (Image with overlay) -->
-          <div class="plant-card-front" v-if="expandedCardIndex !== index" @click="toggleCardDetails(index)">
-            <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" alt="Plant Image">
-            <div class="overlay-content">
-              <h5 class="overlay-title">{{ plant.name }}</h5>
-              <p class="overlay-subtitle">Click for more</p>
-            </div>
+      <div class="card" :class="{'expanded': expandedCardIndex === index}">
+        <!-- Card Front (Image with overlay) -->
+        <div class="plant-card-front" v-if="expandedCardIndex !== index" @click="toggleCardDetails(index)">
+          <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" alt="Plant Image">
+          <div class="overlay-content">
+            <h5 class="overlay-title">{{ plant.name }}</h5>
+            <p class="overlay-subtitle">Click for more</p>
           </div>
+        </div>
           
-          <!-- Card Back (Details) -->
-          <div class="plant-card-back" v-if="expandedCardIndex === index"> 
-            <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" alt="Plant Image">
-            <!-- <button class="close-btn" @click.stop="closeCardDetails(index)">×</button> -->
-            <!-- Updated layout with vertical water bar -->
+        <!-- Plant Card -->
+        <div class="card" :class="{ expanded: expandedCardIndex === index }">
+        <img :src="plant.image_url || '/default-plant.jpg'" class="card-img-top" />
+
+        <transition name="slide-down">
+          <div v-show="expandedCardIndex === index" class="slide-body-wrapper">
             <div class="card-body-with-waterbar">
               <div class="water-bar-wrapper">
                 <div class="water-bar-vertical">
@@ -167,7 +168,9 @@
               </div>
             </div>
           </div>
+        </transition>
         </div>
+        </div>  
       </div>
     </div>
     <!-- No Matches Found -->
@@ -865,6 +868,7 @@ export default {
   display: flex; /* Added for better centering */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
+  animation: slideDown 0.4s ease-in-out;
 }
 
 .plant-card-front img {
@@ -874,6 +878,29 @@ export default {
   filter: brightness(0.7);
   border-radius: 0.5rem;
 }
+
+.slide-body-wrapper {
+  overflow: hidden;
+}
+
+/* Slide-down animation */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: max-height 0.4s ease, opacity 0.3s ease;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+.slide-down-enter-to,
+.slide-down-leave-from {
+  max-height: 600px; /* ensure it's large enough for your largest content */
+  opacity: 1;
+}
+
 
 .overlay-content {
   position: absolute;
@@ -930,6 +957,14 @@ export default {
 @keyframes slideUp {
   from {
     transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
   }
   to {
     transform: translateY(0);
