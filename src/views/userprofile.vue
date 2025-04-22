@@ -1,8 +1,9 @@
 <template>
   <div class="profile-page">
+    
     <div class="profile-background">
       <!-- Toast -->
-      <div v-if="showToast" :class="['toast-popup', toastType]">
+      <div v-if="toastMessage" :class="['toast-popup', toastType]"> 
         {{ toastMessage }}
       </div>
 
@@ -78,27 +79,29 @@
                   </div>
                 </div>
               </div>
-              <p class="text-sm text-gray-600 mt-4">
-                🌿 You have {{ plantCount }} {{ plantCount === 1 ? 'plant' : 'plants' }} saved
-              </p>
-
-              <!-- Email Notifications -->
-              <div class="row mb-3">
+              <div class="row mb-3 mt-5">
                 <div class="col-sm-3"><strong>Enable email notifications</strong></div>
                 <div class="col-sm-9">
                   <div class="form-check">
-                    <input
-                      class="form-check-input"
-                      type="checkbox"
-                      id="emailNotifications"
-                      v-model="userData.emailNotifications"
-                    />
-                    <label class="form-check-label" for="emailNotifications">
-                      Enable email notifications
+                    <label class="switch">
+                      <input type="checkbox" v-model="userData.emailNotifications" />
+                      <span class="slider round"></span>
                     </label>
+
                   </div>
                 </div>
               </div>
+              <div class="total-plants">
+                <p class="text-sm text-gray-600 mt-4">
+                  🌿 You have {{ plantCount }} {{ plantCount === 1 ? 'plant' : 'plants' }} saved
+                </p>
+            </div>
+            <p class="text-sm text-gray-600">
+              💧 You've watered your plants {{ totalWaterings }} times
+            </p>
+
+              <!-- Email Notifications -->
+
 
 
               <!-- Password -->
@@ -183,6 +186,7 @@ export default {
     const loading = ref(true);
     const createdAt = ref(null);
     const plantCount = ref(0);
+    const totalWaterings = ref(0);
 
 
     const userData = ref({
@@ -236,8 +240,9 @@ export default {
           const userDataFromDB = userDocSnap.data();
           userData.value.name = userDataFromDB.name || '';
           userData.value.email = user.value.email || '';
+          userData.value.emailNotifications = userDataFromDB.emailNotifications ?? false;
           profileImage.value = userDataFromDB.profileImage || null;
-          createdAt.value = userDataFromDB.createdAt || null; // ✅ set this
+          createdAt.value = userDataFromDB.createdAt || null; 
           originalData.value = { ...userData.value };
         }
       } catch (error) {
@@ -255,6 +260,11 @@ export default {
           id: doc.id,
           ...doc.data()
         }));
+
+        totalWaterings.value = querySnapshot.docs.reduce((sum, doc) => {
+          const data = doc.data();
+          return sum + (data.waterCount || 0); // default to 0 if not set
+        }, 0);
 
         plantCount.value = querySnapshot.size;
         console.log("✅ Fetched user plants:", userPlants.value);
@@ -289,14 +299,31 @@ export default {
 
       try {
         const userDocRef = doc(db, 'users', user.value.uid);
-        await updateDoc(userDocRef, { name: userData.value.name });
+
+        // Update Firestore user data
+        await updateDoc(userDocRef, {
+          name: userData.value.name,
+          email: userData.value.email // optional, if you store email in Firestore too
+        });
+
+        // Update email in Firebase Auth if it has changed
+        if (user.value.email !== userData.value.email) {
+          await auth.currentUser.updateEmail(userData.value.email);
+          showToast('Email updated in Firebase Auth!');
+        }
+
         showToast('Profile updated successfully!', 'success');
         originalData.value = { ...userData.value };
       } catch (error) {
         console.error('Error updating profile:', error);
-        showToast('Error updating profile', 'error');
+        if (error.code === 'auth/requires-recent-login') {
+          showToast('Please reauthenticate before changing your email.', 'error');
+        } else {
+          showToast('Error updating profile', 'error');
+        }
       }
     };
+
 
     const handleImageUpload = async (event) => {
       const file = event.target.files[0];
@@ -375,6 +402,8 @@ export default {
       fetchUserPlants,
       userPlants,
       plantCount,
+      totalWaterings,
+      createdAt,
     };
   }
 };
@@ -425,7 +454,10 @@ export default {
   }
 }
 
+.total-plants {
+  margin-top: 5rem;
 
+}
 
 .btn-primary:hover {
   background-color: #0a3b1e !important;
@@ -573,6 +605,38 @@ div#profileBox {
   cursor: pointer;
   border: 2px solid #F5E6D3; /* Cream-colored border */
 }
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 25px;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 25px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 17px; width: 17px;
+  left: 4px; bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: #4f2e15;
+}
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
 
 .plus-icon {
   color: #F5E6D3; /* Cream-colored plus sign */

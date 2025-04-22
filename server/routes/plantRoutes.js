@@ -2,6 +2,8 @@ import express from 'express';
 import { fetchPlantFromPerenual } from '../functions/services/perenualService.js';
 import { db } from '../config/firebaseAdmin.js';
 import { verifyFirebaseToken } from '../functions/services/authService.js';
+// import { getFirestore, doc, updateDoc, increment } from 'firebase-admin/firestore';
+import  admin from 'firebase-admin';
 
 const router = express.Router();
 
@@ -104,38 +106,40 @@ router.delete('/users/:userId/plants/:plantId', async (req, res) => {
 /**
  *⚙️ PATCH /users/:userId/plants/:plantId/water - Update the last watered date of a plant
  */
-router.patch('/users/:userId/plants/:plantId/water', async (req, res) => {
+ router.patch('/users/:userId/plants/:plantId/water', async (req, res) => {
     try {
-        const { userId, plantId } = req.params;
-        const { idToken } = req.body;
-
-        if (!idToken) {
+      const { userId, plantId } = req.params;
+      const { idToken } = req.body;
+  
+      if (!idToken) {
         return res.status(401).json({ error: 'Unauthorized: No ID token provided.' });
-        }
-
-        const user = await verifyFirebaseToken(idToken);
-
-        if (user.uid !== userId) {
+      }
+  
+      const user = await verifyFirebaseToken(idToken);
+  
+      if (user.uid !== userId) {
         return res.status(403).json({ error: 'Forbidden: Invalid user access.' });
-        }
-
-        const plantRef = db.collection('users').doc(userId).collection('userPlants').doc(plantId);
-        const doc = await plantRef.get();
-
-        if (!doc.exists) {
+      }
+  
+      const plantRef = db.collection('users').doc(userId).collection('userPlants').doc(plantId);
+      const doc = await plantRef.get();
+  
+      if (!doc.exists) {
         return res.status(404).json({ error: 'Plant not found.' });
-        }
-
-        await plantRef.update({
-        lastWatered: new Date().toISOString()
-        });
-
-        res.json({ success: true, message: 'Plant watered successfully!' });
+      }
+  
+      await plantRef.update({
+        lastWatered: new Date().toISOString(),
+        waterCount: admin.firestore.FieldValue.increment(1)
+      });
+  
+      res.json({ success: true, message: 'Plant watered successfully!' });
     } catch (error) {
-        console.error('❌ Failed to update watering:', error);
-        res.status(500).json({ error: 'Failed to update last watered date.' });
+      console.error('❌ Failed to update watering:', error);
+      res.status(500).json({ error: 'Failed to update last watered date.' });
     }
-});
+  });
+  
 
 /**
  *⚙️  PUT /users/:userId/plants/:plantId - Update a user's plant details
