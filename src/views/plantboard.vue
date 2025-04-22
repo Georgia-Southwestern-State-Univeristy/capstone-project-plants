@@ -5,12 +5,10 @@
       {{ toastMessage }}
     </div>
 
-    <input
-      v-model="searchQuery"
-      type="text"
-      placeholder="Search your plants..."
-      class="form-input-underline"
-    />
+  <div class="center-wrapper">
+    <input class="form-input-underline" type="text" placeholder="Search..." />
+  </div>
+
 
     
     <div class="header-section">
@@ -577,19 +575,26 @@ export default {
   width: 100%;
 }
 
+.center-wrapper {
+  display: flex;
+  justify-content: center;
+}
 
 
 .form-input-underline {
-  width: 100%;
+  width: 70vw;                /* 60% of the viewport width */
+  max-width: 100%;
+  margin: 40px auto 1rem;     /* top, auto (horizontal), bottom */
   padding: 6px 0;
   border: none;
   border-bottom: 3px solid #4f2e15;
   background: transparent;
   outline: none;
-  font-size: 1rem;
-  margin-bottom: 1rem;
-  margin-top: 40px;
+  font-size: 2rem;
+  color: #ffffff;
 }
+
+
 
 .form-input-underline:focus {
   border-bottom-color: #9ef09e;
