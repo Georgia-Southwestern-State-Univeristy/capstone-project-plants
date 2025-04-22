@@ -5,21 +5,17 @@
       {{ toastMessage }}
     </div>
 
-  <div class="center-wrapper">
-    <input class="form-input-underline" type="text" placeholder="Search..." />
-  </div>
+    <div class="center-wrapper">
+      <input v-model="searchQuery" class="form-input-underline" type="text" placeholder="Search..."/>
+    </div>
 
-
-    
     <div class="header-section">
       <h1 class="your-plants-title">Your Plants</h1>
     </div>
     
     <div class="button-container">
       <button 
-        class="add-plant-btn" 
-        @click="toggleUploadForm"
-      >
+        class="add-plant-btn" @click="toggleUploadForm">
         + Add a new plant
       </button>
     </div>
@@ -105,12 +101,7 @@
 
     <!-- Plants Gallery Grid -->
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-      <div 
-        v-for="(plant, index) in filteredPlants" 
-        :key="index" 
-        class="col"
-      >
-
+      <div v-for="(plant, index) in filteredPlants" :key="index" class="col">
       <div class="card" :class="{ expanded: expandedCardIndex === index }">
   <!-- Single shared image always on top -->
         <div class="plant-card-front" @click="toggleCardDetails(index)">
@@ -240,19 +231,20 @@ export default {
         const percent = Math.max(0, 100 - (daysSince / schedule) * 100);
         return Math.round(Math.min(percent, 100));
       });
+      
     },
+
     filteredPlants() {
-      if (!this.searchQuery || !this.plants || this.plants.length === 0) {
-        return this.plants; // ✅ return full list if nothing typed yet
-      }
-
-      const query = this.searchQuery.toLowerCase();
-      return this.plants.filter(plant =>
-        plant.name.toLowerCase().includes(query)
-      );
+    if (!this.searchQuery || !this.plants || this.plants.length === 0) {
+      return this.plants;
     }
-  },
 
+    const query = this.searchQuery.toLowerCase();
+    return this.plants.filter(plant =>
+      plant.name.toLowerCase().includes(query)
+    );
+  }
+},
   methods: {
     calculateWaterLevel(plant) {
     console.log("🌱 Last watered:", plant.last_watered);
