@@ -266,8 +266,11 @@ export default {
     return Math.round(Math.min(percent, 100));
    },
     toggleCardDetails(index) {
-      this.expandedCardIndex = index;
+      setTimeout(() => {
+    this.expandedCardIndex = index;
+    }, 0); // wait one tick
     },
+    
     closeCardDetails() {
       this.expandedCardIndex = null;
     },
