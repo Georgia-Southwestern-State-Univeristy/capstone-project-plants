@@ -9,16 +9,6 @@
       <!-- Navigation -->
       <section>
         <div class="container py-5">
-          <div class="top-navigation mb-4">
-            <nav aria-label="breadcrumb">
-              <ol class="breadcrumb">
-                <li class="breadcrumb-item"><router-link to="/chat">Chat</router-link></li>
-                <li class="breadcrumb-item"><router-link to="/plantboard">Go to Plant Gallery</router-link></li>
-                <li class="breadcrumb-item"><router-link to="/login">Sign Out</router-link></li>
-              </ol>
-            </nav>
-          </div>
-
           <div class="card shadow p-4" style="background-color: #F5E6D3;">
             <!-- Profile Header -->
             <div class="text-center mb-4">
@@ -291,7 +281,7 @@ export default {
 
     const hasChanges = computed(() => {
       return userData.value.name !== originalData.value?.name ||
-             userData.value.email !== originalData.value.email;
+      userData.value.email !== originalData.value.email;
     });
 
     const saveChanges = async () => {
@@ -362,10 +352,7 @@ export default {
       showPassword.value = false;
     };
 
-    const handleSignOut = async () => {
-      await authStore.logout();
-      router.push('/login');
-    };
+
 
     return {
       user,
@@ -384,7 +371,6 @@ export default {
       savePasswordChange,
       cancelPasswordChange,
       toggleEdit,
-      handleSignOut,
       showToast,
       fetchUserPlants,
       userPlants,
@@ -482,17 +468,6 @@ export default {
   border-bottom-color: #2c6e49; /* your accent green */
 }
 
- /* #341c02; */
-
- .top-navigation {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  background-color: #341c02; /* Brown background */
-  padding: 8px 15px;
-  border-radius: 5px;
-  z-index: 10;
-}
 
 .breadcrumb {
   margin: 0;

@@ -18,7 +18,8 @@
         <nav class="sidebar-links">
           <router-link to="/chat" @click="$emit('close')">Chat</router-link>
           <router-link to="/plantboard" @click="$emit('close')">Plant Gallery</router-link>
-          <button class="logout-btn" @click="logout">Sign Out</button>
+          <router-link to="/userProfile" @click="$emit('close')">Profile</router-link>
+          <button class="logout-btn" @click="handleSignOut">Sign Out</button>
         </nav>
       </aside>
     </div>
@@ -26,6 +27,7 @@
   
   <script>
   import { useAuthStore } from '@/store/authStore';
+  import { useRouter } from 'vue-router';
   
   export default {
     props: {
@@ -33,12 +35,17 @@
     },
     setup() {
       const authStore = useAuthStore();
-  
-      const logout = async () => {
+      const router = useRouter();
+
+      // 🔹 Handle user sign-out
+      const handleSignOut = async () => {
         await authStore.logout();
+        router.push('/login');
       };
   
-      return { logout };
+    return { 
+      handleSignOut
+      };
     }
   };
   </script>

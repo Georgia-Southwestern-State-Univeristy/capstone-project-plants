@@ -316,11 +316,7 @@ const sendMessage = async () => {
   }
 };
 
-// 🔹 Handle user sign-out
-const handleSignOut = async () => {
-  await authStore.logout();
-  router.push('/login');
-};
+
 
 // 🔹 Toggle account dropdown
 const toggleDropdown = () => {

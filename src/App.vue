@@ -1,15 +1,21 @@
 <template>
   <div id="app">
-    <button v-if="!sidebarOpen" class="menu-toggle" @click="sidebarOpen = true">
+    <button
+      v-if="!sidebarOpen && !hideNav"
+      class="menu-toggle"
+      @click="sidebarOpen = true"
+    >
       ☰
     </button>
 
-    <SidebarNav :open="sidebarOpen" @close="sidebarOpen = false" />
+    <SidebarNav v-if="!hideNav" :open="sidebarOpen" @close="sidebarOpen = false" />
+
     <router-view />
   </div>
 </template>
 
 <script>
+import { useRoute } from 'vue-router';
 import SidebarNav from '@/views/NavBar.vue';
 
 export default {
@@ -18,9 +24,16 @@ export default {
     return {
       sidebarOpen: false
     };
+  },
+  computed: {
+    hideNav() {
+      const hiddenRoutes = ['/', '/login', '/register'];
+      return hiddenRoutes.includes(this.$route.path);
+    }
   }
 };
 </script>
+
 
 <style scoped>
 .menu-toggle {
@@ -28,7 +41,7 @@ export default {
   top: 1rem;
   left: 1rem;
   z-index: 50;
-  background: #2f1b0c;
+  background: #593317;
   color: white;
   border: none;
   font-size: 1.5rem;
