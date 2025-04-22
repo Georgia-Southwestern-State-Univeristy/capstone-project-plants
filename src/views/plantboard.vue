@@ -5,6 +5,13 @@
       {{ toastMessage }}
     </div>
 
+    <input
+      v-model="searchQuery"
+      type="text"
+      placeholder="Search your plants..."
+      class="form-input-underline"
+    />
+
     
     <div class="header-section">
       <h1 class="your-plants-title">Your Plants</h1>
@@ -101,10 +108,11 @@
     <!-- Plants Gallery Grid -->
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
       <div 
-        v-for="(plant, index) in plants" 
+        v-for="(plant, index) in filteredPlants" 
         :key="index" 
         class="col"
       >
+
         <div class="card" :class="{'expanded': expandedCardIndex === index}">
           <!-- Card Front (Image with overlay) -->
           <div class="plant-card-front" v-if="expandedCardIndex !== index" @click="toggleCardDetails(index)">
@@ -163,6 +171,11 @@
         </div>
       </div>
     </div>
+    <!-- No Matches Found -->
+  <div v-if="filteredPlants.length === 0 && searchQuery.trim()" class="empty-state">
+    <p>🔍 No plants found matching "{{ searchQuery }}".</p>
+  </div>
+
 
     <!-- Empty State Message -->
     <div v-if="plants.length === 0" class="empty-state">
@@ -188,6 +201,8 @@ export default {
     previewImage: null,
     editingIndex: null,
     confirmDeleteIndex: null, 
+    searchQuery: '',
+    userPlants: [],
     toastMessage: '',
     toastType: 'info', // success | error | warning
     newPlant: {
@@ -204,6 +219,8 @@ export default {
   };
 },
 
+
+
   mounted() {
     // Load existing plants from database
     this.loadPlants();
@@ -219,6 +236,16 @@ export default {
         const percent = Math.max(0, 100 - (daysSince / schedule) * 100);
         return Math.round(Math.min(percent, 100));
       });
+    },
+    filteredPlants() {
+      if (!this.searchQuery || !this.plants || this.plants.length === 0) {
+        return this.plants; // ✅ return full list if nothing typed yet
+      }
+
+      const query = this.searchQuery.toLowerCase();
+      return this.plants.filter(plant =>
+        plant.name.toLowerCase().includes(query)
+      );
     }
   },
 
@@ -529,19 +556,22 @@ export default {
 
 
 
+.form-input-underline {
+  width: 100%;
+  padding: 6px 0;
+  border: none;
+  border-bottom: 3px solid #4f2e15;
+  background: transparent;
+  outline: none;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  margin-top: 40px;
+}
 
-/* .toast-popup.success {
-  background-color: #43a047;
+.form-input-underline:focus {
+  border-bottom-color: #9ef09e;
 }
-.toast-popup.error {
-  background-color: #e53935;
-}
-.toast-popup.warning {
-  background-color: #ffa000;
-}
-.toast-popup.info {
-  background-color: #2196f3;
-} */
+
 
 .select-wrapper::after {
   content: '\25BC'; /* Unicode for downward triangle */

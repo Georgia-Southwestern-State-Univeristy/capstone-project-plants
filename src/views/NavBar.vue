@@ -18,6 +18,7 @@
         <nav class="sidebar-links">
           <router-link to="/chat" @click="$emit('close')">Chat</router-link>
           <router-link to="/plantboard" @click="$emit('close')">Plant Gallery</router-link>
+          <router-link to="/userProfile" @click="$emit('close')">Profile</router-link>
           <button class="logout-btn" @click="logout">Sign Out</button>
         </nav>
       </aside>
