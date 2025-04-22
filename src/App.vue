@@ -1,27 +1,39 @@
-<!-- src/App.vue -->
-
 <template>
   <div id="app">
-    <router-view></router-view>
+    <button v-if="!sidebarOpen" class="menu-toggle" @click="sidebarOpen = true">
+      ☰
+    </button>
+
+    <SidebarNav :open="sidebarOpen" @close="sidebarOpen = false" />
+    <router-view />
   </div>
 </template>
 
 <script>
-import { useChatStore } from '@/store/chatStore';
+import SidebarNav from '@/views/NavBar.vue';
 
 export default {
-  setup() {
-    const chatStore = useChatStore();
-
-    console.log("🌐 Global Chat Store Initialized:", chatStore);
-    console.log("🌐 Current Messages in Store:", chatStore.messages);
-
-    return { chatStore };
+  components: { SidebarNav },
+  data() {
+    return {
+      sidebarOpen: false
+    };
   }
 };
-
 </script>
 
-<style>
-@import '@/assets/styles/generalStyle.css';
+<style scoped>
+.menu-toggle {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 50;
+  background: #2f1b0c;
+  color: white;
+  border: none;
+  font-size: 1.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
 </style>

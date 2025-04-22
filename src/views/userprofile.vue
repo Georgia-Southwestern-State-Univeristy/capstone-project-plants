@@ -88,23 +88,27 @@
                   </div>
                 </div>
               </div>
+              <p class="text-sm text-gray-600 mt-4">
+                🌿 You have {{ plantCount }} {{ plantCount === 1 ? 'plant' : 'plants' }} saved
+              </p>
+
               <!-- Email Notifications -->
-<div class="row mb-3">
-  <div class="col-sm-3"><strong>Notifications</strong></div>
-  <div class="col-sm-9">
-    <div class="form-check">
-      <input
-        class="form-check-input"
-        type="checkbox"
-        id="emailNotifications"
-        v-model="userData.emailNotifications"
-      />
-      <label class="form-check-label" for="emailNotifications">
-        Enable email notifications
-      </label>
-    </div>
-  </div>
-</div>
+              <div class="row mb-3">
+                <div class="col-sm-3"><strong>Enable email notifications</strong></div>
+                <div class="col-sm-9">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="emailNotifications"
+                      v-model="userData.emailNotifications"
+                    />
+                    <label class="form-check-label" for="emailNotifications">
+                      Enable email notifications
+                    </label>
+                  </div>
+                </div>
+              </div>
 
 
               <!-- Password -->
@@ -188,6 +192,8 @@ export default {
     const userPlants = ref([]);
     const loading = ref(true);
     const createdAt = ref(null);
+    const plantCount = ref(0);
+
 
     const userData = ref({
       name: '',
@@ -260,6 +266,7 @@ export default {
           ...doc.data()
         }));
 
+        plantCount.value = querySnapshot.size;
         console.log("✅ Fetched user plants:", userPlants.value);
       } catch (error) {
         console.error("❌ Failed to fetch user plants:", error);
@@ -379,7 +386,9 @@ export default {
       toggleEdit,
       handleSignOut,
       showToast,
-      fetchUserPlants
+      fetchUserPlants,
+      userPlants,
+      plantCount,
     };
   }
 };

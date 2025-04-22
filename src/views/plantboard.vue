@@ -4,15 +4,7 @@
     <div v-if="toastMessage" :class="['toast-popup', toastType]">
       {{ toastMessage }}
     </div>
-    <div class="top-navigation">
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item"><router-link to="/chat" class="breadcrumb-link">Chat</router-link></li>
-          <li class="breadcrumb-item"><router-link to="/userprofile" class="breadcrumb-link">Account</router-link></li>
-          <li class="breadcrumb-item"><router-link to="/login" class="breadcrumb-link">Sign Out</router-link></li>
-        </ol>
-      </nav>
-    </div>
+
     
     <div class="header-section">
       <h1 class="your-plants-title">Your Plants</h1>
@@ -613,15 +605,7 @@ export default {
   width: 100%;
 }
 
-.top-navigation {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background-color: white;
-  padding: 8px 15px;
-  border-radius: 5px;
-  z-index: 10;
-}
+
 
 .breadcrumb {
   margin: 0;
@@ -1165,14 +1149,7 @@ export default {
     max-width: 100%;
   }
   
-  .top-navigation {
-    position: relative;
-    top: 0;
-    right: 0;
-    width: fit-content;
-    margin-left: auto;
-    margin-bottom: 20px;
-  }
+
   
   .header-section {
     margin-top: 20px;
