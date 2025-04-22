@@ -352,10 +352,7 @@ export default {
       showPassword.value = false;
     };
 
-    const handleSignOut = async () => {
-      await authStore.logout();
-      router.push('/login');
-    };
+
 
     return {
       user,
@@ -374,7 +371,6 @@ export default {
       savePasswordChange,
       cancelPasswordChange,
       toggleEdit,
-      handleSignOut,
       showToast,
       fetchUserPlants,
       userPlants,
