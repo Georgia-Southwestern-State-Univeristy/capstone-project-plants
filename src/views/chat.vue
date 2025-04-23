@@ -659,15 +659,16 @@ const addPlantToCollection = async (message) => {
 /* Card styling - consolidated to avoid conflicts */
 .message-card {
   width: 100%;
-  max-width: 600px; /* Increase max width */
-  margin-bottom: 8px !important; /* Reduce bottom margin */
-  border: 3px solid #341c02; /* Slightly thinner border */
-  border-radius: 16px !important;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  will-change: transform, opacity;
+  max-width: 600px;
+  margin-bottom: 12px;
+  padding: 1rem;
+  border-radius: 20px;
+  border: none; /* Remove the harsh border */
+  background-color: #ffffff; /* Clean, soft background */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Softer shadow */
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
+
 
 /* Animation keyframes */
 @keyframes fadeInUp {
@@ -732,13 +733,15 @@ const addPlantToCollection = async (message) => {
 
 
 .image-message img {
-  max-width: 100%;
-  max-height: 300px; /* Limit height to prevent huge images */
-  object-fit: contain;
-  border-radius: 8px;
-  margin: 0 auto;
+  width: 100%;
+  max-height: 400px; /* Increase height for taller portraits */
+  object-fit: cover; /* Fill the space while preserving aspect ratio */
+  border-radius: 12px;
   display: block;
+  margin: 0 auto;
+  aspect-ratio: 3/4;
 }
+
 
 /* Add plant button styling */
 .add-plant-btn {

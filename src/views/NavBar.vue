@@ -10,7 +10,7 @@
       <!-- Sidebar -->
       <aside :class="['sidebar-drawer', { open }]">
         <div class="sidebar-header">
-          <!-- <img src="@/assets/leaf-icon.svg" class="logo" /> -->
+          <img src="@/assets/leaf-icon.png" class="logo" />
           <span class="app-name">Verdure AI</span>
           <button class="close-btn" @click="$emit('close')">✕</button>
         </div>
@@ -86,8 +86,8 @@
   }
   
   .logo {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
   }
   
   .app-name {
@@ -111,20 +111,25 @@
   }
   
   .sidebar-links a,
-  .logout-btn {
-    color: white;
-    text-decoration: none;
-    font-weight: 500;
-    background: none;
-    border: none;
-    text-align: left;
-    cursor: pointer;
-    padding: 0.25rem 0;
-  }
-  
-  .sidebar-links a:hover,
-  .logout-btn:hover {
-    color: #9ef09e;
-  }
+.logout-btn {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  display: block; /* ensures it takes full width */
+  border-radius: 6px; /* rounded corners for hover box */
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-links a:hover,
+.logout-btn:hover {
+  background-color: rgba(158, 240, 158, 0.2); /* soft green box */
+  color: #9ef09e;
+}
+
   </style>
   
