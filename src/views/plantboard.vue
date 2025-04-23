@@ -133,7 +133,15 @@
                 <h5 class="card-title">{{ plant.name }}</h5>
                 <p class="plant-info"><span class="detail-emoji">🌿</span> <span class="detail-label">Type:</span> {{ plant.type }}</p>
                 <p class="plant-info"><span class="detail-emoji">☀️</span> <span class="detail-label">Sunlight:</span> {{ plant.sunlight_schedule }}</p>
-                <p class="plant-info"><span class="detail-emoji">💧</span> <span class="detail-label">Watering:</span> {{ plant.watering_schedule }}</p>
+                <p class="plant-info">
+                <span class="detail-emoji">💧</span>
+                <span class="detail-label">Watering: </span>
+                <span v-if="plant.watering_schedule == 7">Once a week</span>
+                <span v-else>
+                  Every {{ plant.watering_schedule }} {{ plant.watering_schedule == 1 ? 'day' : 'days' }}
+                </span>
+              </p>
+
                 <p class="plant-info"><span class="detail-emoji">📅</span> <span class="detail-label">Last watered:</span> {{ formatDate(plant.last_watered) }}</p>
                 <p class="plant-info"><span class="detail-emoji">❤️</span> <span class="detail-label">Health:</span> {{ plant.health_status }}</p>
                 <p class="plant-info"><span class="detail-emoji">📝</span> <span class="detail-label">Notes:</span> {{ plant.notes || 'No notes added yet.' }}</p>

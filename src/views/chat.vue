@@ -1,78 +1,98 @@
 <template>
   <main class="w-100 h-100">
+    <div v-if="toastMessage" :class="['toast-popup', toastType]">
+      {{ toastMessage }}
+    </div>
     <div id="chatBackground" class="chat-container px-4 py-5">
-      <!-- 🔹 Messages Area -->
-      <div class="messages-area mb-4" ref="messagesContainer">
-        <div v-if="chatStore.messages.length === 0" class="chat-placeholder">🌱 Get started by uploading a plant</div>
-        <div
-          v-for="msg in chatStore.messages"
-          :key="msg.id"
-          :class="['message-wrapper', msg.isUser ? 'user-wrapper' : 'ai-wrapper']"
-        >
-          <div
-            class="card mb-3 message-card"
-            :class="[
-              msg.isUser ? 'user-message' : 'ai-message',
-              'animate-in'
-            ]"
-          >
-            <div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
-              {{ msg.isUser ? 'You' : 'Verdure AI' }}
-            </div>
-            <!-- 🔹 Card Body -->
-            <div class="card-body">
-              <!-- Formatted Plant Info -->
-              <div
-                v-if="!msg.isUser && isValidPlantData(msg.content)"
-                class="formatted-plant-response"
-              >
-                <h5 class="plant-title">{{ msg.content.plantName }}</h5>
-                <p class="scientific-name"><i>{{ msg.content.scientificName }}</i></p>
-                <div class="plant-info">
-                  <p><strong>☀️ Sunlight:</strong> {{ msg.content.sunlight }}</p>
-                  <p><strong>💧 Watering:</strong> {{ msg.content.wateringSchedule }}</p>
-                  <p><strong>🌱 Soil Type:</strong> {{ msg.content.soilType }}</p>
-                  <p><strong>📈 Growth Habit:</strong> {{ msg.content.growthHabit }}</p>
-                  <p><strong>🌿 Common Uses:</strong> {{ msg.content.commonUses }}</p>
-                  <p><strong>⚠️ Common Issues:</strong> {{ msg.content.commonIssues }}</p>
-                  <p><strong>🎉 Fun Fact:</strong> {{ msg.content.funFact }}</p>
-                </div>
-              </div>
-              <!-- Text Message -->
-              <div
-                v-else-if="msg.content && (msg.type === 'text' || msg.type === 'both') && (!isValidPlantData(msg.content) || msg.isUser)"
-                class="text-message"
-              >
-                {{ msg.content }}
-              </div>
-              <!-- Image Message -->
-              <div
-                v-if="msg.image || (msg.type === 'image' && msg.content) || msg.type === 'both'"
-                class="image-message"
-              >
-                <img
-                  :src="msg.image || msg.content"
-                  class="img-fluid rounded"
-                  alt="Uploaded plant image"
-                />
-              </div>
-              <!-- Add Plant Button -->
-              <div
-                v-if="!msg.isUser && msg.isResponseToImage && (isPlantDescription(msg.content) || msg.image)"
-                class="mt-3 text-end"
-              >
-                <button class="btn add-plant-btn" @click="addPlantToCollection(msg)">
-                  Add plant to collection
-                </button>
-              </div>
-            </div>
-          </div>
+      <!-- 🔹 Account Icon Dropdown -->
+      <div class="d-flex justify-content-end p-3 position-fixed end-0 top-0" style="z-index: 1000;">
+        <div class="dropdown">
+          <button class="account-circle" type="button" @click="toggleDropdown">
+            <i class="bi bi-person-fill"></i>
+          </button>
+          <ul class="account-dropdown" :class="{ 'show': isDropdownOpen }">
+            <li>
+              <router-link to="/userprofile" class="dropdown-item">Account</router-link>
+            </li>
+            <li>
+              <router-link to="/plantboard" class="dropdown-item">Plant Gallery</router-link>
+            </li>
+            <li>
+              <a href="#" class="dropdown-item" @click.prevent="handleSignOut">Sign Out</a>
+            </li>
+          </ul>
         </div>
       </div>
 
+      <!-- 🔹 Messages Display Area -->
+ <!-- 🔹 Messages Display Area -->
+<div class="messages-area mb-4" ref="messagesContainer">
+  <div 
+    v-for="msg in chatStore.messages" 
+    :key="msg.id" 
+    :class="['message-wrapper', msg.isUser ? 'user-wrapper' : 'ai-wrapper']"
+  >
+  <div 
+  class="card mb-3 message-card"
+  :class="[
+    msg.isUser ? 'user-message' : 'ai-message',
+    'animate-in' /* Add animation class here instead */
+  ]"
+>
+<div class="card-header" :class="msg.isUser ? 'user-header' : 'ai-header'">
+  {{ msg.isUser ? 'You' : 'Verdure AI' }}
+</div>
+      <!-- Replace the entire card-body div with this: -->
+<div class="card-body">
+<!-- Formatted AI Response Display -->
+<div v-if="!msg.isUser && isValidPlantData(msg.content)" class="formatted-plant-response">
+  <h5 class="plant-title">{{ msg.content.plantName }}</h5>
+  <p class="scientific-name"><i>{{ msg.content.scientificName }}</i></p>
+
+  <div class="plant-info">
+    <p><strong>☀️ Sunlight:</strong> {{ msg.content.sunlight }}</p>
+    <p><strong>💧 Watering:</strong> {{ msg.content.wateringSchedule }}</p>
+    <p><strong>🌱 Soil Type:</strong> {{ msg.content.soilType }}</p>
+    <p><strong>📈 Growth Habit:</strong> {{ msg.content.growthHabit }}</p>
+    <p><strong>🌿 Common Uses:</strong> {{ msg.content.commonUses }}</p>
+    <p><strong>⚠️ Common Issues:</strong> {{ msg.content.commonIssues }}</p>
+    <p><strong>🎉 Fun Fact:</strong> {{ msg.content.funFact }}</p>
+  </div>
+</div>
+
+<!-- Text Message - only show for text messages when not displaying plant data -->
+<div v-else-if="msg.content && (msg.type === 'text' || msg.type === 'both') && (!isValidPlantData(msg.content) || msg.isUser)" class="text-message">
+  {{ msg.content }}
+</div>
+
+  <!-- Image Message - show if there's an image -->
+  <div v-if="msg.image || (msg.type === 'image' && msg.content) || msg.type === 'both'" class="image-message">
+    <img 
+      :src="msg.image || msg.content" 
+      class="img-fluid rounded" 
+      alt="Uploaded plant image"
+    />
+  </div>
+  
+  <!-- Add Plant Button (only show for AI responses with plant info) -->
+  <!-- Add Plant Button (only show for AI responses with plant info) -->
+<!-- Add Plant Button (only show for AI responses to image uploads) -->
+<div v-if="!msg.isUser && msg.isResponseToImage && (isPlantDescription(msg.content) || msg.image)" class="mt-3 text-end">
+  <button 
+    class="btn add-plant-btn" 
+    @click="addPlantToCollection(msg)"
+  >
+    Add plant to collection
+  </button>
+</div>
+</div>
+    </div>
+  </div>
+</div>
+
       <!-- 🔹 Input Area (Fixed at Bottom) -->
       <div class="chat-input-container">
-        <!-- 🔹 File Preview -->
+        <!-- 🔹 File Preview (If Exists) -->
         <TransitionGroup name="file-preview" tag="div" class="file-previews-container">
           <div v-for="file in uploadedFiles" :key="file.id" class="file-preview">
             <div class="file-preview-content">
@@ -83,33 +103,37 @@
             </div>
           </div>
         </TransitionGroup>
+
         <div class="input-group">
           <!-- 🔹 Hidden File Input -->
-          <input
-            type="file"
-            ref="fileInput"
-            class="d-none"
-            accept="image/*"
+          <input 
+            type="file" 
+            ref="fileInput" 
+            class="d-none" 
+            accept="image/*" 
             @change="handleFileUpload"
           />
-          <!-- 🔹 Upload Button -->
+
+          <!-- 🔹 Image Upload Button -->
           <button class="attach-button" @click="triggerFileUpload">
             <i class="bi bi-paperclip"></i>
           </button>
+
           <!-- 🔹 Text Input -->
           <textarea
-            class="form-control chat-textarea"
-            placeholder="Ask about your plants or upload an image..."
+            class="form-control chat-textarea" 
+            placeholder="Ask about your plants or upload an image..." 
             v-model="userInput"
             @input="adjustTextarea"
             @keyup.enter.exact="sendMessage"
             ref="textInput"
           ></textarea>
+
           <!-- 🔹 Send Button -->
-          <button class="send-button" @click="sendMessage" :disabled="isLoading">
-            <i v-if="!isLoading" class="bi bi-send-fill"></i>
-            <span v-else class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-          </button>
+        <button class="send-button" @click="sendMessage" :disabled="isLoading">
+        <i v-if="!isLoading" class="bi bi-send-fill"></i>
+        <span v-else class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        </button>
         </div>
       </div>
     </div>
@@ -146,6 +170,9 @@ const userInput = ref('');
 const uploadedFiles = ref([]);
 const isDropdownOpen = ref(false);
 const isLoading = ref(false);
+
+const toastMessage = ref('');
+const toastType = ref('info');
 
 // 🔹 Adjust textarea height dynamically
 console.log("🔍 Chat Store Initialized:", chatStore);
@@ -213,6 +240,13 @@ const triggerFileUpload = () => {
   fileInput.value?.click();
 };
 
+const showToast = (message, type = 'info') => {
+  toastMessage.value = message;
+  toastType.value = type;
+  setTimeout(() => {
+    toastMessage.value = '';
+  }, 3000);
+};
 
 
 // KENDRICK CHANGE - NEW SEND MESSAGE FUNCTION DONE ON MARCH 29. 
@@ -308,7 +342,11 @@ const sendMessage = async () => {
   }
 };
 
-
+// 🔹 Handle user sign-out
+const handleSignOut = async () => {
+  await authStore.logout();
+  router.push('/login');
+};
 
 // 🔹 Toggle account dropdown
 const toggleDropdown = () => {
@@ -424,7 +462,7 @@ const addPlantToCollection = async (message) => {
   console.log("🧪 image:", message.image);
 
   if (!authStore.isAuthenticated) {
-      alert("Please log in to add plants to your collection.");
+      showToast("Please log in to add plants to your collection.", "warning");
       router.push('/login');
       return;
   }
@@ -433,7 +471,7 @@ const addPlantToCollection = async (message) => {
       // Fetch the latest AI response before adding the plant
       const aiResponse = await fetchLastAIResponse();
       if (!aiResponse) {
-          alert("No plant information found to add to collection.");
+          showToast("No AI response found. Please try again.", "error");
           return;
       }
 
@@ -445,7 +483,8 @@ const addPlantToCollection = async (message) => {
       const auth = getAuth();
       const user = auth.currentUser;
       if (!user) {
-          alert("User is not logged in.");
+          showToast("User not authenticated. Please log in.", "error");
+          router.push('/login');
           return;
       }
       const idToken = await user.getIdToken();
@@ -481,13 +520,13 @@ const addPlantToCollection = async (message) => {
 
     if (data.success) {
       const confirmedPlantName = data.plantName || "your plant"; // Ensure a valid name is displayed
-      alert(`${confirmedPlantName} added to your plant collection!`);
+      showToast(`Successfully added ${confirmedPlantName} to your collection!`, "success");
     } else {
-        alert("Failed to add plant to collection.");
+        showToast("Failed to add plant. Please try again.", "error");
     }
   } catch (error) {
       console.error("Error adding plant to collection:", error);
-      alert("An error occurred while adding the plant.");
+        showToast("An error occurred while adding the plant. Please try again.", "error");
   }
 };
 
@@ -620,16 +659,15 @@ const addPlantToCollection = async (message) => {
 /* Card styling - consolidated to avoid conflicts */
 .message-card {
   width: 100%;
-  max-width: 600px;
-  margin-bottom: 12px;
-  padding: 1rem;
-  border-radius: 20px;
-  border: none; /* Remove the harsh border */
-  background-color: #ffffff; /* Clean, soft background */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Softer shadow */
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  max-width: 600px; /* Increase max width */
+  margin-bottom: 8px !important; /* Reduce bottom margin */
+  border: 3px solid #341c02; /* Slightly thinner border */
+  border-radius: 16px !important;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  will-change: transform, opacity;
 }
-
 
 /* Animation keyframes */
 @keyframes fadeInUp {
@@ -646,16 +684,6 @@ const addPlantToCollection = async (message) => {
 /* Add this new class that will be applied dynamically */
 .animate-in {
   animation: fadeInUp 0.3s ease-out forwards;
-}
-
-
-.chat-placeholder {
-  text-align: center;
-  font-size: 1.8rem;
-  color: #6b6051;
-  margin-top: 6rem;
-  font-weight: 600;
-  opacity: 0.7;
 }
 
 
@@ -704,18 +732,13 @@ const addPlantToCollection = async (message) => {
 
 
 .image-message img {
-  width: 100%;
-  max-height: 400px; /* Increase height for taller portraits */
-  object-fit: cover; /* Fill the space while preserving aspect ratio */
-  border-radius: 12px;
-  display: block;
+  max-width: 100%;
+  max-height: 300px; /* Limit height to prevent huge images */
+  object-fit: contain;
+  border-radius: 8px;
   margin: 0 auto;
+  display: block;
 }
-.image-message img {
-  aspect-ratio: 3 / 4; /* Forces portrait aspect */
-  object-fit: cover;
-}
-
 
 /* Add plant button styling */
 .add-plant-btn {
